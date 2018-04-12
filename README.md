@@ -20,3 +20,8 @@ Start vim, then
 :PluginInstall
 ```
 
+## GNU Screen
+
+```
+wget -O ~/.screenrc https://raw.githubusercontent.com/txgvnn/dots/master/.screenrc
+```
