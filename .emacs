@@ -127,6 +127,7 @@
    ("C-c e n" . mc/mark-next-like-this)
    ("C-c e p" . mc/mark-previous-like-this)
    ("C-c e l" . mc/edit-lines)
+   ("C-c e r" . mc/mark-all-in-region)
    )
   )
 
@@ -201,8 +202,6 @@
                   (revert-buffer t t t)
                   (message "buffer is reverted"))
                 )
-;; (add-hook 'before-save-hook 'whitespace-cleanup)
-(add-hook 'before-save-hook (lambda()(delete-trailing-whitespace)))
 
 ;; Mutt support.
 (setq auto-mode-alist (append '(("/tmp/mutt.*" . mail-mode)) auto-mode-alist))
