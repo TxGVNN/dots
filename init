@@ -1,0 +1,64 @@
+#!/bin/bash
+[ "${DEBUG:-0}" -eq 1 ] && set -x
+
+OUTPUT="$HOME"
+INPUT="https://raw.githubusercontent.com/TxGVNN/dots/master"
+
+# msg SUBJECT CONTENT
+msg(){ printf "\e[32m%s\e[0m: %s\n" "$1" "$2";}
+
+banner(){
+    echo -e '\e[-1;34m'
+    echo -e '  #####        ###   #   #  #   #  #   #'
+    echo -e '    #         #      #   #  ##  #  ##  #'
+    echo -e '    #    \e[0;31m# #\e[0;34m  # ##   #   #  # # #  # # #'
+    echo -e '    #     \e[0;31m#\e[0;34m   #   #   # #   #  ##  #  ##'
+    echo -e '    #    \e[0;31m# #\e[0;34m   ###     #    #   #  #   #'
+    echo ''
+    echo -e '  \e[0;36m[ @author TxGVNN ]\e[0m'
+    echo ''
+}
+
+ download OUTPUT LINK
+download(){
+    if type wget >& /dev/null; then
+        wget -qO "$1" "$2"
+        return $?
+    fi
+    if type curl >& /dev/null; then
+        curl -sSL -o "$1" "$2"
+        return $?
+    fi
+    echo "Please install wget or curl command!"
+    exit 1
+}
+
+# install OUTPUT LINK
+install(){
+    if [ -e "$1" ]; then
+        echo "W: $1 is exist, backup first"
+        cp -v "$1" "$1.$(date +%F@%R.%s)"
+    fi
+
+    echo "I: Install $1"
+    download "$1" "$2"
+}
+
+# install OUTPUT LINK
+apply(){
+    if grep "TxGVNN" "$1" >& /dev/null ; then
+        echo "I: Skip $1"
+        return 0
+    fi
+    tmp=$(mktemp -t bakXXXXX -u)
+    echo "O: Apply $1"
+    download "$tmp" "$2"
+    cat "$tmp" >> "$1"
+    return $?
+}
+
+# main
+banner
+install "${OUTPUT}/.screenrc" "${INPUT}/.screenrc"
+install "${OUTPUT}/.emacs" "${INPUT}/.emacs"
+apply "${OUTPUT}/.bashrc" "${INPUT}/.bashrc"
