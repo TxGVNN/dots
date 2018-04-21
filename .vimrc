@@ -43,7 +43,6 @@ filetype plugin indent on
 
 syntax on
 set paste
-set number
 set ts=4 sw=4 expandtab
 set showcmd
 

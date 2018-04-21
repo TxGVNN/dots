@@ -14,10 +14,10 @@ wget -O ~/.vimrc https://raw.githubusercontent.com/txgvnn/dots/master/.vimrc
 git clone https://github.com/VundleVim/Vundle.vim.git ~/.vim/bundle/Vundle.vim
 ```
 
-Start vim, then
+Then install plugins
 
 ```
-:PluginInstall
+vim +PluginInstall
 ```
 
 ## GNU Screen
