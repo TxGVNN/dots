@@ -38,7 +38,7 @@
 (use-package helm-swoop
   :ensure t
   :bind
-  (("M-s s" . helm-swoop))
+  (("M-s w" . helm-swoop))
   )
 
 ;;; company
@@ -188,20 +188,33 @@
 (defalias 'yes-or-no-p 'y-or-n-p)
 (global-set-key (kbd "M-o") 'mode-line-other-buffer)
 (global-set-key (kbd "C-x m") 'compile)
-(global-set-key (kbd "C-c s") 'rgrep)
+;; searching
+(global-set-key (kbd "M-s g") 'rgrep)
+(global-set-key (kbd "M-s s") 'isearch-forward-regexp)
+(global-set-key (kbd "M-s r") 'isearch-backward-regexp)
 
 (defun indent-buffer ()
   (interactive)
   (save-excursion (indent-region (point-min) (point-max) nil))
   (delete-trailing-whitespace)
   )
-(global-set-key (kbd "C-c ;") 'indent-buffer)
+(global-set-key (kbd "C-x x ;") 'indent-buffer)
+(global-set-key (kbd "C-x x .") 'delete-trailing-whitespace)
 (global-set-key (kbd "C-c r")
                 (lambda ()
                   (interactive)
                   (revert-buffer t t t)
                   (message "buffer is reverted"))
                 )
+
+(defun my-c-mode-common-hook ()
+  (c-set-offset 'substatement-open 0)
+  (setq c++-tab-always-indent t)
+  (setq c-basic-offset 4)
+  (setq c-indent-level 4)
+  (setq tab-stop-list '(4 8 12 16 20 24 28 32 36 40))
+  )
+(add-hook 'c-mode-common-hook 'my-c-mode-common-hook)
 
 ;; Mutt support.
 (setq auto-mode-alist (append '(("/tmp/mutt.*" . mail-mode)) auto-mode-alist))
@@ -229,6 +242,7 @@
            (locate-dominating-file buffer-file-name ".dir-locals.el")))))
  '(scroll-bar-mode nil)
  '(show-trailing-whitespace t)
+ '(tab-stop-list (quote (4 8 12 16)))
  '(tab-width 4)
  '(tool-bar-mode nil)
  '(tramp-auto-save-directory "~/.emacs.d/backup")
@@ -264,7 +278,7 @@
   (with-eval-after-load 'go-mode
     (require 'go-autocomplete))
   )
-;;; python-mode
+;; python-mode
 (use-package jedi
   :ensure t
   :init
