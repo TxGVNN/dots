@@ -17,47 +17,43 @@
   :init
   (require 'helm)
   (require 'helm-config)
-  (helm-mode 1)
   (setq helm-mode-line-string "")
-  (global-set-key (kbd "M-x") 'helm-M-x)
-  (global-set-key (kbd "C-x C-f") 'helm-find-files)
+  (setq helm-split-window-inside-p t)
+  (setq helm-autoresize-max-height 0)
+  (setq helm-autoresize-min-height 25)
   (add-to-list 'helm-sources-using-default-as-input 'helm-source-man-pages)
-  (define-key global-map (kbd "C-c m") 'helm-imenu)
-  (define-key global-map (kbd "C-x C-b") 'helm-buffers-list)
-  (define-key global-map (kbd "C-x b") 'helm-buffers-list))
-
-;;; helm-project
+  (helm-autoresize-mode 1)
+  (helm-mode 1)
+  :bind
+  (("M-x" . helm-M-x)
+   ("C-x C-f" . helm-find-files)
+   ("C-x C-b" . helm-buffers-list)
+   ("C-x b" . helm-buffers-list)
+   ("C-c m" . helm-imenu)
+   ("M-y" . helm-show-kill-ring)
+   :map helm-map
+   ("<tab>" . helm-execute-persistent-action)
+   ("C-i" . helm-execute-persistent-action)
+   ("C-z" . helm-select-action))
+  )
+;;; helm-projectile
 (use-package helm-projectile
   :ensure t
   :init
   (projectile-mode)
   (setq projectile-completion-system 'helm)
-  (helm-projectile-on))
-
+  (helm-projectile-on)
+  )
+;;; helm-ag
+(use-package helm-ag
+  :ensure t
+  )
 ;;; helm-swoop
 (use-package helm-swoop
   :ensure t
   :bind
   (("M-s w" . helm-swoop))
   )
-
-;;; company
-(use-package company
-  :ensure t
-  :init
-  (global-company-mode t)
-  )
-
-;;; which-key
-(use-package which-key
-  :ensure t
-  :init (which-key-mode))
-
-;;; flycheck
-(use-package flycheck
-  :ensure t
-  :init (global-flycheck-mode))
-
 ;;; helm-gtags
 (use-package helm-gtags
   :ensure t
@@ -81,6 +77,23 @@
     )
   )
 
+;;; company
+(use-package company
+  :ensure t
+  :init
+  (global-company-mode t)
+  )
+
+;;; which-key
+(use-package which-key
+  :ensure t
+  :init (which-key-mode))
+
+;;; flycheck
+(use-package flycheck
+  :ensure t
+  :init (global-flycheck-mode))
+
 ;;; git-gutter
 (use-package git-gutter
   :ensure t
@@ -97,12 +110,16 @@
 ;;; magit
 (use-package magit
   :ensure t
+  :init
+  (with-eval-after-load 'magit-files
+    (define-key magit-file-mode-map "\C-xg" nil))
   :bind
   (("C-x g v" . magit-status)
    ("C-x g d" . magit-diff-buffer-file)
    ("C-x g l" . magit-log-buffer-file)
    ("C-x g b" . magit-blame)
    ("C-x g a" . magit-log-all)
+   ("C-x g c" . magit-commit-popup)
    ))
 
 ;;; switch-window
@@ -111,6 +128,7 @@
   :init
   (global-set-key (kbd "C-x o") 'switch-window)
   )
+;;; windmove
 (use-package windmove
   :bind
   (("C-c <right>" . windmove-right)
@@ -147,10 +165,10 @@
   )
 
 ;;; themes
-(use-package atom-one-dark-theme
+(use-package doom-themes
   :ensure t
   :init
-  (load-theme 'atom-one-dark t)
+  (load-theme 'doom-one t)
   )
 
 ;; smart-mode-line
@@ -169,13 +187,13 @@
   :config
   (setq dashboard-startup-banner nil)
   (setq dashboard-items
-        '((recents . 5) (bookmarks . 5) (projects . 15)))
+        '((recents . 10) (bookmarks . 5) (projects . 15)))
   (dashboard-setup-startup-hook)
   )
 
 ;; hide the minor modes
 (defvar hidden-minor-modes
-  '(flycheck-mode which-key-mode projectile-mode git-gutter-mode helm-mode undo-tree-mode company-mode helm-gtags-mode))
+  '(flycheck-mode which-key-mode projectile-mode git-gutter-mode helm-mode undo-tree-mode company-mode helm-gtags-mode smartparens-mode))
 (defun purge-minor-modes ()
   (interactive)
   (dolist (x hidden-minor-modes nil)
@@ -198,14 +216,23 @@
   (save-excursion (indent-region (point-min) (point-max) nil))
   (delete-trailing-whitespace)
   )
+(defun yank-file-path ()
+  (interactive)
+  (let ((filename (if (equal major-mode 'dired-mode) default-directory
+                    (buffer-file-name))))
+    (when filename (kill-new filename)
+          (message (format "Copied %s" filename)))
+    )
+  )
+(defun untabify-buffer ()
+  (interactive)
+  (save-excursion (untabify (point-min) (point-max) nil))
+  )
 (global-set-key (kbd "C-x x ;") 'indent-buffer)
 (global-set-key (kbd "C-x x .") 'delete-trailing-whitespace)
-(global-set-key (kbd "C-c r")
-                (lambda ()
-                  (interactive)
-                  (revert-buffer t t t)
-                  (message "buffer is reverted"))
-                )
+(global-set-key (kbd "C-x x t") 'untabify-buffer)
+(global-set-key (kbd "C-x x p") 'yank-file-path)
+(global-set-key (kbd "C-c r") 'revert-buffer)
 
 (defun my-c-mode-common-hook ()
   (c-set-offset 'substatement-open 0)
@@ -231,6 +258,7 @@
  '(default-input-method "vietnamese-telex")
  '(delete-old-versions 6)
  '(delete-selection-mode t)
+ '(global-whitespace-mode t)
  '(helm-gtags-auto-update t)
  '(indent-tabs-mode nil)
  '(initial-scratch-message nil)
@@ -246,7 +274,10 @@
  '(tab-width 4)
  '(tool-bar-mode nil)
  '(tramp-auto-save-directory "~/.emacs.d/backup")
- '(version-control t))
+ '(version-control t)
+ '(whitespace-style
+   (quote
+    (tabs empty indentation big-indent tab-mark))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
