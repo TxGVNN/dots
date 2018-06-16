@@ -81,8 +81,7 @@
 (use-package company
   :ensure t
   :init
-  (global-company-mode t)
-  )
+  (global-company-mode t))
 
 ;;; which-key
 (use-package which-key
@@ -94,6 +93,20 @@
   :ensure t
   :init (global-flycheck-mode))
 
+;;; magit
+(use-package magit
+  :ensure t
+  :init
+  (with-eval-after-load 'magit-files
+    (define-key magit-file-mode-map "\C-xg" nil))
+  :bind
+  (("C-x g v" . magit-status)
+   ("C-x g d" . magit-diff-buffer-file-popup)
+   ("C-x g l" . magit-log-buffer-file-popup)
+   ("C-x g a" . magit-log-all)
+   ("C-x g b" . magit-blame)
+   ("C-x g c" . magit-commit-popup)
+   ))
 ;;; git-gutter
 (use-package git-gutter
   :ensure t
@@ -107,27 +120,11 @@
    ("C-x g r" . git-gutter:revert-hunk)
    ))
 
-;;; magit
-(use-package magit
-  :ensure t
-  :init
-  (with-eval-after-load 'magit-files
-    (define-key magit-file-mode-map "\C-xg" nil))
-  :bind
-  (("C-x g v" . magit-status)
-   ("C-x g d" . magit-diff-buffer-file)
-   ("C-x g l" . magit-log-buffer-file)
-   ("C-x g b" . magit-blame)
-   ("C-x g a" . magit-log-all)
-   ("C-x g c" . magit-commit-popup)
-   ))
-
 ;;; switch-window
 (use-package switch-window
   :ensure t
   :init
-  (global-set-key (kbd "C-x o") 'switch-window)
-  )
+  (global-set-key (kbd "C-x o") 'switch-window))
 ;;; windmove
 (use-package windmove
   :bind
@@ -156,21 +153,23 @@
   (smartparens-global-mode t)
   (show-smartparens-global-mode t)
   )
+;; highlight-parentheses
+(use-package highlight-parentheses
+  :ensure t
+  :init
+  (global-highlight-parentheses-mode t))
 
 ;; undo-tree
 (use-package undo-tree
   :ensure t
   :init
-  (global-undo-tree-mode t)
-  )
+  (global-undo-tree-mode t))
 
 ;;; themes
 (use-package doom-themes
   :ensure t
   :init
-  (load-theme 'doom-one t)
-  )
-
+  (load-theme 'doom-one t))
 ;; smart-mode-line
 (use-package smart-mode-line
   :ensure t
@@ -232,6 +231,7 @@
 (global-set-key (kbd "C-x x .") 'delete-trailing-whitespace)
 (global-set-key (kbd "C-x x t") 'untabify-buffer)
 (global-set-key (kbd "C-x x p") 'yank-file-path)
+(global-set-key (kbd "C-x x r") 'rename-buffer)
 (global-set-key (kbd "C-c r") 'revert-buffer)
 
 (defun my-c-mode-common-hook ()
@@ -275,9 +275,7 @@
  '(tool-bar-mode nil)
  '(tramp-auto-save-directory "~/.emacs.d/backup")
  '(version-control t)
- '(whitespace-style
-   (quote
-    (tabs empty indentation big-indent tab-mark))))
+ '(whitespace-style (quote (tabs empty indentation big-indent tab-mark))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -303,7 +301,7 @@
     (setq gofmt-command "goimports")
     (go-guru-hl-identifier-mode)                    ; highlight identifiers
     (local-set-key (kbd "M-.") 'godef-jump)
-    (local-set-key (kbd "M-*") 'pop-tag-mark)
+    (local-set-key (kbd "M-,") 'pop-tag-mark)
     (auto-complete-mode 1))                         ; Enable auto-complete mode
   (add-hook 'go-mode-hook 'my-go-mode-hook)
   (with-eval-after-load 'go-mode
