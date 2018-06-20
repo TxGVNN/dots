@@ -146,6 +146,12 @@
    )
   )
 
+;; ace-jump-mode
+(use-package ace-jump-mode
+  :ensure t
+  :bind
+  ("M-s a" . ace-jump-mode))
+
 ;; smartparens
 (use-package smartparens
   :ensure t
