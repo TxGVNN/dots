@@ -128,11 +128,16 @@
 ;;; windmove
 (use-package windmove
   :bind
-  (("C-c <right>" . windmove-right)
-   ("C-c <left>" . windmove-left)
-   ("C-c <up>" . windmove-up)
-   ("C-c <down>" . windmove-down)
-   ))
+  (("C-x w <right>" . windmove-right)
+   ("C-x w <left>" . windmove-left)
+   ("C-x w <up>" . windmove-up)
+   ("C-x w <down>" . windmove-down)
+   ("C-x w f" . windmove-right)
+   ("C-x w b" . windmove-left)
+   ("C-x w p" . windmove-up)
+   ("C-x w n" . windmove-down)
+   )
+  )
 
 ;; multiple-cursors
 (use-package multiple-cursors
