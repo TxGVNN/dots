@@ -14,6 +14,9 @@ bindkey -d -k kb
 # do not trash Delete, usually ESC [ 3 ~
 bindkey -k kD
 bindkey -d -k kD
+# unbind lock
+bind ^x
+bind x
 bind = resize =
 bind + resize +5
 bind - resize -5
