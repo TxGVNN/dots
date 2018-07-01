@@ -42,18 +42,12 @@
   :init
   (projectile-mode)
   (setq projectile-completion-system 'helm)
-  (helm-projectile-on)
-  )
-;;; helm-ag
-(use-package helm-ag
-  :ensure t
-  )
+  (helm-projectile-on))
 ;;; helm-swoop
 (use-package helm-swoop
   :ensure t
   :bind
-  (("M-s w" . helm-swoop))
-  )
+  ("M-s w" . helm-swoop))
 ;;; helm-gtags
 (use-package helm-gtags
   :ensure t
@@ -105,8 +99,8 @@
    ("C-x g l" . magit-log-buffer-file-popup)
    ("C-x g a" . magit-log-all)
    ("C-x g b" . magit-blame)
-   ("C-x g c" . magit-commit-popup)
-   ))
+   ("C-x g c" . magit-commit-popup))
+  )
 ;;; git-gutter
 (use-package git-gutter
   :ensure t
@@ -117,8 +111,8 @@
    ("C-x g p" . git-gutter:previous-hunk)
    ("C-x g n" . git-gutter:next-hunk)
    ("C-x g s" . git-gutter:stage-hunk)
-   ("C-x g r" . git-gutter:revert-hunk)
-   ))
+   ("C-x g r" . git-gutter:revert-hunk))
+  )
 
 ;;; switch-window
 (use-package switch-window
@@ -135,8 +129,7 @@
    ("C-x w f" . windmove-right)
    ("C-x w b" . windmove-left)
    ("C-x w p" . windmove-up)
-   ("C-x w n" . windmove-down)
-   )
+   ("C-x w n" . windmove-down))
   )
 
 ;; multiple-cursors
@@ -147,23 +140,15 @@
    ("C-c e n" . mc/mark-next-like-this)
    ("C-c e p" . mc/mark-previous-like-this)
    ("C-c e l" . mc/edit-lines)
-   ("C-c e r" . mc/mark-all-in-region)
-   )
+   ("C-c e r" . mc/mark-all-in-region))
   )
-
-;; ace-jump-mode
-(use-package ace-jump-mode
-  :ensure t
-  :bind
-  ("M-s a" . ace-jump-mode))
 
 ;; smartparens
 (use-package smartparens
   :ensure t
   :init
   (smartparens-global-mode t)
-  (show-smartparens-global-mode t)
-  )
+  (show-smartparens-global-mode t))
 ;; highlight-parentheses
 (use-package highlight-parentheses
   :ensure t
@@ -201,6 +186,16 @@
   (dashboard-setup-startup-hook)
   )
 
+;; options
+;;; helm-ag
+(use-package helm-ag
+  :bind
+  ("M-s d" . helm-ag))
+;;; ace-jump-mode
+(use-package ace-jump-mode
+  :bind
+  ("M-s a" . ace-jump-mode))
+
 ;; hide the minor modes
 (defvar hidden-minor-modes
   '(flycheck-mode which-key-mode projectile-mode git-gutter-mode helm-mode undo-tree-mode company-mode helm-gtags-mode smartparens-mode))
@@ -224,20 +219,18 @@
 (defun indent-buffer ()
   (interactive)
   (save-excursion (indent-region (point-min) (point-max) nil))
-  (delete-trailing-whitespace)
-  )
+  (delete-trailing-whitespace))
 (defun yank-file-path ()
   (interactive)
   (let ((filename (if (equal major-mode 'dired-mode) default-directory
                     (buffer-file-name))))
     (when filename (kill-new filename)
           (message (format "Copied %s" filename)))
-    )
-  )
+    ))
 (defun untabify-buffer ()
   (interactive)
-  (save-excursion (untabify (point-min) (point-max) nil))
-  )
+  (save-excursion (untabify (point-min) (point-max) nil)))
+
 (global-set-key (kbd "C-x x ;") 'indent-buffer)
 (global-set-key (kbd "C-x x .") 'delete-trailing-whitespace)
 (global-set-key (kbd "C-x x t") 'untabify-buffer)
@@ -250,8 +243,7 @@
   (setq c++-tab-always-indent t)
   (setq c-basic-offset 4)
   (setq c-indent-level 4)
-  (setq tab-stop-list '(4 8 12 16 20 24 28 32 36 40))
-  )
+  (setq tab-stop-list '(4 8 12 16 20 24 28 32 36 40)))
 (add-hook 'c-mode-common-hook 'my-c-mode-common-hook)
 
 ;; Mutt support.
