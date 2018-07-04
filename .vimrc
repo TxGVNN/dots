@@ -1,49 +1,64 @@
 "" TxGVNN
-"" git clone https://github.com/VundleVim/Vundle.vim.git ~/.vim/bundle/Vundle.vim
 
-set nocompatible              " be iMproved, required
-filetype off                  " required
+"*****************************************************************************
+"" Vim-PLug core
+"*****************************************************************************
+if has('vim_starting')
+  set nocompatible               " Be iMproved
+endif
 
-" set the runtime path to include Vundle and initialize
-set rtp+=/opt/etc/vim-gxt
-set rtp+=~/.vim/bundle/Vundle.vim
-call vundle#begin()
-"call vundle#begin('~/some/path/here')
+let vimplug_exists=expand('~/.vim/autoload/plug.vim')
 
-" let Vundle manage Vundle, required
-Plugin 'VundleVim/Vundle.vim'
+let g:vim_bootstrap_langs = "go"
+let g:vim_bootstrap_editor = "vim"				" nvim or vim
 
-" File browser
-Plugin 'scrooloose/nerdtree'
-" Bar
-Plugin 'vim-airline/vim-airline'
-Plugin 'vim-airline/vim-airline-themes'
-" Git
-Plugin 'tpope/vim-fugitive'
-Plugin 'airblade/vim-gitgutter'
-" Syntax
-Plugin 'scrooloose/syntastic'
-" Tagbar
-Plugin 'majutsushi/tagbar'
-" Session
-Plugin 'xolox/vim-misc'
-Plugin 'xolox/vim-session'
+if !filereadable(vimplug_exists)
+  if executable("curl")
+    echo "Installing Vim-Plug..."
+    echo ""
+    silent !\curl -fLo ~/.vim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+    let g:not_finish_vimplug = "yes"
+    autocmd VimEnter * PlugInstall
+  endif
+endif
 
-" Fuzzy file, buffer, mru, tag, etc finder https://github.com/ctrlpvim/ctrlp.vim
-" http://stackoverflow.com/questions/2372307/opening-files-in-vim-using-fuzzy-search
-Plugin 'ctrlpvim/ctrlp.vim'
-" Grep
-Plugin 'vim-scripts/grep.vim'
+if filereadable(vimplug_exists)
+  " Required:
+  call plug#begin(expand('~/.vim/plugged'))
 
-" All of your Plugins must be added before the following line
-call vundle#end()
+  " File browser
+  Plug 'scrooloose/nerdtree'
+  " Bar
+  Plug 'vim-airline/vim-airline'
+  Plug 'vim-airline/vim-airline-themes'
+  " Git
+  Plug 'tpope/vim-fugitive'
+  Plug 'airblade/vim-gitgutter'
+  " Syntax
+  Plug 'scrooloose/syntastic'
+  " Tagbar
+  Plug 'majutsushi/tagbar'
+  " Session
+  Plug 'xolox/vim-misc'
+  Plug 'xolox/vim-session'
+
+  " Fuzzy file, buffer, mru, tag, etc finder https://github.com/ctrlpvim/ctrlp.vim
+  " http://stackoverflow.com/questions/2372307/opening-files-in-vim-using-fuzzy-search
+  Plug 'ctrlpvim/ctrlp.vim'
+  " Grep
+  Plug 'vim-scripts/grep.vim'
+
+  " All of your Plugins must be added before the following line
+  call plug#end()
+endif
+
 filetype plugin indent on
-" see :h vundle for more details or wiki for FAQ
-" Put your non-Plugin stuff after this line
-
 syntax on
 set paste
-set ts=4 sw=4 expandtab
+set tabstop=4
+set softtabstop=0
+set shiftwidth=4
+set expandtab
 set showcmd
 
 "" Encoding
