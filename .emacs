@@ -71,12 +71,6 @@
     )
   )
 
-;;; company
-(use-package company
-  :ensure t
-  :init
-  (global-company-mode t))
-
 ;;; which-key
 (use-package which-key
   :ensure t
@@ -155,17 +149,24 @@
   :init
   (global-highlight-parentheses-mode t))
 
+;; yasnippet
+(use-package yasnippet-snippets
+  :ensure t
+  :init (yas-global-mode t))
+;;; company
+(use-package company
+  :ensure t
+  :init (global-company-mode t))
+
 ;; undo-tree
 (use-package undo-tree
   :ensure t
-  :init
-  (global-undo-tree-mode t))
+  :init (global-undo-tree-mode t))
 
 ;;; themes
 (use-package doom-themes
   :ensure t
-  :init
-  (load-theme 'doom-one t))
+  :init (load-theme 'doom-one t))
 ;; smart-mode-line
 (use-package smart-mode-line
   :ensure t
@@ -198,7 +199,7 @@
 
 ;; hide the minor modes
 (defvar hidden-minor-modes
-  '(flycheck-mode which-key-mode projectile-mode git-gutter-mode helm-mode undo-tree-mode company-mode helm-gtags-mode smartparens-mode))
+  '(global-whitespace-mode flycheck-mode which-key-mode projectile-mode git-gutter-mode helm-mode undo-tree-mode company-mode helm-gtags-mode smartparens-mode))
 (defun purge-minor-modes ()
   (interactive)
   (dolist (x hidden-minor-modes nil)
@@ -237,13 +238,13 @@
 (global-set-key (kbd "C-x x p") 'yank-file-path)
 (global-set-key (kbd "C-x x r") 'rename-buffer)
 (global-set-key (kbd "C-c r") 'revert-buffer)
+(global-set-key (kbd "C-M-_") 'dabbrev-completion)
 
 (defun my-c-mode-common-hook ()
   (c-set-offset 'substatement-open 0)
   (setq c++-tab-always-indent t)
   (setq c-basic-offset 4)
-  (setq c-indent-level 4)
-  (setq tab-stop-list '(4 8 12 16 20 24 28 32 36 40)))
+  (setq c-indent-level 4))
 (add-hook 'c-mode-common-hook 'my-c-mode-common-hook)
 
 ;; Mutt support.
@@ -267,13 +268,14 @@
  '(initial-scratch-message nil)
  '(keep-new-versions 2)
  '(menu-bar-mode nil)
+ '(read-quoted-char-radix 16)
  '(safe-local-variable-values
    (quote
     ((eval setq default-directory
            (locate-dominating-file buffer-file-name ".dir-locals.el")))))
  '(scroll-bar-mode nil)
  '(show-trailing-whitespace t)
- '(tab-stop-list (quote (4 8 12 16)))
+ '(tab-stop-list (quote (4 8 12 16 20 24 28 32 36)))
  '(tab-width 4)
  '(tool-bar-mode nil)
  '(tramp-auto-save-directory "~/.emacs.d/backup")
