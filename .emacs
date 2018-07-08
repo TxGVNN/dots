@@ -243,6 +243,16 @@
   (other-window 1 nil)
   (if (= prefix 1 )
       (switch-to-next-buffer)))
+(defun swap-2-windows()
+  "Swap 2 windows"
+  (interactive)
+  (cond ((/= (count-windows) 2) (message "Required exactly 2 windows"))
+        (t (let* ((w1 (first (window-list))) (w2 (second (window-list)))
+                  (b1 (window-buffer w1)) (b2 (window-buffer w2))
+                  (s1 (window-start w1)) (s2 (window-start w2)))
+             (set-window-buffer w1 b2) (set-window-buffer w2 b1)
+             (set-window-start w1 s2) (set-window-start w2 s1))))
+  (other-window 1))
 
 (global-set-key (kbd "C-x x ;") 'indent-buffer)
 (global-set-key (kbd "C-x x .") 'delete-trailing-whitespace)
@@ -253,6 +263,7 @@
 (global-set-key (kbd "C-M-_") 'dabbrev-completion)
 (global-set-key (kbd "C-x 2") 'split-window-vertically-last-buffer)
 (global-set-key (kbd "C-x 3") 'split-window-horizontally-last-buffer)
+(global-set-key (kbd "C-x 7") 'swap-2-windows)
 
 (defun my-c-mode-common-hook ()
   (c-set-offset 'substatement-open 0)
