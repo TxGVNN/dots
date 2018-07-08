@@ -11,7 +11,8 @@
   (package-refresh-contents)
   (package-install 'use-package))
 
-;;; helm
+;;; Packages
+;; helm
 (use-package helm
   :ensure t
   :init
@@ -36,23 +37,22 @@
    ("C-i" . helm-execute-persistent-action)
    ("C-z" . helm-select-action))
   )
-;;; helm-projectile
+;; helm-projectile
 (use-package helm-projectile
   :ensure t
   :init
   (projectile-mode)
   (setq projectile-completion-system 'helm)
   (helm-projectile-on))
-;;; helm-swoop
+;; helm-swoop
 (use-package helm-swoop
   :ensure t
-  :bind
-  ("M-s w" . helm-swoop))
-;;; helm-gtags
+  :bind ("M-s w" . helm-swoop))
+;; helm-gtags
 (use-package helm-gtags
   :ensure t
   :init
-  ;;; Enable helm-gtags-mode
+  ;; Enable helm-gtags-mode
   (add-hook 'c-mode-hook 'helm-gtags-mode)
   (add-hook 'java-mode-hook 'helm-gtags-mode)
   (add-hook 'c++-mode-hook 'helm-gtags-mode)
@@ -68,20 +68,19 @@
        (define-key helm-gtags-mode-map (kbd "C-c t p") 'helm-gtags-previous-history)
        (define-key helm-gtags-mode-map (kbd "C-c t n") 'helm-gtags-next-history)
        (define-key helm-gtags-mode-map (kbd "C-c t t") 'helm-gtags-pop-stack) )
-    )
-  )
+    ))
 
-;;; which-key
+;; which-key
 (use-package which-key
   :ensure t
   :init (which-key-mode))
 
-;;; flycheck
+;; flycheck
 (use-package flycheck
   :ensure t
   :init (global-flycheck-mode))
 
-;;; magit
+;; magit
 (use-package magit
   :ensure t
   :init
@@ -95,11 +94,10 @@
    ("C-x g b" . magit-blame)
    ("C-x g c" . magit-commit-popup))
   )
-;;; git-gutter
+;; git-gutter
 (use-package git-gutter
   :ensure t
-  :init
-  (global-git-gutter-mode 1)
+  :init (global-git-gutter-mode 1)
   :bind
   (("C-x g p" . git-gutter:previous-hunk)
    ("C-x g p" . git-gutter:previous-hunk)
@@ -108,22 +106,17 @@
    ("C-x g r" . git-gutter:revert-hunk))
   )
 
-;;; switch-window
+;; switch-window
 (use-package switch-window
   :ensure t
-  :init
-  (global-set-key (kbd "C-x o") 'switch-window))
-;;; windmove
+  :init (global-set-key (kbd "C-x o") 'switch-window))
+;; windmove
 (use-package windmove
   :bind
-  (("C-x w <right>" . windmove-right)
-   ("C-x w <left>" . windmove-left)
-   ("C-x w <up>" . windmove-up)
-   ("C-x w <down>" . windmove-down)
-   ("C-x w f" . windmove-right)
-   ("C-x w b" . windmove-left)
-   ("C-x w p" . windmove-up)
-   ("C-x w n" . windmove-down))
+  (("C-x w <right>" . windmove-right) ("C-x w f" . windmove-right)
+   ("C-x w <left>" . windmove-left) ("C-x w b" . windmove-left)
+   ("C-x w <up>" . windmove-up) ("C-x w p" . windmove-up)
+   ("C-x w <down>" . windmove-down) ("C-x w n" . windmove-down))
   )
 
 ;; multiple-cursors
@@ -146,14 +139,13 @@
 ;; highlight-parentheses
 (use-package highlight-parentheses
   :ensure t
-  :init
-  (global-highlight-parentheses-mode t))
+  :init (global-highlight-parentheses-mode t))
 
 ;; yasnippet
 (use-package yasnippet-snippets
   :ensure t
   :init (yas-global-mode t))
-;;; company
+;; company
 (use-package company
   :ensure t
   :init (global-company-mode t))
@@ -163,7 +155,7 @@
   :ensure t
   :init (global-undo-tree-mode t))
 
-;;; themes
+;; themes
 (use-package doom-themes
   :ensure t
   :init (load-theme 'doom-one t))
@@ -187,16 +179,15 @@
   (dashboard-setup-startup-hook)
   )
 
-;; options
-;;; helm-ag
+;;; Options
+;; helm-ag
 (use-package helm-ag
-  :bind
-  ("M-s d" . helm-ag))
-;;; ace-jump-mode
+  :bind ("M-s d" . helm-ag))
+;; ace-jump-mode
 (use-package ace-jump-mode
-  :bind
-  ("M-s a" . ace-jump-mode))
+  :bind ("M-s a" . ace-jump-mode))
 
+;;: Hook
 ;; hide the minor modes
 (defvar hidden-minor-modes
   '(global-whitespace-mode flycheck-mode which-key-mode projectile-mode git-gutter-mode helm-mode undo-tree-mode company-mode helm-gtags-mode smartparens-mode))
@@ -204,19 +195,20 @@
   (interactive)
   (dolist (x hidden-minor-modes nil)
     (let ((trg (cdr (assoc x minor-mode-alist))))
-      (when trg
-        (setcar trg "")))))
+      (when trg (setcar trg "")))))
 (add-hook 'after-change-major-mode-hook 'purge-minor-modes)
+;; c hook
+(defun my-c-mode-common-hook ()
+  (c-set-offset 'substatement-open 0)
+  (setq c++-tab-always-indent t)
+  (setq c-basic-offset 4)
+  (setq c-indent-level 4))
+(add-hook 'c-mode-common-hook 'my-c-mode-common-hook)
+;; mutt support.
+(setq auto-mode-alist (append '(("/tmp/mutt.*" . mail-mode)) auto-mode-alist))
 
-;;; customize
-(defalias 'yes-or-no-p 'y-or-n-p)
-(global-set-key (kbd "M-o") 'mode-line-other-buffer)
-(global-set-key (kbd "C-x m") 'compile)
-;; searching
-(global-set-key (kbd "M-s g") 'rgrep)
-(global-set-key (kbd "M-s s") 'isearch-forward-regexp)
-(global-set-key (kbd "M-s r") 'isearch-backward-regexp)
-
+;;; Customize
+;; defun
 (defun indent-buffer ()
   (interactive)
   (save-excursion (indent-region (point-min) (point-max) nil))
@@ -235,14 +227,12 @@
   (interactive "p")
   (split-window-vertically)
   (other-window 1 nil)
-  (if (= prefix 1 )
-      (switch-to-next-buffer)))
+  (if (= prefix 1 ) (switch-to-next-buffer)))
 (defun split-window-horizontally-last-buffer (prefix)
   (interactive "p")
   (split-window-horizontally)
   (other-window 1 nil)
-  (if (= prefix 1 )
-      (switch-to-next-buffer)))
+  (if (= prefix 1 ) (switch-to-next-buffer)))
 (defun swap-2-windows()
   "Swap 2 windows"
   (interactive)
@@ -254,26 +244,22 @@
              (set-window-start w1 s2) (set-window-start w2 s1))))
   (other-window 1))
 
+(defalias 'yes-or-no-p 'y-or-n-p)
+(global-set-key (kbd "M-o") 'mode-line-other-buffer)
+(global-set-key (kbd "C-x m") 'compile)
+(global-set-key (kbd "M-s g") 'rgrep)
+(global-set-key (kbd "M-s s") 'isearch-forward-regexp)
+(global-set-key (kbd "M-s r") 'isearch-backward-regexp)
+(global-set-key (kbd "C-c r") 'revert-buffer)
+(global-set-key (kbd "C-M-_") 'dabbrev-completion)
 (global-set-key (kbd "C-x x ;") 'indent-buffer)
 (global-set-key (kbd "C-x x .") 'delete-trailing-whitespace)
 (global-set-key (kbd "C-x x t") 'untabify-buffer)
 (global-set-key (kbd "C-x x p") 'yank-file-path)
 (global-set-key (kbd "C-x x r") 'rename-buffer)
-(global-set-key (kbd "C-c r") 'revert-buffer)
-(global-set-key (kbd "C-M-_") 'dabbrev-completion)
 (global-set-key (kbd "C-x 2") 'split-window-vertically-last-buffer)
 (global-set-key (kbd "C-x 3") 'split-window-horizontally-last-buffer)
 (global-set-key (kbd "C-x 7") 'swap-2-windows)
-
-(defun my-c-mode-common-hook ()
-  (c-set-offset 'substatement-open 0)
-  (setq c++-tab-always-indent t)
-  (setq c-basic-offset 4)
-  (setq c-indent-level 4))
-(add-hook 'c-mode-common-hook 'my-c-mode-common-hook)
-
-;; Mutt support.
-(setq auto-mode-alist (append '(("/tmp/mutt.*" . mail-mode)) auto-mode-alist))
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -316,11 +302,9 @@
 
 ;; go-mode
 (use-package go-guru
-  :ensure t
-  )
+  :ensure t)
 (use-package go-autocomplete
-  :ensure t
-  )
+  :ensure t)
 (use-package go-projectile
   :ensure t
   :init
@@ -336,8 +320,7 @@
     (auto-complete-mode 1))                         ; Enable auto-complete mode
   (add-hook 'go-mode-hook 'my-go-mode-hook)
   (with-eval-after-load 'go-mode
-    (require 'go-autocomplete))
-  )
+    (require 'go-autocomplete)))
 ;; python-mode
 (use-package jedi
   :ensure t
@@ -366,14 +349,12 @@
        (base-dir ;; traverse until we reach the base
         (try-find-best-root (cdr base-dir) (cdr buffer-dir)
                             (append current (list (car buffer-dir)))))
-
        (buffer-dir ;; try until we hit the current directory
         (let* ((next-dir (append current (list (car buffer-dir))))
                (file-file (concat (dir-list-to-path next-dir) "/" init-file)))
           (if (file-exists-p file-file)
               (dir-list-to-path current)
             (try-find-best-root nil (cdr buffer-dir) next-dir))))
-
        (t nil)))
 
     (let* ((buffer-dir (expand-file-name (file-name-directory (buffer-file-name buf))))
@@ -401,13 +382,10 @@
       `(setq ,arg-list (append ,arg-list (list ,arg-name ,arg-value))))
     ;; and now define the args
     (let ((project-root (current-buffer-project-root)))
-
       (make-local-variable 'jedi:server-args)
-
       (when project-root
         (message (format "Adding system path: %s" project-root))
         (add-args jedi:server-args "--sys-path" project-root))
-
       (when jedi-config:with-virtualenv
         (message (format "Adding virtualenv: %s" jedi-config:with-virtualenv))
         (add-args jedi:server-args "--virtual-env" jedi-config:with-virtualenv))))
@@ -451,5 +429,7 @@
 
 ;; php-mode
 (use-package company-php
-  :ensure t
-  )
+  :ensure t)
+
+(provide '.emacs)
+;;; .emacs ends here
