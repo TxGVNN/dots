@@ -70,6 +70,13 @@
        (define-key helm-gtags-mode-map (kbd "C-c t t") 'helm-gtags-pop-stack) )
     ))
 
+;; crux
+(use-package crux
+  :ensure t
+  :bind
+  ("C-a" . crux-move-beginning-of-line)
+  ("C-x 7" . crux-swap-windows))
+
 ;; which-key
 (use-package which-key
   :ensure t
@@ -87,48 +94,45 @@
   (with-eval-after-load 'magit-files
     (define-key magit-file-mode-map "\C-xg" nil))
   :bind
-  (("C-x g v" . magit-status)
-   ("C-x g d" . magit-diff-buffer-file-popup)
-   ("C-x g l" . magit-log-buffer-file-popup)
-   ("C-x g a" . magit-log-all)
-   ("C-x g b" . magit-blame)
-   ("C-x g c" . magit-commit-popup))
-  )
+  ("C-x g v" . magit-status)
+  ("C-x g d" . magit-diff-buffer-file-popup)
+  ("C-x g l" . magit-log-buffer-file-popup)
+  ("C-x g a" . magit-log-all)
+  ("C-x g b" . magit-blame)
+  ("C-x g c" . magit-commit-popup))
+
 ;; git-gutter
 (use-package git-gutter
   :ensure t
   :init (global-git-gutter-mode 1)
   :bind
-  (("C-x g p" . git-gutter:previous-hunk)
-   ("C-x g p" . git-gutter:previous-hunk)
-   ("C-x g n" . git-gutter:next-hunk)
-   ("C-x g s" . git-gutter:stage-hunk)
-   ("C-x g r" . git-gutter:revert-hunk))
-  )
+  ("C-x g p" . git-gutter:previous-hunk)
+  ("C-x g p" . git-gutter:previous-hunk)
+  ("C-x g n" . git-gutter:next-hunk)
+  ("C-x g s" . git-gutter:stage-hunk)
+  ("C-x g r" . git-gutter:revert-hunk))
 
 ;; switch-window
-(use-package switch-window
+(use-package ace-window
   :ensure t
-  :init (global-set-key (kbd "C-x o") 'switch-window))
+  :init (global-set-key (kbd "C-x o") 'ace-window))
 ;; windmove
 (use-package windmove
   :bind
-  (("C-x w <right>" . windmove-right) ("C-x w f" . windmove-right)
-   ("C-x w <left>" . windmove-left) ("C-x w b" . windmove-left)
-   ("C-x w <up>" . windmove-up) ("C-x w p" . windmove-up)
-   ("C-x w <down>" . windmove-down) ("C-x w n" . windmove-down))
-  )
+  ("C-x w <right>" . windmove-right) ("C-x w f" . windmove-right)
+  ("C-x w <left>" . windmove-left) ("C-x w b" . windmove-left)
+  ("C-x w <up>" . windmove-up) ("C-x w p" . windmove-up)
+  ("C-x w <down>" . windmove-down) ("C-x w n" . windmove-down))
 
 ;; multiple-cursors
 (use-package multiple-cursors
   :ensure t
   :bind
-  (("C-c e a" . mc/mark-all-like-this)
-   ("C-c e n" . mc/mark-next-like-this)
-   ("C-c e p" . mc/mark-previous-like-this)
-   ("C-c e l" . mc/edit-lines)
-   ("C-c e r" . mc/mark-all-in-region))
-  )
+  ("C-c e a" . mc/mark-all-like-this)
+  ("C-c e n" . mc/mark-next-like-this)
+  ("C-c e p" . mc/mark-previous-like-this)
+  ("C-c e l" . mc/edit-lines)
+  ("C-c e r" . mc/mark-all-in-region))
 
 ;; smartparens
 (use-package smartparens
@@ -140,6 +144,10 @@
 (use-package highlight-parentheses
   :ensure t
   :init (global-highlight-parentheses-mode t))
+;; volatile-highlights
+(use-package volatile-highlights
+  :ensure t
+  :init (volatile-highlights-mode t))
 
 ;; yasnippet
 (use-package yasnippet-snippets
@@ -165,8 +173,7 @@
   :init
   (setq sml/theme 'respectful)
   (setq sml/no-confirm-load-theme t)
-  (add-hook 'after-init-hook #'sml/setup)
-  )
+  (add-hook 'after-init-hook #'sml/setup))
 
 ;; dashboard
 (use-package dashboard
@@ -176,8 +183,7 @@
   (setq dashboard-startup-banner nil)
   (setq dashboard-items
         '((recents . 10) (bookmarks . 5) (projects . 15)))
-  (dashboard-setup-startup-hook)
-  )
+  (dashboard-setup-startup-hook))
 
 ;;; Options
 ;; helm-ag
@@ -190,7 +196,7 @@
 ;;: Hook
 ;; hide the minor modes
 (defvar hidden-minor-modes
-  '(global-whitespace-mode flycheck-mode which-key-mode projectile-mode git-gutter-mode helm-mode undo-tree-mode company-mode helm-gtags-mode smartparens-mode))
+  '(global-whitespace-mode flycheck-mode which-key-mode projectile-mode git-gutter-mode helm-mode undo-tree-mode company-mode helm-gtags-mode smartparens-mode volatile-highlights-mode))
 (defun purge-minor-modes ()
   (interactive)
   (dolist (x hidden-minor-modes nil)
@@ -233,16 +239,6 @@
   (split-window-horizontally)
   (other-window 1 nil)
   (if (= prefix 1 ) (switch-to-next-buffer)))
-(defun swap-2-windows()
-  "Swap 2 windows"
-  (interactive)
-  (cond ((/= (count-windows) 2) (message "Required exactly 2 windows"))
-        (t (let* ((w1 (first (window-list))) (w2 (second (window-list)))
-                  (b1 (window-buffer w1)) (b2 (window-buffer w2))
-                  (s1 (window-start w1)) (s2 (window-start w2)))
-             (set-window-buffer w1 b2) (set-window-buffer w2 b1)
-             (set-window-start w1 s2) (set-window-start w2 s1))))
-  (other-window 1))
 
 (defalias 'yes-or-no-p 'y-or-n-p)
 (global-set-key (kbd "M-o") 'mode-line-other-buffer)
@@ -259,7 +255,6 @@
 (global-set-key (kbd "C-x x r") 'rename-buffer)
 (global-set-key (kbd "C-x 2") 'split-window-vertically-last-buffer)
 (global-set-key (kbd "C-x 3") 'split-window-horizontally-last-buffer)
-(global-set-key (kbd "C-x 7") 'swap-2-windows)
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -274,6 +269,7 @@
  '(delete-old-versions 6)
  '(delete-selection-mode t)
  '(enable-local-variables :all)
+ '(global-hl-line-mode t)
  '(global-whitespace-mode t)
  '(helm-gtags-auto-update t)
  '(indent-tabs-mode nil)
