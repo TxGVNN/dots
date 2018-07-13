@@ -75,6 +75,9 @@
   :ensure t
   :bind
   ("C-a" . crux-move-beginning-of-line)
+  ("M-o" . crux-smart-open-line)
+  ("C-c d" . crux-duplicate-current-line-or-region)
+  ("C-c k" . crux-kill-other-buffers)
   ("C-x 7" . crux-swap-windows))
 
 ;; which-key
@@ -241,7 +244,7 @@
   (if (= prefix 1 ) (switch-to-next-buffer)))
 
 (defalias 'yes-or-no-p 'y-or-n-p)
-(global-set-key (kbd "M-o") 'mode-line-other-buffer)
+(global-set-key (kbd "C-x <up>") 'mode-line-other-buffer)
 (global-set-key (kbd "C-x m") 'compile)
 (global-set-key (kbd "M-s g") 'rgrep)
 (global-set-key (kbd "M-s s") 'isearch-forward-regexp)

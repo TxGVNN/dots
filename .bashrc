@@ -8,7 +8,7 @@ fi
 if ! declare -f "__git_ps1" >/dev/null; then
     function __git_ps1(){ echo "";}
 fi
-
+export GIT_PS1_SHOWDIRTYSTATE=true
 PS1="\n\[\e[0;${color}m\]\342\224\214\[\e[1;30m\](\[\e[0;${color}m\]\u\[\e[0;36m\]@\h\[\e[1;30m\])\$(if [[ \$? == 0 ]]; then echo \"\[\e[6;32m\]\342\224\200\"; else echo \"\[\e[6;31m\]\342\224\200\"; fi)\[\e[0m\]\[\e[1;30m\](\[\e[0;34m\]\w\[\e[1;30m\])\342\224\200(\[\e[0;33m\]\t\[\e[1;30m\]\[\e[1;30m\])\$(__git_ps1)\n\[\e[0;${color}m\]\342\224\224>\[\e[0m\]"
 
 function cdenv(){
