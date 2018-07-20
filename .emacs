@@ -74,11 +74,20 @@
 (use-package crux
   :ensure t
   :bind
+  ("C-^" . crux-top-join-line)
   ("C-a" . crux-move-beginning-of-line)
   ("M-o" . crux-smart-open-line)
   ("C-c d" . crux-duplicate-current-line-or-region)
+  ("C-c D" . crux-delete-file-and-buffer)
   ("C-c k" . crux-kill-other-buffers)
   ("C-x 7" . crux-swap-windows))
+
+;; move-text
+(use-package move-text
+  :ensure t
+  :bind
+  ("M-g <up>" . move-text-up)
+  ("M-g <down>" . move-text-down))
 
 ;; which-key
 (use-package which-key
@@ -195,6 +204,9 @@
 ;; ace-jump-mode
 (use-package ace-jump-mode
   :bind ("M-s a" . ace-jump-mode))
+;; which keybindings in my major?
+(use-package discover-my-major
+  :bind ("C-h M" . discover-my-major))
 
 ;;: Hook
 ;; hide the minor modes
@@ -286,6 +298,7 @@
            (locate-dominating-file buffer-file-name ".dir-locals.el")))))
  '(scroll-bar-mode nil)
  '(show-trailing-whitespace t)
+ '(size-indication-mode t)
  '(tab-stop-list (quote (4 8 12 16 20 24 28 32 36)))
  '(tab-width 4)
  '(tool-bar-mode nil)
