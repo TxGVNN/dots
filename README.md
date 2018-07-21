@@ -6,6 +6,10 @@ wget -O ~/.emacs https://raw.githubusercontent.com/txgvnn/dots/master/.emacs
 
 Just start and enjoy Emacs
 
+*Optional*
+ * <kbd>M-x</kbd> <kbd>develop-go</kbd> Golang development
+ * <kbd>M-x</kbd> <kbd>develop-python</kbd> Python development
+ * <kbd>M-x</kbd> <kbd>develop-php</kbd> PHP development
 ## GNU Screen
 
 ```

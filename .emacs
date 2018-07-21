@@ -76,6 +76,7 @@
   :bind
   ("C-^" . crux-top-join-line)
   ("C-a" . crux-move-beginning-of-line)
+  ("C-o" . crux-smart-open-line-above)
   ("M-o" . crux-smart-open-line)
   ("C-c d" . crux-duplicate-current-line-or-region)
   ("C-c D" . crux-delete-file-and-buffer)
@@ -270,6 +271,8 @@
 (global-set-key (kbd "C-x x r") 'rename-buffer)
 (global-set-key (kbd "C-x 2") 'split-window-vertically-last-buffer)
 (global-set-key (kbd "C-x 3") 'split-window-horizontally-last-buffer)
+(global-set-key (kbd "C-x 4 C-v") 'scroll-other-window)
+(global-set-key (kbd "C-x 4 M-v") 'scroll-other-window-down)
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -313,12 +316,22 @@
  )
 
 ;; go-mode
-(use-package go-guru
-  :ensure t)
-(use-package go-autocomplete
-  :ensure t)
+(defun develop-go()
+  "Please install:
+   go get -u golang.org/x/tools/cmd/...
+   go get -u golang.org/x/tools/cmd/goimports
+   go get -u golang.org/x/tools/cmd/guru
+   go get -u github.com/rogpeppe/godef/...
+   go get -u github.com/nsf/gocode
+   go get -u github.com/dougm/goflymake"
+  (interactive)
+  (use-package go-autocomplete
+    :ensure t)
+  (use-package go-guru
+    :after (go-autocomplete)
+    :ensure t))
 (use-package go-projectile
-  :ensure t
+  :defer t
   :init
   (defun my-switch-project-hook ()
     (go-set-project))
@@ -334,8 +347,12 @@
   (with-eval-after-load 'go-mode
     (require 'go-autocomplete)))
 ;; python-mode
+(defun develop-python()
+  (interactive)
+  (package-install 'python-mode)
+  (package-install 'jedi))
 (use-package jedi
-  :ensure t
+  :defer t
   :init
   (defvar jedi-config:use-system-python nil)
   (defvar jedi-config:with-virtualenv nil)
@@ -408,14 +425,6 @@
     (make-local-variable 'jedi:server-command)
     (set 'jedi:server-command
          (list (executable-find "python"))))
-
-  ;; Now hook everything up
-  ;; Hook up to autocomplete
-  (add-to-list 'ac-sources 'ac-source-jedi-direct)
-
-  ;; Enable Jedi setup on mode start
-  (add-hook 'python-mode-hook 'jedi:setup)
-
   ;; Buffer-specific server options
   (add-hook 'python-mode-hook
             'jedi-config:setup-server-args)
@@ -436,12 +445,14 @@
   (setq jedi:complete-on-dot t)
   ;; Use custom keybinds
   (add-hook 'python-mode-hook 'jedi-config:setup-keys)
-  (add-to-list 'ac-sources 'ac-source-jedi-direct)
+  ;; Enable Jedi setup on mode start
   (add-hook 'python-mode-hook 'jedi:setup))
 
 ;; php-mode
-(use-package company-php
-  :ensure t)
+(defun develop-php()
+  (interactive)
+  (package-install 'php-mode)
+  (package-install 'company-php))
 
 (provide '.emacs)
 ;;; .emacs ends here
