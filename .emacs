@@ -41,8 +41,9 @@
 (use-package helm-projectile
   :ensure t
   :init
-  (projectile-mode)
+  (setq projectile-keymap-prefix (kbd "C-c p"))
   (setq projectile-completion-system 'helm)
+  (projectile-mode)
   (helm-projectile-on))
 ;; helm-swoop
 (use-package helm-swoop
@@ -165,7 +166,11 @@
 ;; yasnippet
 (use-package yasnippet-snippets
   :ensure t
-  :init (yas-global-mode t))
+  :hook
+  ((sh-mode python-mode perl-mode php-mode
+            c-mode go-mode java-mode c++-mode
+            emacs-lisp-mode org-mode)
+   . yas-minor-mode))
 ;; company
 (use-package company
   :ensure t
