@@ -81,7 +81,9 @@
   ("M-o" . crux-smart-open-line)
   ("C-c d" . crux-duplicate-current-line-or-region)
   ("C-c D" . crux-delete-file-and-buffer)
+  ("C-c f" . crux-recentf-find-file)
   ("C-c k" . crux-kill-other-buffers)
+  ("C-c r" . crux-rename-buffer-and-file)
   ("C-x 7" . crux-swap-windows))
 
 ;; move-text
@@ -213,13 +215,18 @@
 ;; which keybindings in my major?
 (use-package discover-my-major
   :bind ("C-h M" . discover-my-major))
+(defun develop-utils()
+  (interactive)
+  (package-install 'helm-ag)
+  (package-install 'ace-jump-mode)
+  (package-install 'discover-my-major)
+  (package-install 'markdown-mode))
 
 ;;: Hook
 ;; hide the minor modes
 (defvar hidden-minor-modes
   '(global-whitespace-mode flycheck-mode which-key-mode projectile-mode git-gutter-mode helm-mode undo-tree-mode company-mode helm-gtags-mode smartparens-mode volatile-highlights-mode))
 (defun purge-minor-modes ()
-  (interactive)
   (dolist (x hidden-minor-modes nil)
     (let ((trg (cdr (assoc x minor-mode-alist))))
       (when trg (setcar trg "")))))
@@ -264,16 +271,17 @@
 (defalias 'yes-or-no-p 'y-or-n-p)
 (global-set-key (kbd "C-x <up>") 'mode-line-other-buffer)
 (global-set-key (kbd "C-x m") 'compile)
+(global-set-key (kbd "M-s e") 'eww)
 (global-set-key (kbd "M-s g") 'rgrep)
 (global-set-key (kbd "M-s s") 'isearch-forward-regexp)
 (global-set-key (kbd "M-s r") 'isearch-backward-regexp)
-(global-set-key (kbd "C-c r") 'revert-buffer)
 (global-set-key (kbd "C-M-_") 'dabbrev-completion)
-(global-set-key (kbd "C-x x ;") 'indent-buffer)
 (global-set-key (kbd "C-x x .") 'delete-trailing-whitespace)
-(global-set-key (kbd "C-x x t") 'untabify-buffer)
+(global-set-key (kbd "C-x x ;") 'indent-buffer)
+(global-set-key (kbd "C-x x b") 'rename-buffer)
 (global-set-key (kbd "C-x x p") 'yank-file-path)
-(global-set-key (kbd "C-x x r") 'rename-buffer)
+(global-set-key (kbd "C-x x r") 'revert-buffer)
+(global-set-key (kbd "C-x x t") 'untabify-buffer)
 (global-set-key (kbd "C-x 2") 'split-window-vertically-last-buffer)
 (global-set-key (kbd "C-x 3") 'split-window-horizontally-last-buffer)
 (global-set-key (kbd "C-x 4 C-v") 'scroll-other-window)
@@ -287,6 +295,7 @@
  '(Buffer-menu-use-header-line nil)
  '(backup-by-copying t)
  '(backup-directory-alist (quote (("." . "~/.emacs.d/backup"))))
+ '(browse-url-browser-function (quote eww-browse-url))
  '(column-number-mode t)
  '(default-input-method "vietnamese-telex")
  '(delete-old-versions 6)

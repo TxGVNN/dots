@@ -10,6 +10,8 @@ Just start and enjoy Emacs
  * <kbd>M-x</kbd> <kbd>develop-go</kbd> Golang development
  * <kbd>M-x</kbd> <kbd>develop-python</kbd> Python development
  * <kbd>M-x</kbd> <kbd>develop-php</kbd> PHP development
+ * <kbd>M-x</kbd> <kbd>develop-utils</kbd> Some utility packages
+
 ## GNU Screen
 
 ```
