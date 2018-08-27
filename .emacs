@@ -79,6 +79,7 @@
   ("C-a" . crux-move-beginning-of-line)
   ("C-o" . crux-smart-open-line-above)
   ("M-o" . crux-smart-open-line)
+  ("C-c c" . crux-create-scratch-buffer)
   ("C-c d" . crux-duplicate-current-line-or-region)
   ("C-c D" . crux-delete-file-and-buffer)
   ("C-c f" . crux-recentf-find-file)
@@ -195,16 +196,6 @@
   (setq sml/no-confirm-load-theme t)
   (add-hook 'after-init-hook #'sml/setup))
 
-;; dashboard
-(use-package dashboard
-  :ensure t
-  :diminish dashboard-mode
-  :config
-  (setq dashboard-startup-banner nil)
-  (setq dashboard-items
-        '((recents . 10) (bookmarks . 5) (projects . 15)))
-  (dashboard-setup-startup-hook))
-
 ;;; Options
 ;; helm-ag
 (use-package helm-ag
@@ -305,10 +296,12 @@
  '(global-whitespace-mode t)
  '(helm-gtags-auto-update t)
  '(indent-tabs-mode nil)
+ '(inhibit-startup-screen t)
  '(initial-scratch-message nil)
  '(keep-new-versions 2)
  '(menu-bar-mode nil)
  '(read-quoted-char-radix 16)
+ '(recentf-mode t)
  '(safe-local-variable-values
    (quote
     ((eval setq default-directory
