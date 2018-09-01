@@ -41,9 +41,9 @@
 (use-package helm-projectile
   :ensure t
   :init
-  (setq projectile-keymap-prefix (kbd "C-c p"))
   (setq projectile-completion-system 'helm)
   (projectile-mode)
+  (define-key projectile-mode-map (kbd "C-x p") 'projectile-command-map)
   (helm-projectile-on))
 ;; helm-swoop
 (use-package helm-swoop
@@ -59,7 +59,6 @@
   (add-hook 'c++-mode-hook 'helm-gtags-mode)
   (add-hook 'asm-mode-hook 'helm-gtags-mode)
   (add-hook 'php-mode-hook 'helm-gtags-mode)
-  (add-hook 'python-mode-hook 'helm-gtags-mode)
   (eval-after-load "helm-gtags"
     '(progn
        (define-key helm-gtags-mode-map (kbd "C-c t f") 'helm-gtags-find-tag)
@@ -109,7 +108,7 @@
   :ensure t
   :init
   (with-eval-after-load 'magit-files
-    (define-key magit-file-mode-map "\C-xg" nil))
+    (define-key magit-file-mode-map (kbd "C-x g") nil))
   :bind
   ("C-x g v" . magit-status)
   ("C-x g d" . magit-diff-buffer-file-popup)
@@ -136,10 +135,10 @@
 ;; windmove
 (use-package windmove
   :bind
-  ("C-x w <right>" . windmove-right) ("C-x w f" . windmove-right)
-  ("C-x w <left>" . windmove-left) ("C-x w b" . windmove-left)
-  ("C-x w <up>" . windmove-up) ("C-x w p" . windmove-up)
-  ("C-x w <down>" . windmove-down) ("C-x w n" . windmove-down))
+  ("C-x <right>" . windmove-right) ("C-x w f" . windmove-right)
+  ("C-x <left>" . windmove-left) ("C-x w b" . windmove-left)
+  ("C-x <up>" . windmove-up) ("C-x w p" . windmove-up)
+  ("C-x <down>" . windmove-down) ("C-x w n" . windmove-down))
 
 ;; multiple-cursors
 (use-package multiple-cursors
@@ -182,7 +181,11 @@
 ;; undo-tree
 (use-package undo-tree
   :ensure t
-  :init (global-undo-tree-mode t))
+  :init
+  (setq undo-tree-visualizer-timestamps t)
+  (setq undo-tree-visualizer-diff t)
+  (global-undo-tree-mode t)
+  )
 
 ;; themes
 (use-package doom-themes
@@ -207,11 +210,13 @@
 (use-package discover-my-major
   :bind ("C-h M" . discover-my-major))
 (defun develop-utils()
+  "Utility packages ."
   (interactive)
   (package-install 'helm-ag)
   (package-install 'ace-jump-mode)
   (package-install 'discover-my-major)
-  (package-install 'markdown-mode))
+  (package-install 'markdown-mode)
+  (package-install 'interaction-log))
 
 ;;: Hook
 ;; hide the minor modes
@@ -235,32 +240,75 @@
 ;;; Customize
 ;; defun
 (defun indent-buffer ()
+  "Indent and delete trailing whitespace in buffer."
   (interactive)
   (save-excursion (indent-region (point-min) (point-max) nil))
   (delete-trailing-whitespace))
 (defun yank-file-path ()
+  "Yank file path of buffer."
   (interactive)
   (let ((filename (if (equal major-mode 'dired-mode) default-directory
                     (buffer-file-name))))
     (when filename (kill-new filename)
-          (message (format "Copied %s" filename)))
+          (message (format "Yanked %s" filename)))
     ))
 (defun untabify-buffer ()
+  "Convert all tabs in buffer to multiple spaces."
   (interactive)
   (save-excursion (untabify (point-min) (point-max) nil)))
 (defun split-window-vertically-last-buffer (prefix)
+  "Split window vertically.
+- PREFIX: default(1) is switch to last buffer"
   (interactive "p")
   (split-window-vertically)
   (other-window 1 nil)
   (if (= prefix 1 ) (switch-to-next-buffer)))
 (defun split-window-horizontally-last-buffer (prefix)
+  "Split window horizontally.
+- PREFIX: default(1) is switch to last buffer"
   (interactive "p")
   (split-window-horizontally)
   (other-window 1 nil)
   (if (= prefix 1 ) (switch-to-next-buffer)))
+(defun share-buffer-online (downloads)
+  "Share buffer to online."
+  (interactive "p")
+  (let ((filename (if (equal major-mode 'dired-mode) default-directory
+                    (buffer-file-name))))
+    (when filename (async-shell-command
+                    (format "curl --progress-bar -H 'Max-Downloads: %d' --upload-file %s https://transfer.sh" downloads filename))))
+  )
+(defun copy-to-clipboard ()
+  "Copy to clipboard."
+  (interactive)
+  (if (display-graphic-p)
+      (progn (message "Yanked region to x-clipboard!")
+             (call-interactively 'clipboard-kill-ring-save))
+    (if (region-active-p)
+        (progn
+          (shell-command-on-region (region-beginning) (region-end) "xsel -i -b")
+          (message "Yanked region to clipboard!")
+          (deactivate-mark))
+      (message "No region active; can't yank to clipboard!")))
+  )
+(defun paste-from-clipboard ()
+  "Paste from clipboard."
+  (interactive)
+  (if (display-graphic-p)
+      (progn (clipboard-yank))
+    (insert (shell-command-to-string "xsel -o -b"))))
+(defun show-lossage ()
+  "Show logssage."
+  (interactive)
+  (if (locate-library "interaction-log")
+      (progn
+        (load-library "interaction-log")
+        (call-interactively 'interaction-log-mode))
+    (view-lossage))
+  )
 
 (defalias 'yes-or-no-p 'y-or-n-p)
-(global-set-key (kbd "C-x <up>") 'mode-line-other-buffer)
+(global-set-key (kbd "C-x j") 'mode-line-other-buffer)
 (global-set-key (kbd "C-x m") 'compile)
 (global-set-key (kbd "M-s e") 'eww)
 (global-set-key (kbd "M-s g") 'rgrep)
@@ -272,11 +320,16 @@
 (global-set-key (kbd "C-x x b") 'rename-buffer)
 (global-set-key (kbd "C-x x p") 'yank-file-path)
 (global-set-key (kbd "C-x x r") 'revert-buffer)
+(global-set-key (kbd "C-x x s") 'share-buffer-online)
 (global-set-key (kbd "C-x x t") 'untabify-buffer)
+(global-set-key (kbd "C-x x M-w") 'copy-to-clipboard)
+(global-set-key (kbd "C-x x C-y") 'paste-from-clipboard)
 (global-set-key (kbd "C-x 2") 'split-window-vertically-last-buffer)
 (global-set-key (kbd "C-x 3") 'split-window-horizontally-last-buffer)
 (global-set-key (kbd "C-x 4 C-v") 'scroll-other-window)
 (global-set-key (kbd "C-x 4 M-v") 'scroll-other-window-down)
+(global-set-key (kbd "C-h RET") 'crux-find-user-init-file)
+(global-set-key (kbd "C-h l") 'show-lossage)
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -324,7 +377,8 @@
 
 ;; go-mode
 (defun develop-go()
-  "Please install:
+  "Go develoment.
+Please install:
    go get -u golang.org/x/tools/cmd/...
    go get -u golang.org/x/tools/cmd/goimports
    go get -u golang.org/x/tools/cmd/guru
@@ -353,110 +407,59 @@
   (add-hook 'go-mode-hook 'my-go-mode-hook)
   (with-eval-after-load 'go-mode
     (require 'go-autocomplete)))
+
 ;; python-mode
 (defun develop-python()
+  "Python development."
   (interactive)
   (package-install 'python-mode)
   (package-install 'jedi))
 (use-package jedi
   :defer t
   :init
-  (defvar jedi-config:use-system-python nil)
-  (defvar jedi-config:with-virtualenv nil)
-  (defvar jedi-config:vcs-root-sentinel ".git")
-  (defvar jedi-config:python-module-sentinel "__init__.py")
-
-  (defun get-project-root-with-file (buf repo-file &optional init-file)
-    "Guesses that the python root is the less 'deep' of either:
-         -- the root directory of the repository, or
-         -- the directory before the first directory after the root
-            having the init-file file (e.g., '__init__.py'."
-
-    ;; make list of directories from root, removing empty
-    (defun make-dir-list (path)
-      (delq nil (mapcar (lambda (x) (and (not (string= x "")) x))
-                        (split-string path "/"))))
-    ;; convert a list of directories to a path starting at "/"
-    (defun dir-list-to-path (dirs)
-      (mapconcat 'identity (cons "" dirs) "/"))
-    ;; a little something to try to find the "best" root directory
-    (defun try-find-best-root (base-dir buffer-dir current)
-      (cond
-       (base-dir ;; traverse until we reach the base
-        (try-find-best-root (cdr base-dir) (cdr buffer-dir)
-                            (append current (list (car buffer-dir)))))
-       (buffer-dir ;; try until we hit the current directory
-        (let* ((next-dir (append current (list (car buffer-dir))))
-               (file-file (concat (dir-list-to-path next-dir) "/" init-file)))
-          (if (file-exists-p file-file)
-              (dir-list-to-path current)
-            (try-find-best-root nil (cdr buffer-dir) next-dir))))
-       (t nil)))
-
-    (let* ((buffer-dir (expand-file-name (file-name-directory (buffer-file-name buf))))
-           (vc-root-dir (vc-find-root buffer-dir repo-file)))
-      (if (and init-file vc-root-dir)
-          (try-find-best-root
-           (make-dir-list (expand-file-name vc-root-dir))
-           (make-dir-list buffer-dir)
-           '())
-        vc-root-dir))
-    ) ;; default to vc root if init file not given
-
-  ;; Set this variable to find project root
-  (defvar jedi-config:find-root-function 'get-project-root-with-file)
-
-  (defun current-buffer-project-root ()
-    (funcall jedi-config:find-root-function
-             (current-buffer)
-             jedi-config:vcs-root-sentinel
-             jedi-config:python-module-sentinel))
-
+  (setq jedi:complete-on-dot t)
+  ;; Buffer-specific server options
   (defun jedi-config:setup-server-args ()
-    ;; little helper macro for building the arglist
     (defmacro add-args (arg-list arg-name arg-value)
       `(setq ,arg-list (append ,arg-list (list ,arg-name ,arg-value))))
-    ;; and now define the args
-    (let ((project-root (current-buffer-project-root)))
+    (let ((project-root (projectile-project-root)))
       (make-local-variable 'jedi:server-args)
       (when project-root
         (message (format "Adding system path: %s" project-root))
-        (add-args jedi:server-args "--sys-path" project-root))
-      (when jedi-config:with-virtualenv
-        (message (format "Adding virtualenv: %s" jedi-config:with-virtualenv))
-        (add-args jedi:server-args "--virtual-env" jedi-config:with-virtualenv))))
-
-  ;; Use system python
-  (defun jedi-config:set-python-executable ()
-    (set-exec-path-from-shell-PATH)
-    (make-local-variable 'jedi:server-command)
-    (set 'jedi:server-command
-         (list (executable-find "python"))))
-  ;; Buffer-specific server options
-  (add-hook 'python-mode-hook
-            'jedi-config:setup-server-args)
-  (when jedi-config:use-system-python
-    (add-hook 'python-mode-hook
-              'jedi-config:set-python-executable))
-
+        (add-args jedi:server-args "--sys-path" project-root))))
   ;; And custom keybindings
   (defun jedi-config:setup-keys ()
     (local-set-key (kbd "M-.") 'jedi:goto-definition)
     (local-set-key (kbd "M-,") 'jedi:goto-definition-pop-marker)
     (local-set-key (kbd "M-?") 'jedi:show-doc)
     (local-set-key (kbd "M-/") 'jedi:get-in-function-call))
-
-  ;; Don't let tooltip show up automatically
-  (setq jedi:get-in-function-call-delay 10000000)
-  ;; Start completion at method dot
-  (setq jedi:complete-on-dot t)
-  ;; Use custom keybinds
-  (add-hook 'python-mode-hook 'jedi-config:setup-keys)
-  ;; Enable Jedi setup on mode start
-  (add-hook 'python-mode-hook 'jedi:setup))
+  ;; Update python environment
+  (defun py-venv-update()
+    (defvar venv-executables-dir "bin")
+    (setq venv-current-dir (file-name-as-directory (python-environment-root-path)))
+    ;; setup the python shell
+    (setq python-shell-virtualenv-path venv-current-dir)
+    ;; setup emacs exec-path
+    (add-to-list 'exec-path (concat venv-current-dir venv-executables-dir))
+    ;; setup the environment for subprocesses
+    (let ((path (concat venv-current-dir
+                        venv-executables-dir
+                        path-separator
+                        (getenv "PATH"))))
+      (setenv "PATH" path)
+      ;; keep eshell path in sync
+      (setq eshell-path-env path))
+    (setenv "VIRTUAL_ENV" venv-current-dir))
+  ;; Hooks
+  (add-hook 'python-mode-hook 'jedi-config:setup-server-args)
+  (add-hook 'python-mode-hook 'py-venv-update)
+  (add-hook 'python-mode-hook 'jedi:setup)
+  (add-hook 'python-mode-hook 'jedi:ac-setup)
+  (add-hook 'python-mode-hook 'jedi-config:setup-keys))
 
 ;; php-mode
 (defun develop-php()
+  "PHP development."
   (interactive)
   (package-install 'php-mode)
   (package-install 'company-php))
