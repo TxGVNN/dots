@@ -61,13 +61,13 @@
   (add-hook 'php-mode-hook 'helm-gtags-mode)
   (eval-after-load "helm-gtags"
     '(progn
-       (define-key helm-gtags-mode-map (kbd "C-c t f") 'helm-gtags-find-tag)
-       (define-key helm-gtags-mode-map (kbd "C-c t r") 'helm-gtags-find-rtag)
-       (define-key helm-gtags-mode-map (kbd "C-c t s") 'helm-gtags-find-symbol)
-       (define-key helm-gtags-mode-map (kbd "C-c t g") 'helm-gtags-parse-file)
-       (define-key helm-gtags-mode-map (kbd "C-c t p") 'helm-gtags-previous-history)
-       (define-key helm-gtags-mode-map (kbd "C-c t n") 'helm-gtags-next-history)
-       (define-key helm-gtags-mode-map (kbd "C-c t t") 'helm-gtags-pop-stack) )
+       (define-key helm-gtags-mode-map (kbd "C-x t f") 'helm-gtags-find-tag)
+       (define-key helm-gtags-mode-map (kbd "C-x t r") 'helm-gtags-find-rtag)
+       (define-key helm-gtags-mode-map (kbd "C-x t s") 'helm-gtags-find-symbol)
+       (define-key helm-gtags-mode-map (kbd "C-x t g") 'helm-gtags-parse-file)
+       (define-key helm-gtags-mode-map (kbd "C-x t p") 'helm-gtags-previous-history)
+       (define-key helm-gtags-mode-map (kbd "C-x t n") 'helm-gtags-next-history)
+       (define-key helm-gtags-mode-map (kbd "C-x t t") 'helm-gtags-pop-stack))
     ))
 
 ;; crux
@@ -80,10 +80,12 @@
   ("M-o" . crux-smart-open-line)
   ("C-c c" . crux-create-scratch-buffer)
   ("C-c d" . crux-duplicate-current-line-or-region)
+  ("C-c M-d" . crux-duplicate-and-comment-current-line-or-region)
   ("C-c D" . crux-delete-file-and-buffer)
   ("C-c f" . crux-recentf-find-file)
   ("C-c k" . crux-kill-other-buffers)
   ("C-c r" . crux-rename-buffer-and-file)
+  ("C-c t" . crux-visit-term-buffer)
   ("C-x 7" . crux-swap-windows))
 
 ;; move-text
@@ -184,8 +186,7 @@
   :init
   (setq undo-tree-visualizer-timestamps t)
   (setq undo-tree-visualizer-diff t)
-  (global-undo-tree-mode t)
-  )
+  (global-undo-tree-mode t))
 
 ;; themes
 (use-package doom-themes
@@ -394,9 +395,6 @@ Please install:
 (use-package go-projectile
   :defer t
   :init
-  (defun my-switch-project-hook ()
-    (go-set-project))
-  (add-hook 'projectile-after-switch-project-hook 'my-switch-project-hook)
   (defun my-go-mode-hook ()
     (add-hook 'before-save-hook 'gofmt-before-save) ; gofmt before every save
     (setq gofmt-command "goimports")
