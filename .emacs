@@ -86,6 +86,7 @@
   ("C-c k" . crux-kill-other-buffers)
   ("C-c r" . crux-rename-buffer-and-file)
   ("C-c t" . crux-visit-term-buffer)
+  ("C-h RET" . crux-find-user-init-file)
   ("C-x 7" . crux-swap-windows))
 
 ;; move-text
@@ -210,6 +211,11 @@
 ;; which keybindings in my major?
 (use-package discover-my-major
   :bind ("C-h M" . discover-my-major))
+;; google-translate
+(use-package google-translate
+  :init
+  (setq google-translate-translation-directions-alist '(("en" . "vi")))
+  :bind ("M-s t" . google-translate-smooth-translate))
 (defun develop-utils()
   "Utility packages ."
   (interactive)
@@ -329,8 +335,10 @@
 (global-set-key (kbd "C-x 3") 'split-window-horizontally-last-buffer)
 (global-set-key (kbd "C-x 4 C-v") 'scroll-other-window)
 (global-set-key (kbd "C-x 4 M-v") 'scroll-other-window-down)
-(global-set-key (kbd "C-h RET") 'crux-find-user-init-file)
 (global-set-key (kbd "C-h l") 'show-lossage)
+(global-set-key (kbd "C-x w <right>") 'next-buffer)
+(global-set-key (kbd "C-x w <left>") 'previous-buffer)
+(global-unset-key (kbd "C-z"))
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -354,6 +362,8 @@
  '(initial-scratch-message nil)
  '(keep-new-versions 2)
  '(menu-bar-mode nil)
+ '(org-todo-keyword-faces (quote (("CANCELED" . "orange"))))
+ '(org-todo-keywords (quote ((sequence "TODO" "CANCELED" "DONE"))))
  '(read-quoted-char-radix 16)
  '(recentf-mode t)
  '(safe-local-variable-values
@@ -362,7 +372,6 @@
            (locate-dominating-file buffer-file-name ".dir-locals.el")))))
  '(scroll-bar-mode nil)
  '(show-trailing-whitespace t)
- '(size-indication-mode t)
  '(tab-stop-list (quote (4 8 12 16 20 24 28 32 36)))
  '(tab-width 4)
  '(tool-bar-mode nil)
