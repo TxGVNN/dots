@@ -283,8 +283,8 @@
   (let ((filename (if (equal major-mode 'dired-mode) default-directory
                     (buffer-file-name))))
     (when filename (async-shell-command
-                    (format "curl --progress-bar -H 'Max-Downloads: %d' --upload-file %s https://transfer.sh" downloads filename))))
-  )
+                    (format "curl --progress-bar -H 'Max-Downloads: %d' --upload-file %s https://transfer.sh"
+                            downloads filename)))))
 (defun copy-to-clipboard ()
   "Copy to clipboard."
   (interactive)
@@ -313,6 +313,12 @@
         (call-interactively 'interaction-log-mode))
     (view-lossage))
   )
+(defun sudo-save ()
+  "Save buffer with sudo."
+  (interactive)
+  (if (not buffer-file-name)
+      (write-file (concat "/sudo::" (helm-read-file-name "sudo-save to:")))
+    (write-file (concat "/sudo::" buffer-file-name))))
 
 (defalias 'yes-or-no-p 'y-or-n-p)
 (global-set-key (kbd "C-x j") 'mode-line-other-buffer)
@@ -331,6 +337,7 @@
 (global-set-key (kbd "C-x x t") 'untabify-buffer)
 (global-set-key (kbd "C-x x M-w") 'copy-to-clipboard)
 (global-set-key (kbd "C-x x C-y") 'paste-from-clipboard)
+(global-set-key (kbd "C-x x C-s") 'sudo-save)
 (global-set-key (kbd "C-x 2") 'split-window-vertically-last-buffer)
 (global-set-key (kbd "C-x 3") 'split-window-horizontally-last-buffer)
 (global-set-key (kbd "C-x 4 C-v") 'scroll-other-window)
@@ -362,8 +369,8 @@
  '(initial-scratch-message nil)
  '(keep-new-versions 2)
  '(menu-bar-mode nil)
- '(org-todo-keyword-faces (quote (("CANCELED" . "orange"))))
- '(org-todo-keywords (quote ((sequence "TODO" "CANCELED" "DONE"))))
+ '(org-todo-keyword-faces (quote (("WAITING" . "yellow") ("CANCELED" . "orange"))))
+ '(org-todo-keywords (quote ((sequence "TODO" "WAITING" "CANCELED" "DONE"))))
  '(read-quoted-char-radix 16)
  '(recentf-mode t)
  '(safe-local-variable-values
