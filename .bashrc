@@ -11,6 +11,10 @@ fi
 export GIT_PS1_SHOWDIRTYSTATE=true
 PS1="\n\[\e[0;${color}m\]\342\224\214\[\e[1;30m\](\[\e[0;${color}m\]\u\[\e[0;35m\]@\h\[\e[1;30m\])\$(if [[ \$? == 0 ]]; then echo \"\[\e[6;32m\]\342\224\200\"; else echo \"\[\e[6;31m\]\342\224\200\"; fi)\[\e[0m\]\[\e[1;30m\](\[\e[0;34m\]\w\[\e[1;30m\])\342\224\200(\[\e[0;33m\]\t\[\e[1;30m\]\[\e[1;30m\])\$(__git_ps1)\n\[\e[0;${color}m\]\342\224\224>\[\e[0m\]"
 
+function cdtmp(){
+    cd "$(mktemp -d -t ${USER}_$(date +%F+%R)_XXX)" || exit 1
+}
+
 function cdenv(){
     if [ -z "$1" ]; then
         cd || exit 1
@@ -18,10 +22,10 @@ function cdenv(){
         cd "$1"
     fi
 
-    # .bin my-environment
+    # .bin #TxGVNN
     if [ -e .bin ]; then
         if [[ $PATH != *"$(pwd)/.bin"* ]]; then
-            PS1="\342\224\200\e[1;30m\](\e[0;35m\].bin\e[1;30m\])\e[0m\]"$PS1
+            PS1="\342\224\200\[\e[1;30m\](\[\e[0;35m\].bin\[\e[1;30m\])\[\e[0m\]"$PS1
             export PATH=$(pwd)/.bin:$PATH
         fi
         if [ -e .bin/env ]; then
@@ -32,7 +36,7 @@ function cdenv(){
     # virtualenv
     if [ -e bin ]; then
         if [[ $PATH != *"$(pwd)/bin"* ]]; then
-            PS1="\342\224\200\e[1;30m\](\e[0;35m\]bin\e[1;30m\])\e[0m\]"$PS1
+            PS1="\342\224\200\[\e[1;30m\](\[\e[0;35m\]bin\[\e[1;30m\])\[\e[0m\]"$PS1
             #export PATH=$(pwd)/bin:$PATH
         fi
         if [ -e bin/activate ]; then
@@ -42,20 +46,21 @@ function cdenv(){
     # docker compose
     if [ -e docker-compose.yml ]; then
         if [[ $PS1 != *"d-compose"* ]]; then
-            PS1="\342\224\200\e[1;30m\](\e[0;35m\]d-compose\e[1;30m\])\e[0m\]"$PS1
+            PS1="\342\224\200\[\e[1;30m\](\[\e[0;35m\]d-compose\[\e[1;30m\])\[\e[0m\]"$PS1
         fi
     else
-        PS1=$(echo $PS1 | sed 's/\\342\\224\\200\\e\[1;30m\\\](\\e\[0;35m\\\]d-compose\\e\[1;30m\\\])//g')
+        PS1=$(echo $PS1 | sed 's/\\342\\224\\200\\\[\\e\[1;30m\\\](\\\[\\e\[0;35m\\\]d-compose\\\[\\e\[1;30m\\\])//g')
     fi
     # vagrant
     if [ -e Vagrantfile ]; then
         if [[ $PS1 != *"vagrant"* ]]; then
-            PS1="\342\224\200\e[1;30m\](\e[0;35m\]vagrant\e[1;30m\])\e[0m\]"$PS1
+            PS1="\342\224\200\[\e[1;30m\](\[\e[0;35m\]vagrant\[\e[1;30m\])\[\e[0m\]"$PS1
         fi
     else
-        PS1=$(echo $PS1 | sed 's/\\342\\224\\200\\e\[1;30m\\\](\\e\[0;35m\\\]vagrant\\e\[1;30m\\\])//g')
+        PS1=$(echo $PS1 | sed 's/\\342\\224\\200\\\[\\e\[1;30m\\\](\\\[\\e\[0;35m\\\]vagrant\\\[\\e\[1;30m\\\])//g')
     fi
 }
+
 # Alias
 alias cd="cdenv"
 alias em="emacs -nw"
