@@ -12,7 +12,7 @@ export GIT_PS1_SHOWDIRTYSTATE=true
 PS1="\n\[\e[0;${color}m\]\342\224\214\[\e[1;30m\](\[\e[0;${color}m\]\u\[\e[0;35m\]@\h\[\e[1;30m\])\$(if [[ \$? == 0 ]]; then echo \"\[\e[6;32m\]\342\224\200\"; else echo \"\[\e[6;31m\]\342\224\200\"; fi)\[\e[0m\]\[\e[1;30m\](\[\e[0;34m\]\w\[\e[1;30m\])\342\224\200(\[\e[0;33m\]\t\[\e[1;30m\]\[\e[1;30m\])\$(__git_ps1)\n\[\e[0;${color}m\]\342\224\224>\[\e[0m\]"
 
 function cdtmp(){
-    cd "$(mktemp -d -t ${USER}_$(date +%F+%R)_XXX)" || exit 1
+    cd "$(mktemp -d -t ${USER}_$(date +%F@%R).XXX)" || exit 1
 }
 
 function cdenv(){
@@ -60,6 +60,17 @@ function cdenv(){
         PS1=$(echo $PS1 | sed 's/\\342\\224\\200\\\[\\e\[1;30m\\\](\\\[\\e\[0;35m\\\]vagrant\\\[\\e\[1;30m\\\])//g')
     fi
 }
+
+# SSH and screen
+function sshscreen(){
+    ssh "$@" -v -t 'if screen -ls | grep gtx -q ; then screen -x gtx ;else screen -S gtx ;fi'
+}
+
+# SSH and screen
+function sshtmux(){
+    ssh "$@" -v -t 'if tmux ls | grep gtx -q ; then tmux at -t gtx ;else tmux new -s gtx ;fi'
+}
+
 
 # Alias
 alias cd="cdenv"
