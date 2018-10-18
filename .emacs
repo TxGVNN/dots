@@ -109,15 +109,14 @@
 ;; magit
 (use-package magit
   :ensure t
-  :init
-  (with-eval-after-load 'magit-files
-    (define-key magit-file-mode-map (kbd "C-x g") nil))
+  :config
+  (define-key magit-file-mode-map (kbd "C-x g") nil)
   :bind
   ("C-x g v" . magit-status)
   ("C-x g d" . magit-diff-buffer-file-popup)
   ("C-x g l" . magit-log-buffer-file-popup)
   ("C-x g a" . magit-log-all)
-  ("C-x g b" . magit-blame)
+  ("C-x g b" . magit-blame-popup)
   ("C-x g c" . magit-commit-popup))
 
 ;; git-gutter
@@ -142,6 +141,13 @@
   ("C-x <left>" . windmove-left) ("C-x w b" . windmove-left)
   ("C-x <up>" . windmove-up) ("C-x w p" . windmove-up)
   ("C-x <down>" . windmove-down) ("C-x w n" . windmove-down))
+;; eyebrowse - layout
+(use-package eyebrowse
+  :ensure t
+  :init
+  (setq eyebrowse-keymap-prefix (kbd "C-z"))
+  :config
+  (eyebrowse-mode t))
 
 ;; multiple-cursors
 (use-package multiple-cursors
@@ -350,7 +356,6 @@
 (global-set-key (kbd "C-h l") 'show-lossage)
 (global-set-key (kbd "C-x w <right>") 'next-buffer)
 (global-set-key (kbd "C-x w <left>") 'previous-buffer)
-(global-unset-key (kbd "C-z"))
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.

@@ -14,6 +14,9 @@ PS1="\n\[\e[0;${color}m\]\342\224\214\[\e[1;30m\](\[\e[0;${color}m\]\u\[\e[0;35m
 function cdtmp(){
     cd "$(mktemp -d -t ${USER}_$(date +%F@%R).XXX)" || exit 1
 }
+function lstmp(){
+    ls /tmp/"$USER"*
+}
 
 function cdenv(){
     if [ -z "$1" ]; then
