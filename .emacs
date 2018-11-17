@@ -89,6 +89,12 @@
   ("C-h RET" . crux-find-user-init-file)
   ("C-x 7" . crux-swap-windows))
 
+;; vlf - view large files
+(use-package vlf
+  :ensure t
+  :config
+  (require 'vlf-setup))
+
 ;; move-text
 (use-package move-text
   :ensure t
@@ -180,7 +186,7 @@
   :hook
   ((sh-mode python-mode perl-mode php-mode
             c-mode go-mode java-mode c++-mode
-            emacs-lisp-mode org-mode)
+            emacs-lisp-mode org-mode markdown-mode)
    . yas-minor-mode))
 ;; company
 (use-package company
@@ -379,6 +385,7 @@
  '(initial-scratch-message nil)
  '(keep-new-versions 2)
  '(menu-bar-mode nil)
+ '(org-agenda-files (quote ("~/.gxt/org")))
  '(org-todo-keyword-faces (quote (("WAITING" . "yellow") ("CANCELED" . "orange"))))
  '(org-todo-keywords (quote ((sequence "TODO" "WAITING" "CANCELED" "DONE"))))
  '(read-quoted-char-radix 16)
@@ -388,6 +395,7 @@
     ((eval setq default-directory
            (locate-dominating-file buffer-file-name ".dir-locals.el")))))
  '(scroll-bar-mode nil)
+ '(send-mail-function (quote smtpmail-send-it))
  '(show-trailing-whitespace t)
  '(tab-stop-list (quote (4 8 12 16 20 24 28 32 36)))
  '(tab-width 4)
