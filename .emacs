@@ -35,8 +35,7 @@
    :map helm-map
    ("<tab>" . helm-execute-persistent-action)
    ("C-i" . helm-execute-persistent-action)
-   ("C-z" . helm-select-action))
-  )
+   ("C-z" . helm-select-action)))
 ;; helm-projectile
 (use-package helm-projectile
   :ensure t
@@ -208,10 +207,10 @@
 ;; smart-mode-line
 (use-package smart-mode-line
   :ensure t
-  :init
+  :config
   (setq sml/theme 'respectful)
   (setq sml/no-confirm-load-theme t)
-  (add-hook 'after-init-hook #'sml/setup))
+  (sml/setup))
 
 ;;; Options
 ;; helm-ag
@@ -347,6 +346,7 @@
 (global-set-key (kbd "C-x x .") 'delete-trailing-whitespace)
 (global-set-key (kbd "C-x x ;") 'indent-buffer)
 (global-set-key (kbd "C-x x b") 'rename-buffer)
+(global-set-key (kbd "C-x x g") 'org-agenda)
 (global-set-key (kbd "C-x x p") 'yank-file-path)
 (global-set-key (kbd "C-x x r") 'revert-buffer)
 (global-set-key (kbd "C-x x s") 'share-buffer-online)
@@ -386,8 +386,11 @@
  '(keep-new-versions 2)
  '(menu-bar-mode nil)
  '(org-agenda-files (quote ("~/.gxt/org")))
- '(org-todo-keyword-faces (quote (("WAITING" . "yellow") ("CANCELED" . "orange"))))
- '(org-todo-keywords (quote ((sequence "TODO" "WAITING" "CANCELED" "DONE"))))
+ '(org-enforce-todo-dependencies t)
+ '(org-todo-keywords
+   (quote
+    ((sequence "TODO(t)" "|" "DONE(d)")
+     (sequence "WAITING(w)" "|" "CANCELED(c)"))))
  '(read-quoted-char-radix 16)
  '(recentf-mode t)
  '(safe-local-variable-values
@@ -409,6 +412,19 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  )
+
+;; .emacs
+(defun develop-dot()
+  "Update user-init-file - .emacs"
+  (interactive)
+  (let (upstream)
+    (setq upstream (make-temp-file ".emacs"))
+    (message upstream)
+    (url-copy-file "https://raw.githubusercontent.com/TxGVNN/dots/master/.emacs" upstream t)
+    (diff user-init-file upstream)
+    (other-window 1 nil)
+    (message "C-c C-a: To apply the hunk")
+    ))
 
 ;; go-mode
 (defun develop-go()
