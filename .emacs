@@ -398,7 +398,6 @@
     ((eval setq default-directory
            (locate-dominating-file buffer-file-name ".dir-locals.el")))))
  '(scroll-bar-mode nil)
- '(send-mail-function (quote smtpmail-send-it))
  '(show-trailing-whitespace t)
  '(tab-stop-list (quote (4 8 12 16 20 24 28 32 36)))
  '(tab-width 4)
@@ -423,8 +422,7 @@
     (url-copy-file "https://raw.githubusercontent.com/TxGVNN/dots/master/.emacs" upstream t)
     (diff user-init-file upstream)
     (other-window 1 nil)
-    (message "C-c C-a: To apply the hunk")
-    ))
+    (message "Override %s by %s to update" user-init-file upstream)))
 
 ;; go-mode
 (defun develop-go()

@@ -11,6 +11,17 @@ Just start and enjoy Emacs
  * <kbd>M-x</kbd> <kbd>develop-python</kbd> Python development
  * <kbd>M-x</kbd> <kbd>develop-php</kbd> PHP development
  * <kbd>M-x</kbd> <kbd>develop-utils</kbd> Some utility packages
+ * <kbd>M-x</kbd> <kbd>develop-dot</kbd> Diff new .emacs version
+
+### Email with Gnus & smtpmail-multi
+
+```
+wget -O ~/.gnus https://raw.githubusercontent.com/txgvnn/dots/master/.gnus
+wget -O ~/.authinfo https://raw.githubusercontent.com/txgvnn/dots/master/.authinfo
+```
+You have to customize the `.gnus` and `.authinfo` (default 2 accounts) with your credentials.
+
+Setup `.authinfo.gpg`(by gnupg) instead of `.authinfo` if you wanna protect your sensitive data
 
 ## GNU Screen
 
