@@ -140,13 +140,6 @@
 (use-package ace-window
   :ensure t
   :init (global-set-key (kbd "C-x o") 'ace-window))
-;; windmove
-(use-package windmove
-  :bind
-  ("C-x <right>" . windmove-right) ("C-x w f" . windmove-right)
-  ("C-x <left>" . windmove-left) ("C-x w b" . windmove-left)
-  ("C-x <up>" . windmove-up) ("C-x w p" . windmove-up)
-  ("C-x <down>" . windmove-down) ("C-x w n" . windmove-down))
 ;; eyebrowse - layout
 (use-package eyebrowse
   :ensure t
@@ -362,8 +355,6 @@
 (global-set-key (kbd "C-x 4 C-v") 'scroll-other-window)
 (global-set-key (kbd "C-x 4 M-v") 'scroll-other-window-down)
 (global-set-key (kbd "C-h l") 'show-lossage)
-(global-set-key (kbd "C-x w <right>") 'next-buffer)
-(global-set-key (kbd "C-x w <left>") 'previous-buffer)
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
