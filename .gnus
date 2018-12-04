@@ -29,6 +29,7 @@
                       (nnimap-authinfo-file "~/.authinfo")))
 (add-to-list 'gnus-parameters
              '("nnimap.Gmail:.*"
+               (gcc-self . "nnimap+Gmail:Sent")
                (display . all)
                (posting-style
                 (name "Giap Tran")
@@ -62,7 +63,8 @@
                       (nnimap-authinfo-file "~/.authinfo")))
 (add-to-list 'gnus-parameters
              '("nnimap.Example:.*"
-               (display \.all)
+               (gcc-self . "nnimap+Example:Sent")
+               (display . all)
                (posting-style
                 (name "Giap TRAN")
                 (address "user@example.com")
@@ -72,10 +74,10 @@
 ;; Outcomming
 (add-to-list 'smtpmail-multi-accounts
              '(example . ("user@example.com"
-                           "smtp.example.com"
-                           587
-                           "user@example.com"
-                           starttls nil nil nil)))
+                          "smtp.example.com"
+                          465
+                          "user@example.com"
+                          ssl nil nil nil)))
 (add-to-list 'smtpmail-multi-associations '("user@example.com" example))
 
 ;; Topic
@@ -90,10 +92,8 @@
 (add-to-list 'topic-topology '("Gnus" visible))
 (eval-after-load 'gnus-topic
   '(progn
-     (setq gnus-message-archive-group '((format-time-string "sent.%Y")))
      (setq gnus-topic-topology topic-topology)
-     (setq gnus-topic-alist topic-alist)
-     ))
+     (setq gnus-topic-alist topic-alist)))
 
 (setq message-alternative-emails
       (regexp-opt email-addresses))

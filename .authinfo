@@ -1,4 +1,4 @@
 machine imap.gmail.com login txgvnn@gmail.com password PASSWORD_HERE port imaps
 machine smtp.gmail.com login txgvnn@gmail.com password PASSWORD_HERE port 587
 machine imap.example.com login user@example.com password PASSWORD_HERE port imaps
-machine smtp.example.com login user@example.com password PASSWORD_HERE port 587
+machine smtp.example.com login user@example.com password PASSWORD_HERE port 465
