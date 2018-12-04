@@ -52,6 +52,7 @@
 (use-package helm-gtags
   :ensure t
   :init
+  (setq helm-gtags-auto-update t)
   ;; Enable helm-gtags-mode
   (add-hook 'c-mode-hook 'helm-gtags-mode)
   (add-hook 'java-mode-hook 'helm-gtags-mode)
@@ -293,7 +294,8 @@
   (other-window 1 nil)
   (if (= prefix 1 ) (switch-to-next-buffer)))
 (defun share-buffer-online (downloads)
-  "Share buffer to online."
+  "Share buffer to online.
+- DOWNLOADS: The max-downloads"
   (interactive "p")
   (let ((filename (if (equal major-mode 'dired-mode) default-directory
                     (buffer-file-name))))
@@ -369,21 +371,21 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(Buffer-menu-use-header-line nil)
+ '(auto-revert-check-vc-info t)
  '(backup-by-copying t)
  '(backup-directory-alist (quote (("." . "~/.emacs.d/backup"))))
  '(browse-url-browser-function (quote eww-browse-url))
  '(column-number-mode t)
  '(default-input-method "vietnamese-telex")
- '(delete-old-versions 6)
+ '(delete-old-versions t)
  '(delete-selection-mode t)
  '(enable-local-variables :all)
  '(global-hl-line-mode t)
  '(global-whitespace-mode t)
- '(helm-gtags-auto-update t)
  '(indent-tabs-mode nil)
  '(inhibit-startup-screen t)
  '(initial-scratch-message nil)
- '(keep-new-versions 2)
+ '(kept-new-versions 6)
  '(menu-bar-mode nil)
  '(org-agenda-files (quote ("~/.gxt/org")))
  '(org-enforce-todo-dependencies t)
@@ -414,7 +416,7 @@
 
 ;; .emacs
 (defun develop-dot()
-  "Update user-init-file - .emacs"
+  "Update 'user-init-file - .emacs."
   (interactive)
   (let (upstream)
     (setq upstream (make-temp-file ".emacs"))
