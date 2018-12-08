@@ -23,8 +23,8 @@
   (setq helm-autoresize-max-height 0)
   (setq helm-autoresize-min-height 25)
   (add-to-list 'helm-sources-using-default-as-input 'helm-source-man-pages)
-  (helm-autoresize-mode 1)
-  (helm-mode 1)
+  (helm-autoresize-mode t)
+  (helm-mode t)
   :bind
   (("M-x" . helm-M-x)
    ("C-x C-f" . helm-find-files)
@@ -128,9 +128,8 @@
 ;; git-gutter
 (use-package git-gutter
   :ensure t
-  :init (global-git-gutter-mode 1)
+  :init (global-git-gutter-mode t)
   :bind
-  ("C-x g p" . git-gutter:previous-hunk)
   ("C-x g p" . git-gutter:previous-hunk)
   ("C-x g n" . git-gutter:next-hunk)
   ("C-x g s" . git-gutter:stage-hunk)
@@ -179,12 +178,19 @@
   :hook
   ((sh-mode python-mode perl-mode php-mode
             c-mode go-mode java-mode c++-mode
-            emacs-lisp-mode org-mode markdown-mode)
+            emacs-lisp-mode org-mode markdown-mode
+            terraform-mode)
    . yas-minor-mode))
 ;; company
 (use-package company
   :ensure t
-  :init (global-company-mode t))
+  :init (global-company-mode t)
+  :config
+  (defun company-mode/backend-with-yas (backend)
+    (if (and (listp backend) (member 'company-yasnippet backend)) backend
+      (append (if (consp backend) backend (list backend))
+              '(:with company-yasnippet))))
+  (setq company-backends (mapcar #'company-mode/backend-with-yas company-backends)))
 
 ;; undo-tree
 (use-package undo-tree
@@ -233,21 +239,12 @@
 ;;: Hook
 ;; hide the minor modes
 (defvar hidden-minor-modes
-  '(global-whitespace-mode flycheck-mode which-key-mode projectile-mode git-gutter-mode helm-mode undo-tree-mode company-mode helm-gtags-mode smartparens-mode volatile-highlights-mode))
+  '(global-whitespace-mode flycheck-mode which-key-mode projectile-mode git-gutter-mode helm-mode undo-tree-mode company-mode highlight-parentheses-mode smartparens-mode volatile-highlights-mode))
 (defun purge-minor-modes ()
   (dolist (x hidden-minor-modes nil)
     (let ((trg (cdr (assoc x minor-mode-alist))))
       (when trg (setcar trg "")))))
 (add-hook 'after-change-major-mode-hook 'purge-minor-modes)
-;; c hook
-(defun my-c-mode-common-hook ()
-  (c-set-offset 'substatement-open 0)
-  (setq c++-tab-always-indent t)
-  (setq c-basic-offset 4)
-  (setq c-indent-level 4))
-(add-hook 'c-mode-common-hook 'my-c-mode-common-hook)
-;; mutt support.
-(setq auto-mode-alist (append '(("/tmp/mutt.*" . mail-mode)) auto-mode-alist))
 
 ;;; Customize
 ;; defun
@@ -417,6 +414,17 @@
     (other-window 1 nil)
     (message "Override %s by %s to update" user-init-file upstream)))
 
+;; c-mode
+(defun my-c-mode-common-hook ()
+  (c-set-offset 'substatement-open 0)
+  (setq c++-tab-always-indent t)
+  (setq c-basic-offset 4)
+  (setq c-indent-level 4))
+(add-hook 'c-mode-common-hook 'my-c-mode-common-hook)
+
+;; mutt support.
+(setq auto-mode-alist (append '(("/tmp/mutt.*" . mail-mode)) auto-mode-alist))
+
 ;; go-mode
 (defun develop-go()
   "Go develoment.
@@ -442,7 +450,7 @@ Please install:
     (go-guru-hl-identifier-mode)                    ; highlight identifiers
     (local-set-key (kbd "M-.") 'godef-jump)
     (local-set-key (kbd "M-,") 'pop-tag-mark)
-    (auto-complete-mode 1))                         ; Enable auto-complete mode
+    (auto-complete-mode t))                         ; Enable auto-complete mode
   (add-hook 'go-mode-hook 'my-go-mode-hook)
   (with-eval-after-load 'go-mode
     (require 'go-autocomplete)))
@@ -502,6 +510,9 @@ Please install:
   (interactive)
   (package-install 'php-mode)
   (package-install 'company-php))
+
+;; terraform-mode
+(add-hook 'terraform-mode-hook 'company-terraform-init)
 
 (provide '.emacs)
 ;;; .emacs ends here
