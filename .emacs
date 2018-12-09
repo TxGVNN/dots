@@ -176,10 +176,9 @@
 (use-package yasnippet-snippets
   :ensure t
   :hook
-  ((sh-mode python-mode perl-mode php-mode
-            c-mode go-mode java-mode c++-mode
-            emacs-lisp-mode org-mode markdown-mode
-            terraform-mode)
+  ((sh-mode emacs-lisp-mode python-mode perl-mode php-mode
+            makefile-mode c-mode go-mode java-mode c++-mode
+            org-mode markdown-mode terraform-mode)
    . yas-minor-mode))
 ;; company
 (use-package company
@@ -190,7 +189,8 @@
     (if (and (listp backend) (member 'company-yasnippet backend)) backend
       (append (if (consp backend) backend (list backend))
               '(:with company-yasnippet))))
-  (setq company-backends (mapcar #'company-mode/backend-with-yas company-backends)))
+  (setq company-backends (mapcar #'company-mode/backend-with-yas company-backends))
+  :bind ("M-]" . company-complete))
 
 ;; undo-tree
 (use-package undo-tree
@@ -204,13 +204,15 @@
 (use-package doom-themes
   :ensure t
   :init (load-theme 'doom-one t))
-;; smart-mode-line
-(use-package smart-mode-line
+;; modeline
+(use-package doom-modeline
   :ensure t
-  :config
-  (setq sml/theme 'respectful)
-  (setq sml/no-confirm-load-theme t)
-  (sml/setup))
+  :init
+  (setq doom-modeline-buffer-file-name-style 'relative-from-project)
+  (setq doom-modeline-icon nil)
+  (setq doom-modeline-major-mode-icon nil)
+  (setq doom-modeline-minor-modes t)
+  :hook (after-init . doom-modeline-init))
 
 ;;; Options
 ;; helm-ag
@@ -241,6 +243,7 @@
 (defvar hidden-minor-modes
   '(global-whitespace-mode flycheck-mode which-key-mode projectile-mode git-gutter-mode helm-mode undo-tree-mode company-mode highlight-parentheses-mode smartparens-mode volatile-highlights-mode))
 (defun purge-minor-modes ()
+  "Dont show on modeline."
   (dolist (x hidden-minor-modes nil)
     (let ((trg (cdr (assoc x minor-mode-alist))))
       (when trg (setcar trg "")))))
@@ -259,8 +262,7 @@
   (let ((filename (if (equal major-mode 'dired-mode) default-directory
                     (buffer-file-name))))
     (when filename (kill-new filename)
-          (message (format "Yanked %s" filename)))
-    ))
+          (message (format "Yanked %s" filename)))))
 (defun untabify-buffer ()
   "Convert all tabs in buffer to multiple spaces."
   (interactive)
@@ -303,8 +305,7 @@
           (shell-command-on-region (region-beginning) (region-end) "xsel -i -b")
           (message "Yanked region to clipboard!")
           (deactivate-mark))
-      (message "No region active; can't yank to clipboard!")))
-  )
+      (message "No region active; can't yank to clipboard!"))))
 (defun paste-from-clipboard ()
   "Paste from clipboard."
   (interactive)
@@ -318,8 +319,7 @@
       (progn
         (load-library "interaction-log")
         (call-interactively 'interaction-log-mode))
-    (view-lossage))
-  )
+    (view-lossage)))
 (defun sudo-save ()
   "Save buffer with sudo."
   (interactive)
@@ -436,11 +436,8 @@ Please install:
    go get -u github.com/nsf/gocode
    go get -u github.com/dougm/goflymake"
   (interactive)
-  (use-package go-autocomplete
-    :ensure t)
-  (use-package go-guru
-    :after (go-autocomplete)
-    :ensure t))
+  (package-install 'go-projectile)
+  (package-install 'company-go))
 (use-package go-projectile
   :defer t
   :init
@@ -450,18 +447,16 @@ Please install:
     (go-guru-hl-identifier-mode)                    ; highlight identifiers
     (local-set-key (kbd "M-.") 'godef-jump)
     (local-set-key (kbd "M-,") 'pop-tag-mark)
-    (auto-complete-mode t))                         ; Enable auto-complete mode
-  (add-hook 'go-mode-hook 'my-go-mode-hook)
-  (with-eval-after-load 'go-mode
-    (require 'go-autocomplete)))
+    (add-to-list 'company-backends '(company-go :with company-yasnippet)))
+  (add-hook 'go-mode-hook 'my-go-mode-hook))
 
 ;; python-mode
 (defun develop-python()
   "Python development."
   (interactive)
   (package-install 'python-mode)
-  (package-install 'jedi))
-(use-package jedi
+  (package-install 'company-jedi))
+(use-package python-mode
   :defer t
   :init
   (setq jedi:complete-on-dot t)
@@ -478,8 +473,7 @@ Please install:
   (defun jedi-config:setup-keys ()
     (local-set-key (kbd "M-.") 'jedi:goto-definition)
     (local-set-key (kbd "M-,") 'jedi:goto-definition-pop-marker)
-    (local-set-key (kbd "M-?") 'jedi:show-doc)
-    (local-set-key (kbd "M-/") 'jedi:get-in-function-call))
+    (local-set-key (kbd "M-?") 'jedi:show-doc))
   ;; Update python environment
   (defun py-venv-update()
     (defvar venv-executables-dir "bin")
@@ -498,11 +492,16 @@ Please install:
       (setq eshell-path-env path))
     (setenv "VIRTUAL_ENV" venv-current-dir))
   ;; Hooks
-  (add-hook 'python-mode-hook 'jedi-config:setup-server-args)
-  (add-hook 'python-mode-hook 'py-venv-update)
-  (add-hook 'python-mode-hook 'jedi:setup)
-  (add-hook 'python-mode-hook 'jedi:ac-setup)
-  (add-hook 'python-mode-hook 'jedi-config:setup-keys))
+  (if (package-installed-p 'company-jedi)
+      (progn
+        (add-hook 'python-mode-hook 'jedi-config:setup-server-args)
+        (add-hook 'python-mode-hook 'py-venv-update)
+        (add-hook 'python-mode-hook 'jedi:setup)
+        (add-hook 'python-mode-hook 'jedi-config:setup-keys)
+        (add-hook 'python-mode-hook '(lambda ()
+                                       (add-to-list 'company-backends
+                                                    '(company-jedi :with company-yasnippet))))))
+  )
 
 ;; php-mode
 (defun develop-php()
@@ -510,9 +509,35 @@ Please install:
   (interactive)
   (package-install 'php-mode)
   (package-install 'company-php))
+(use-package php-mode
+  :defer t
+  :hook
+  (php-mode . (lambda ()
+                (add-to-list 'company-backends '(company-ac-php-backend :with company-yasnippet)))))
 
 ;; terraform-mode
-(add-hook 'terraform-mode-hook 'company-terraform-init)
+(defun develop-terraform()
+  "Terraform development."
+  (interactive)
+  (package-install 'company-terraform))
+(use-package company-terraform
+  :defer t
+  :init
+  (add-hook 'terraform-mode-hook 'company-terraform-init))
+
+;; ansible-mode
+(defun develop-ansible ()
+  "Ansible development."
+  (interactive)
+  (package-install 'ansible)
+  (package-install 'company-ansible))
+(use-package ansible
+  :defer t
+  :init
+  (add-hook 'ansible-hook '
+            (lambda ()
+              (add-to-list 'company-backends '(company-ansible :with company-yasnippet))
+              (yas-minor-mode-on))))
 
 (provide '.emacs)
 ;;; .emacs ends here
