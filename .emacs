@@ -139,13 +139,14 @@
 (use-package ace-window
   :ensure t
   :init (global-set-key (kbd "C-x o") 'ace-window))
-;; eyebrowse - layout
-(use-package eyebrowse
+;; layout
+(use-package perspective
   :ensure t
   :init
-  (setq eyebrowse-keymap-prefix (kbd "C-z"))
+  (setq persp-mode-prefix-key (kbd "C-z"))
+  (setq persp-initial-frame-name "0")
   :config
-  (eyebrowse-mode t))
+  (persp-mode t))
 
 ;; multiple-cursors
 (use-package multiple-cursors
@@ -208,10 +209,11 @@
 (use-package doom-modeline
   :ensure t
   :init
-  (setq doom-modeline-buffer-file-name-style 'relative-from-project)
+  (setq doom-modeline-buffer-file-name-style 'truncate-with-project)
+  (setq doom-modeline-minor-modes t)
+  (setq doom-modeline-lsp nil)
   (setq doom-modeline-icon nil)
   (setq doom-modeline-major-mode-icon nil)
-  (setq doom-modeline-minor-modes t)
   :hook (after-init . doom-modeline-init))
 
 ;;; Options
@@ -538,6 +540,21 @@ Please install:
             (lambda ()
               (add-to-list 'company-backends '(company-ansible :with company-yasnippet))
               (yas-minor-mode-on))))
+;; java-mode
+(defun develop-java()
+  "Java develoment.
+Please install:
+https://download.eclipse.org/jdtls/snapshots/jdt-language-server-latest.tar.gz
+tar -vxf jdt-language-server-latest.tar.gz -C ~/.emacs.d/eclipse.jdt.ls/server/"
+  (interactive)
+  (package-install 'lsp-java)
+  (package-install 'company-lsp))
+(use-package lsp-java
+  :defer t
+  :init
+  (add-hook 'java-mode-hook '
+            (lambda () (require 'lsp-java) (lsp)
+              (add-to-list 'company-backends '(company-lsp :with company-yasnippet)))))
 
 (provide '.emacs)
 ;;; .emacs ends here
