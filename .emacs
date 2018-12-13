@@ -51,8 +51,7 @@
 ;; helm-gtags
 (use-package helm-gtags
   :ensure t
-  :init
-  (setq helm-gtags-auto-update t)
+  :init (setq helm-gtags-auto-update t)
   ;; Enable helm-gtags-mode
   (add-hook 'c-mode-hook 'helm-gtags-mode)
   (add-hook 'java-mode-hook 'helm-gtags-mode)
@@ -92,8 +91,7 @@
 ;; vlf - view large files
 (use-package vlf
   :ensure t
-  :config
-  (require 'vlf-setup))
+  :config (require 'vlf-setup))
 
 ;; move-text
 (use-package move-text
@@ -145,8 +143,7 @@
   :init
   (setq persp-mode-prefix-key (kbd "C-z"))
   (setq persp-initial-frame-name "0")
-  :config
-  (persp-mode t))
+  :config (persp-mode t))
 
 ;; multiple-cursors
 (use-package multiple-cursors
@@ -161,9 +158,7 @@
 ;; smartparens
 (use-package smartparens
   :ensure t
-  :init
-  (smartparens-global-mode t)
-  (show-smartparens-global-mode t))
+  :init (smartparens-global-mode t))
 ;; highlight-parentheses
 (use-package highlight-parentheses
   :ensure t
@@ -172,10 +167,18 @@
 (use-package volatile-highlights
   :ensure t
   :init (volatile-highlights-mode t))
+;; anzu
+(use-package anzu
+  :ensure t
+  :init (global-anzu-mode t))
 
 ;; yasnippet
 (use-package yasnippet-snippets
   :ensure t
+  :config
+  (define-key yas-minor-mode-map [(tab)] nil)
+  (define-key yas-minor-mode-map (kbd "TAB") nil)
+  (define-key yas-minor-mode-map (kbd "M-]") yas-maybe-expand)
   :hook
   ((sh-mode emacs-lisp-mode python-mode perl-mode php-mode
             makefile-mode c-mode go-mode java-mode c++-mode
@@ -214,6 +217,11 @@
   (setq doom-modeline-lsp nil)
   (setq doom-modeline-icon nil)
   (setq doom-modeline-major-mode-icon nil)
+  :config
+  (doom-modeline-def-modeline 'slim
+    '(bar workspace-number window-number " " buffer-info remote-host buffer-position " " selection-info)
+    '(global persp-name minor-modes input-method buffer-encoding major-mode process vcs flycheck))
+  (doom-modeline-set-modeline 'slim t)
   :hook (after-init . doom-modeline-init))
 
 ;;; Options
@@ -243,7 +251,7 @@
 ;;: Hook
 ;; hide the minor modes
 (defvar hidden-minor-modes
-  '(global-whitespace-mode flycheck-mode which-key-mode projectile-mode git-gutter-mode helm-mode undo-tree-mode company-mode highlight-parentheses-mode smartparens-mode volatile-highlights-mode))
+  '(global-whitespace-mode flycheck-mode which-key-mode projectile-mode git-gutter-mode helm-mode undo-tree-mode company-mode highlight-parentheses-mode smartparens-mode volatile-highlights-mode anzu-mode))
 (defun purge-minor-modes ()
   "Dont show on modeline."
   (dolist (x hidden-minor-modes nil)
@@ -390,6 +398,7 @@
     ((eval setq default-directory
            (locate-dominating-file buffer-file-name ".dir-locals.el")))))
  '(scroll-bar-mode nil)
+ '(show-paren-mode t)
  '(show-trailing-whitespace t)
  '(tab-stop-list (quote (4 8 12 16 20 24 28 32 36)))
  '(tab-width 4)
@@ -524,8 +533,9 @@ Please install:
   (package-install 'company-terraform))
 (use-package company-terraform
   :defer t
-  :init
-  (add-hook 'terraform-mode-hook 'company-terraform-init))
+  :hook
+  (terraform-mode . (lambda ()
+                      (add-to-list 'company-backends '(company-terraform :with company-yasnippet)))))
 
 ;; ansible-mode
 (defun develop-ansible ()
