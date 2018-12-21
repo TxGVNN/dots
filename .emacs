@@ -22,7 +22,6 @@
   (setq helm-split-window-inside-p t)
   (setq helm-autoresize-max-height 0)
   (setq helm-autoresize-min-height 25)
-  (add-to-list 'helm-sources-using-default-as-input 'helm-source-man-pages)
   (helm-autoresize-mode t)
   (helm-mode t)
   :bind
@@ -217,11 +216,6 @@
   (setq doom-modeline-lsp nil)
   (setq doom-modeline-icon nil)
   (setq doom-modeline-major-mode-icon nil)
-  :config
-  (doom-modeline-def-modeline 'slim
-    '(bar workspace-number window-number " " buffer-info remote-host buffer-position " " selection-info)
-    '(global persp-name minor-modes input-method buffer-encoding major-mode process vcs flycheck))
-  (doom-modeline-set-modeline 'slim t)
   :hook (after-init . doom-modeline-init))
 
 ;;; Options
