@@ -177,7 +177,7 @@
   :config
   (define-key yas-minor-mode-map [(tab)] nil)
   (define-key yas-minor-mode-map (kbd "TAB") nil)
-  (define-key yas-minor-mode-map (kbd "M-]") yas-maybe-expand)
+  (define-key yas-minor-mode-map (kbd "C-c & TAB") yas-maybe-expand)
   :hook
   ((sh-mode emacs-lisp-mode python-mode perl-mode php-mode
             makefile-mode c-mode go-mode java-mode c++-mode
@@ -432,7 +432,7 @@
 
 ;; go-mode
 (defun develop-go()
-  "Go develoment.
+  "Go development.
 Please install:
    go get -u golang.org/x/tools/cmd/...
    go get -u golang.org/x/tools/cmd/goimports
@@ -546,7 +546,7 @@ Please install:
               (yas-minor-mode-on))))
 ;; java-mode
 (defun develop-java()
-  "Java develoment.
+  "Java development.
 Please install:
 https://download.eclipse.org/jdtls/snapshots/jdt-language-server-latest.tar.gz
 tar -vxf jdt-language-server-latest.tar.gz -C ~/.emacs.d/eclipse.jdt.ls/server/"
@@ -559,6 +559,21 @@ tar -vxf jdt-language-server-latest.tar.gz -C ~/.emacs.d/eclipse.jdt.ls/server/"
   (add-hook 'java-mode-hook '
             (lambda () (require 'lsp-java) (lsp)
               (add-to-list 'company-backends '(company-lsp :with company-yasnippet)))))
+;; js-mode
+(defun develop-js()
+  "JS development.
+npm i -g javascript-typescript-langserver"
+  (interactive)
+  (package-install 'lsp-mode))
+(use-package lsp-mode
+  :defer t
+  :config
+  (require 'lsp)
+  (require 'lsp-clients)
+  :hook
+  (js-mode . (lambda()
+               (lsp)
+               (define-key js-mode-map (kbd "M-.") 'xref-find-definitions))))
 
 (provide '.emacs)
 ;;; .emacs ends here
