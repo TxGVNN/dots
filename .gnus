@@ -97,6 +97,12 @@
 
 (setq message-alternative-emails
       (regexp-opt email-addresses))
+;;; setup message-dont-reply-to-names
+(mapc
+ (lambda(arg)
+   (when (string-match "\\(.+?\\)\<\\(.+?\\)\>" arg)
+     (add-to-list 'message-dont-reply-to-names (match-string 2 arg)))
+   ) email-addresses)
 
 ;; Gnus from manipulation
 (setq gnus-from-selected-index 0)
