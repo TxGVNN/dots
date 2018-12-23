@@ -2,8 +2,8 @@
 ;;; Commentary: by TxGVNN
 
 (require 'package)
-(add-to-list 'package-archives
-             '("melpa" . "https://melpa.org/packages/"))
+(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
+(add-to-list 'package-archives '("txgvnn" . "https://txgvnn.github.io/packages/"))
 (package-initialize)
 
 ;;; bootstrap `use-package'
@@ -206,10 +206,14 @@
 ;; themes
 (use-package doom-themes
   :ensure t
+  :pin txgvnn
+  :config
+  (doom-themes-org-config)
   :init (load-theme 'doom-one t))
 ;; modeline
 (use-package doom-modeline
   :ensure t
+  :pin txgvnn
   :init
   (setq doom-modeline-buffer-file-name-style 'truncate-with-project)
   (setq doom-modeline-minor-modes t)
@@ -356,6 +360,7 @@
 (global-set-key (kbd "C-x 4 C-v") 'scroll-other-window)
 (global-set-key (kbd "C-x 4 M-v") 'scroll-other-window-down)
 (global-set-key (kbd "C-h l") 'show-lossage)
+(global-set-key (kbd "M-z") 'zap-up-to-char)
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -536,14 +541,21 @@ Please install:
   "Ansible development."
   (interactive)
   (package-install 'ansible)
+  (package-install 'ansible-doc)
   (package-install 'company-ansible))
 (use-package ansible
   :defer t
   :init
   (add-hook 'ansible-hook '
             (lambda ()
+              (ansible-doc-mode)
               (add-to-list 'company-backends '(company-ansible :with company-yasnippet))
               (yas-minor-mode-on))))
+(use-package ansible-doc
+  :defer t
+  :config
+  (define-key ansible-doc-mode-map (kbd "M-?") #'ansible-doc))
+
 ;; java-mode
 (defun develop-java()
   "Java development.
@@ -559,6 +571,7 @@ tar -vxf jdt-language-server-latest.tar.gz -C ~/.emacs.d/eclipse.jdt.ls/server/"
   (add-hook 'java-mode-hook '
             (lambda () (require 'lsp-java) (lsp)
               (add-to-list 'company-backends '(company-lsp :with company-yasnippet)))))
+
 ;; js-mode
 (defun develop-js()
   "JS development.
