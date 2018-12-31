@@ -1,6 +1,11 @@
 ;;; .emacs --- initialization file
 ;;; Commentary: by TxGVNN
 
+;;; Code:
+(when (version< emacs-version "25.1")
+  (error "Requires GNU Emacs 25.1 or newer, but you're running %s" emacs-version))
+(setq gc-cons-threshold (* 64 1024 1024))
+
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
 (add-to-list 'package-archives '("txgvnn" . "https://txgvnn.github.io/packages/"))
@@ -50,23 +55,19 @@
 ;; helm-gtags
 (use-package helm-gtags
   :ensure t
-  :init (setq helm-gtags-auto-update t)
-  ;; Enable helm-gtags-mode
-  (add-hook 'c-mode-hook 'helm-gtags-mode)
-  (add-hook 'java-mode-hook 'helm-gtags-mode)
-  (add-hook 'c++-mode-hook 'helm-gtags-mode)
-  (add-hook 'asm-mode-hook 'helm-gtags-mode)
-  (add-hook 'php-mode-hook 'helm-gtags-mode)
-  (eval-after-load "helm-gtags"
-    '(progn
-       (define-key helm-gtags-mode-map (kbd "C-x t f") 'helm-gtags-find-tag)
-       (define-key helm-gtags-mode-map (kbd "C-x t r") 'helm-gtags-find-rtag)
-       (define-key helm-gtags-mode-map (kbd "C-x t s") 'helm-gtags-find-symbol)
-       (define-key helm-gtags-mode-map (kbd "C-x t g") 'helm-gtags-parse-file)
-       (define-key helm-gtags-mode-map (kbd "C-x t p") 'helm-gtags-previous-history)
-       (define-key helm-gtags-mode-map (kbd "C-x t n") 'helm-gtags-next-history)
-       (define-key helm-gtags-mode-map (kbd "C-x t t") 'helm-gtags-pop-stack))
-    ))
+  :init
+  (setq helm-gtags-mode-name "H-Gtags")
+  :hook
+  ((c-mode c++-mode java-mode asm-mode php-mode)
+   . helm-gtags-mode)
+  :config
+  (define-key helm-gtags-mode-map (kbd "C-x t f") 'helm-gtags-find-tag)
+  (define-key helm-gtags-mode-map (kbd "C-x t r") 'helm-gtags-find-rtag)
+  (define-key helm-gtags-mode-map (kbd "C-x t s") 'helm-gtags-find-symbol)
+  (define-key helm-gtags-mode-map (kbd "C-x t g") 'helm-gtags-parse-file)
+  (define-key helm-gtags-mode-map (kbd "C-x t p") 'helm-gtags-previous-history)
+  (define-key helm-gtags-mode-map (kbd "C-x t n") 'helm-gtags-next-history)
+  (define-key helm-gtags-mode-map (kbd "C-x t t") 'helm-gtags-pop-stack))
 
 ;; crux
 (use-package crux
@@ -158,10 +159,10 @@
 (use-package smartparens
   :ensure t
   :init (smartparens-global-mode t))
-;; highlight-parentheses
-(use-package highlight-parentheses
+;; rainbow-delimiters
+(use-package rainbow-delimiters
   :ensure t
-  :init (global-highlight-parentheses-mode t))
+  :hook (prog-mode . rainbow-delimiters-mode))
 ;; volatile-highlights
 (use-package volatile-highlights
   :ensure t
@@ -170,6 +171,15 @@
 (use-package anzu
   :ensure t
   :init (global-anzu-mode t))
+;; symbol-overlay
+(use-package symbol-overlay
+  :ensure t
+  :config
+  (define-key symbol-overlay-map (kbd "N") 'symbol-overlay-switch-forward)
+  (define-key symbol-overlay-map (kbd "P") 'symbol-overlay-switch-backward)
+  (define-key symbol-overlay-map (kbd "c") 'symbol-overlay-remove-all)
+  :bind ("M-s H" . symbol-overlay-put)
+  :hook (prog-mode . symbol-overlay-mode))
 
 ;; yasnippet
 (use-package yasnippet-snippets
@@ -179,9 +189,7 @@
   (define-key yas-minor-mode-map (kbd "TAB") nil)
   (define-key yas-minor-mode-map (kbd "C-c & TAB") yas-maybe-expand)
   :hook
-  ((sh-mode emacs-lisp-mode python-mode perl-mode php-mode
-            makefile-mode c-mode go-mode java-mode c++-mode
-            org-mode markdown-mode terraform-mode)
+  ((prog-mode org-mode markdown-mode)
    . yas-minor-mode))
 ;; company
 (use-package company
@@ -207,9 +215,8 @@
 (use-package doom-themes
   :ensure t
   :pin txgvnn
-  :config
-  (doom-themes-org-config)
-  :init (load-theme 'doom-one t))
+  :init (load-theme 'doom-one t)
+  :config (doom-themes-org-config))
 ;; modeline
 (use-package doom-modeline
   :ensure t
@@ -587,6 +594,13 @@ npm i -g javascript-typescript-langserver"
   (js-mode . (lambda()
                (lsp)
                (define-key js-mode-map (kbd "M-.") 'xref-find-definitions))))
+
+;; Kubernetes
+(use-package k8s-mode
+  :defer t
+  :config
+  (setq k8s-search-documentation-browser-function 'browse-url-firefox)
+  :hook (k8s-mode . yas-minor-mode))
 
 (provide '.emacs)
 ;;; .emacs ends here
