@@ -45,6 +45,7 @@
   :ensure t
   :init
   (setq projectile-completion-system 'helm)
+  (setq projectile-project-compilation-cmd "make ")
   (projectile-mode)
   (define-key projectile-mode-map (kbd "C-x p") 'projectile-command-map)
   (helm-projectile-on))
@@ -56,7 +57,7 @@
 (use-package helm-gtags
   :ensure t
   :init
-  (setq helm-gtags-mode-name "H-Gtags")
+  (setq helm-gtags-mode-name "HGtags")
   :hook
   ((c-mode c++-mode java-mode asm-mode php-mode)
    . helm-gtags-mode)
@@ -108,8 +109,7 @@
 ;; flycheck
 (use-package flycheck
   :ensure t
-  :init (global-flycheck-mode))
-
+  :hook (prog-mode . flycheck-mode))
 ;; magit
 (use-package magit
   :ensure t
@@ -595,12 +595,17 @@ npm i -g javascript-typescript-langserver"
                (lsp)
                (define-key js-mode-map (kbd "M-.") 'xref-find-definitions))))
 
-;; Kubernetes
+;; k8s-mode
 (use-package k8s-mode
   :defer t
   :config
   (setq k8s-search-documentation-browser-function 'browse-url-firefox)
   :hook (k8s-mode . yas-minor-mode))
+
+;; keep personal settings not in the .emacs file
+(let ((personal-settings "~/.personal.el"))
+  (when (file-exists-p personal-settings)
+    (load-file personal-settings)))
 
 (provide '.emacs)
 ;;; .emacs ends here
