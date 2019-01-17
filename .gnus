@@ -6,9 +6,20 @@
   :config
   (setq send-mail-function (quote smtpmail-multi-send-it))
   (setq message-send-mail-function (quote smtpmail-multi-send-it)))
+(use-package ebdb
+  :ensure t
+  :config
+  (require 'ebdb-gnus))
+(use-package company-ebdb
+  :ensure t
+  :config
+  (add-to-list 'company-backends 'company-ebdb))
 
 (add-hook 'gnus-group-mode-hook 'gnus-topic-mode)
+(setq gnus-large-newsgroup 50)
 (setq gnus-select-method '(nnml ""))
+(setq gnus-gcc-mark-as-read t)
+
 (defvar topic-topology nil)
 (defvar topic-alist nil)
 (defvar email-addresses nil)
