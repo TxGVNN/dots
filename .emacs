@@ -57,7 +57,7 @@
 (use-package helm-gtags
   :ensure t
   :init
-  (setq helm-gtags-mode-name "HGtags")
+  (setq helm-gtags-mode-name " HGtags")
   :hook
   ((c-mode c++-mode java-mode asm-mode php-mode)
    . helm-gtags-mode)
@@ -127,6 +127,7 @@
 (use-package git-gutter
   :ensure t
   :init (global-git-gutter-mode t)
+  (add-hook 'magit-post-refresh-hook #'git-gutter:update-all-windows)
   :bind
   ("C-x g p" . git-gutter:previous-hunk)
   ("C-x g n" . git-gutter:next-hunk)
@@ -158,7 +159,7 @@
 ;; smartparens
 (use-package smartparens
   :ensure t
-  :init (smartparens-global-mode t))
+  :hook (prog-mode . smartparens-mode))
 ;; rainbow-delimiters
 (use-package rainbow-delimiters
   :ensure t
@@ -256,7 +257,7 @@
 ;;: Hook
 ;; hide the minor modes
 (defvar hidden-minor-modes
-  '(global-whitespace-mode flycheck-mode which-key-mode projectile-mode git-gutter-mode helm-mode undo-tree-mode company-mode highlight-parentheses-mode smartparens-mode volatile-highlights-mode anzu-mode))
+  '(global-whitespace-mode flycheck-mode which-key-mode projectile-mode git-gutter-mode helm-mode undo-tree-mode company-mode smartparens-mode volatile-highlights-mode anzu-mode symbol-overlay-mode))
 (defun purge-minor-modes ()
   "Dont show on modeline."
   (dolist (x hidden-minor-modes nil)
