@@ -108,6 +108,7 @@
 (use-package flycheck
   :ensure t
   :hook (prog-mode . flycheck-mode))
+
 ;; magit
 (use-package magit
   :ensure t
@@ -121,7 +122,6 @@
   ("C-x g b" . magit-branch-popup)
   ("C-x g B" . magit-blame-popup)
   ("C-x g c" . magit-commit-popup))
-
 ;; git-gutter
 (use-package git-gutter
   :ensure t
@@ -147,6 +147,23 @@
 (use-package persp-projectile
   :after (perspective)
   :ensure t)
+;; helm-projectile
+(use-package helm-projectile
+  :ensure t
+  :config
+  (define-key projectile-mode-map [remap projectile-find-other-file] #'helm-projectile-find-other-file)
+  (define-key projectile-mode-map [remap projectile-find-file] #'helm-projectile-find-file)
+  (define-key projectile-mode-map [remap projectile-find-file-in-known-projects] #'helm-projectile-find-file-in-known-projects)
+  (define-key projectile-mode-map [remap projectile-find-file-dwim] #'helm-projectile-find-file-dwim)
+  (define-key projectile-mode-map [remap projectile-find-dir] #'helm-projectile-find-dir)
+  (define-key projectile-mode-map [remap projectile-recentf] #'helm-projectile-recentf)
+  (define-key projectile-mode-map [remap projectile-switch-to-buffer] #'helm-projectile-switch-to-buffer)
+  (define-key projectile-mode-map [remap projectile-grep] #'helm-projectile-grep)
+  (define-key projectile-mode-map [remap projectile-ack] #'helm-projectile-ack)
+  (define-key projectile-mode-map [remap projectile-ag] #'helm-projectile-ag)
+  (define-key projectile-mode-map [remap projectile-ripgrep] #'helm-projectile-rg)
+  (define-key projectile-mode-map [remap projectile-browse-dirty-projects] #'helm-projectile-browse-dirty-projects)
+  (helm-projectile-commander-bindings))
 
 ;; multiple-cursors
 (use-package multiple-cursors
@@ -421,7 +438,7 @@
  '(tab-stop-list (quote (4 8 12 16 20 24 28 32 36)))
  '(tab-width 4)
  '(tool-bar-mode nil)
- '(tramp-auto-save-directory "~/.emacs.d/backup" nil (tramp))
+ '(tramp-auto-save-directory "~/.emacs.d/backup")
  '(version-control t)
  '(whitespace-style (quote (tabs empty indentation big-indent tab-mark))))
 (custom-set-faces
@@ -506,6 +523,9 @@ Please install:
   ;; Update python environment
   (defun py-venv-update()
     (defvar venv-executables-dir "bin")
+    (when (getenv "VIRTUAL_ENV")
+      (setq python-environment-directory (file-name-base (getenv "VIRTUAL_ENV")))
+      (setq python-environment-default-root-name (file-name-directory (directory-file-name (getenv "VIRTUAL_ENV")))))
     (setq venv-current-dir (file-name-as-directory (python-environment-root-path)))
     ;; setup the python shell
     (setq python-shell-virtualenv-path venv-current-dir)
