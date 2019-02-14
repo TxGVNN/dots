@@ -58,6 +58,19 @@
   (define-key helm-gtags-mode-map (kbd "C-x t n") 'helm-gtags-next-history)
   (define-key helm-gtags-mode-map (kbd "C-x t t") 'helm-gtags-pop-stack))
 
+;; projectile
+(use-package projectile
+  :pin emacs24
+  :ensure t
+  :init
+  (setq projectile-completion-system 'helm)
+  (setq projectile-project-compilation-cmd "make ")
+  (projectile-mode)
+  (define-key projectile-mode-map (kbd "C-x p") 'projectile-command-map))
+;; helm-projectile
+(use-package helm-projectile
+  :ensure t
+  :config (helm-projectile-on))
 ;; crux
 (use-package crux
   :ensure t
@@ -101,8 +114,8 @@
 
 ;; magit
 (use-package magit
-  :ensure t
   :pin emacs24
+  :ensure t
   :config
   (define-key magit-file-mode-map (kbd "C-x g") nil)
   :bind
