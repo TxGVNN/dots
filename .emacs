@@ -116,12 +116,12 @@
   (define-key magit-file-mode-map (kbd "C-x g") nil)
   :bind
   ("C-x g v" . magit-status)
-  ("C-x g d" . magit-diff-buffer-file-popup)
-  ("C-x g l" . magit-log-buffer-file-popup)
+  ("C-x g d" . magit-diff)
+  ("C-x g l" . magit-log)
   ("C-x g a" . magit-log-all)
-  ("C-x g b" . magit-branch-popup)
-  ("C-x g B" . magit-blame-popup)
-  ("C-x g c" . magit-commit-popup))
+  ("C-x g b" . magit-branch)
+  ("C-x g B" . magit-blame)
+  ("C-x g c" . magit-commit))
 ;; git-gutter
 (use-package git-gutter
   :ensure t

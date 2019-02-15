@@ -9,6 +9,7 @@
 (use-package ebdb
   :ensure t
   :config
+  (setq ebdb-mua-pop-up nil)
   (require 'ebdb-gnus))
 (use-package company-ebdb
   :ensure t
