@@ -113,8 +113,15 @@
   :hook (prog-mode . flycheck-mode))
 
 ;; magit
+(use-package ghub
+  :pin emacs24
+  :ensure t)
+(use-package git-commit
+  :pin emacs24
+  :ensure t)
 (use-package magit
   :pin emacs24
+  :after (ghub git-commit)
   :ensure t
   :config
   (define-key magit-file-mode-map (kbd "C-x g") nil)
