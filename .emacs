@@ -143,7 +143,9 @@
   :init
   (setq persp-mode-prefix-key (kbd "C-z"))
   (setq persp-initial-frame-name "0")
-  :config (persp-mode))
+  :config
+  (define-key perspective-map (kbd "z") 'perspective-map)
+  (persp-mode))
 (use-package persp-projectile
   :after (perspective)
   :ensure t)
