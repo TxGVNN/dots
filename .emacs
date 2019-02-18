@@ -51,22 +51,6 @@
 (use-package helm-swoop
   :ensure t
   :bind ("M-s w" . helm-swoop))
-;; helm-gtags
-(use-package helm-gtags
-  :ensure t
-  :init
-  (setq helm-gtags-mode-name " HGtags")
-  :hook
-  ((c-mode c++-mode java-mode asm-mode php-mode)
-   . helm-gtags-mode)
-  :config
-  (define-key helm-gtags-mode-map (kbd "C-x t f") 'helm-gtags-find-tag)
-  (define-key helm-gtags-mode-map (kbd "C-x t r") 'helm-gtags-find-rtag)
-  (define-key helm-gtags-mode-map (kbd "C-x t s") 'helm-gtags-find-symbol)
-  (define-key helm-gtags-mode-map (kbd "C-x t g") 'helm-gtags-parse-file)
-  (define-key helm-gtags-mode-map (kbd "C-x t p") 'helm-gtags-previous-history)
-  (define-key helm-gtags-mode-map (kbd "C-x t n") 'helm-gtags-next-history)
-  (define-key helm-gtags-mode-map (kbd "C-x t t") 'helm-gtags-pop-stack))
 
 ;; crux
 (use-package crux
@@ -456,7 +440,6 @@
   (interactive)
   (let (upstream)
     (setq upstream (make-temp-file ".emacs"))
-    (message upstream)
     (url-copy-file "https://raw.githubusercontent.com/TxGVNN/dots/master/.emacs" upstream t)
     (diff user-init-file upstream)
     (other-window 1 nil)
