@@ -17,40 +17,28 @@
   (package-install 'use-package))
 
 ;;; Packages
-;; helm
-(use-package helm
+;; counsel
+(use-package counsel
   :ensure t
-  :init
-  (require 'helm)
-  (require 'helm-config)
-  (setq helm-mode-line-string "")
-  (setq helm-split-window-inside-p t)
-  (setq helm-autoresize-max-height 0)
-  (setq helm-autoresize-min-height 25)
-  (helm-autoresize-mode)
-  (helm-mode)
   :bind
-  (("M-x" . helm-M-x)
-   ("C-x C-f" . helm-find-files)
-   ("C-x b" . helm-buffers-list)
-   ("C-c m" . helm-imenu)
-   ("M-y" . helm-show-kill-ring)
-   :map helm-map
-   ("<tab>" . helm-execute-persistent-action)
-   ("C-i" . helm-execute-persistent-action)
-   ("C-z" . helm-select-action)))
-;; projectile
-(use-package projectile
+  ("M-x" . counsel-M-x)
+  ("C-x C-f" . counsel-find-file)
+  ("C-x C-b" . ivy-switch-buffer)
+  ("C-x b" . ivy-switch-buffer)
+  ("C-c m" . counsel-imenu)
+  ("M-y" . counsel-yank-pop))
+;; counsel-projectile
+(use-package counsel-projectile
   :ensure t
   :init
-  (setq projectile-completion-system 'helm)
+  (setq projectile-completion-system 'ivy)
   (setq projectile-project-compilation-cmd "make ")
   (projectile-mode)
   (define-key projectile-mode-map (kbd "C-x p") 'projectile-command-map))
-;; helm-swoop
-(use-package helm-swoop
+;; swiper
+(use-package swiper
   :ensure t
-  :bind ("M-s w" . helm-swoop))
+  :bind ("M-s w" . swiper))
 
 ;; crux
 (use-package crux
@@ -134,23 +122,6 @@
 (use-package persp-projectile
   :after (perspective)
   :ensure t)
-;; helm-projectile
-(use-package helm-projectile
-  :ensure t
-  :config
-  (define-key projectile-mode-map [remap projectile-find-other-file] #'helm-projectile-find-other-file)
-  (define-key projectile-mode-map [remap projectile-find-file] #'helm-projectile-find-file)
-  (define-key projectile-mode-map [remap projectile-find-file-in-known-projects] #'helm-projectile-find-file-in-known-projects)
-  (define-key projectile-mode-map [remap projectile-find-file-dwim] #'helm-projectile-find-file-dwim)
-  (define-key projectile-mode-map [remap projectile-find-dir] #'helm-projectile-find-dir)
-  (define-key projectile-mode-map [remap projectile-recentf] #'helm-projectile-recentf)
-  (define-key projectile-mode-map [remap projectile-switch-to-buffer] #'helm-projectile-switch-to-buffer)
-  (define-key projectile-mode-map [remap projectile-grep] #'helm-projectile-grep)
-  (define-key projectile-mode-map [remap projectile-ack] #'helm-projectile-ack)
-  (define-key projectile-mode-map [remap projectile-ag] #'helm-projectile-ag)
-  (define-key projectile-mode-map [remap projectile-ripgrep] #'helm-projectile-rg)
-  (define-key projectile-mode-map [remap projectile-browse-dirty-projects] #'helm-projectile-browse-dirty-projects)
-  (helm-projectile-commander-bindings))
 
 ;; multiple-cursors
 (use-package multiple-cursors
@@ -245,9 +216,6 @@
   :hook (after-init . doom-modeline-init))
 
 ;;; Options
-;; helm-ag
-(use-package helm-ag
-  :bind ("M-s d" . helm-ag))
 ;; ace-jump-mode
 (use-package ace-jump-mode
   :bind ("M-s a" . ace-jump-mode))
@@ -259,10 +227,10 @@
   :init
   (setq google-translate-translation-directions-alist '(("en" . "vi")))
   :bind ("M-s t" . google-translate-smooth-translate))
+
 (defun develop-utils()
   "Utility packages ."
   (interactive)
-  (package-install 'helm-ag)
   (package-install 'ace-jump-mode)
   (package-install 'discover-my-major)
   (package-install 'markdown-mode)
@@ -271,7 +239,7 @@
 ;;: Hook
 ;; hide the minor modes
 (defvar hidden-minor-modes
-  '(global-whitespace-mode flycheck-mode which-key-mode projectile-mode git-gutter-mode helm-mode undo-tree-mode company-mode smartparens-mode indent-guide-mode volatile-highlights-mode anzu-mode symbol-overlay-mode))
+  '(global-whitespace-mode flycheck-mode which-key-mode projectile-mode git-gutter-mode undo-tree-mode company-mode smartparens-mode indent-guide-mode volatile-highlights-mode anzu-mode symbol-overlay-mode))
 (defun purge-minor-modes ()
   "Dont show on modeline."
   (dolist (x hidden-minor-modes nil)
@@ -301,6 +269,7 @@
   "Convert 4 spaces in buffer to tab."
   (interactive)
   (save-excursion (tabify (point-min) (point-max) nil)))
+
 (defun split-window-vertically-last-buffer (prefix)
   "Split window vertically.
 - PREFIX: default(1) is switch to last buffer"
@@ -435,13 +404,12 @@
  ;; If there is more than one, they won't work right.
  )
 
-;; .emacs
 (defun develop-dot()
   "Update 'user-init-file - .emacs."
   (interactive)
   (let (upstream)
     (setq upstream (make-temp-file ".emacs"))
-    (url-copy-file "https://raw.githubusercontent.com/TxGVNN/dots/master/.emacs" upstream t)
+    (url-copy-file "https://raw.githubusercontent.com/TxGVNN/dots/master/.emacs-counsel" upstream t)
     (diff user-init-file upstream)
     (other-window 1 nil)
     (message "Override %s by %s to update" user-init-file upstream)))
