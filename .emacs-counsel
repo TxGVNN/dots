@@ -452,59 +452,16 @@ Please install:
 
 ;; python-mode
 (defun develop-python()
-  "Python development."
+  "Python development.
+Please install:
+   pip install python-language-server"
   (interactive)
   (package-install 'python-mode)
-  (package-install 'company-jedi))
+  (package-install 'lsp-mode))
 (use-package python-mode
   :defer t
-  :init
-  (setq jedi:complete-on-dot t)
-  ;; Buffer-specific server options
-  (defun jedi-config:setup-server-args ()
-    (defmacro add-args (arg-list arg-name arg-value)
-      `(setq ,arg-list (append ,arg-list (list ,arg-name ,arg-value))))
-    (let ((project-root (projectile-project-root)))
-      (make-local-variable 'jedi:server-args)
-      (when project-root
-        (message (format "Adding system path: %s" project-root))
-        (add-args jedi:server-args "--sys-path" project-root))))
-  ;; And custom keybindings
-  (defun jedi-config:setup-keys ()
-    (local-set-key (kbd "M-.") 'jedi:goto-definition)
-    (local-set-key (kbd "M-,") 'jedi:goto-definition-pop-marker)
-    (local-set-key (kbd "M-?") 'jedi:show-doc))
-  ;; Update python environment
-  (defun py-venv-update()
-    (defvar venv-executables-dir "bin")
-    (when (getenv "VIRTUAL_ENV")
-      (setq python-environment-directory (file-name-base (getenv "VIRTUAL_ENV")))
-      (setq python-environment-default-root-name (file-name-directory (directory-file-name (getenv "VIRTUAL_ENV")))))
-    (setq venv-current-dir (file-name-as-directory (python-environment-root-path)))
-    ;; setup the python shell
-    (setq python-shell-virtualenv-path venv-current-dir)
-    ;; setup emacs exec-path
-    (add-to-list 'exec-path (concat venv-current-dir venv-executables-dir))
-    ;; setup the environment for subprocesses
-    (let ((path (concat venv-current-dir
-                        venv-executables-dir
-                        path-separator
-                        (getenv "PATH"))))
-      (setenv "PATH" path)
-      ;; keep eshell path in sync
-      (setq eshell-path-env path))
-    (setenv "VIRTUAL_ENV" venv-current-dir))
-  ;; Hooks
-  (if (package-installed-p 'company-jedi)
-      (progn
-        (add-hook 'python-mode-hook 'jedi-config:setup-server-args)
-        (add-hook 'python-mode-hook 'py-venv-update)
-        (add-hook 'python-mode-hook 'jedi:setup)
-        (add-hook 'python-mode-hook 'jedi-config:setup-keys)
-        (add-hook 'python-mode-hook '(lambda ()
-                                       (add-to-list 'company-backends
-                                                    '(company-jedi :with company-yasnippet))))))
-  )
+  :hook
+  (python-mode . (lambda() (lsp))))
 
 ;; php-mode
 (defun develop-php()
