@@ -92,22 +92,14 @@
 (use-package flycheck
   :ensure t
   :hook (prog-mode . flycheck-mode)
-  :config
-  (setq flycheck-highlighting-mode (quote columns)))
+  :config (setq flycheck-highlighting-mode (quote columns)))
 
 ;; magit
 (use-package magit
   :ensure t
-  :config
-  (define-key magit-file-mode-map (kbd "C-x g") nil)
-  :bind
-  ("C-x g v" . magit-status)
-  ("C-x g d" . magit-diff)
-  ("C-x g l" . magit-log)
-  ("C-x g a" . magit-log-all)
-  ("C-x g b" . magit-branch)
-  ("C-x g B" . magit-blame)
-  ("C-x g c" . magit-commit))
+  :init (global-magit-file-mode)
+  :config (define-key magit-file-mode-map (kbd "C-x g") nil)
+  :bind ("C-x g g" . magit-status))
 ;; git-gutter
 (use-package git-gutter
   :ensure t
@@ -176,8 +168,7 @@
 (use-package indent-guide
   :ensure t
   :hook (html-mode . indent-guide-mode)
-  :config
-  (set-face-foreground 'indent-guide-face "dimgray"))
+  :config (set-face-foreground 'indent-guide-face "dimgray"))
 ;; volatile-highlights
 (use-package volatile-highlights
   :ensure t
@@ -262,13 +253,14 @@
   (setq google-translate-translation-directions-alist '(("en" . "vi")))
   :bind ("M-s t" . google-translate-smooth-translate))
 (defun develop-utils()
-  "Utility packages ."
+  "Utility packages."
   (interactive)
-  (package-install 'helm-ag)
   (package-install 'ace-jump-mode)
   (package-install 'discover-my-major)
+  (package-install 'helm-ag)
+  (package-install 'interaction-log)
   (package-install 'markdown-mode)
-  (package-install 'interaction-log))
+  (package-install 'regex-tool))
 
 ;;: Hook
 ;; hide the minor modes
