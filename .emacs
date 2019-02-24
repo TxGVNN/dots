@@ -91,7 +91,9 @@
 ;; flycheck
 (use-package flycheck
   :ensure t
-  :hook (prog-mode . flycheck-mode))
+  :hook (prog-mode . flycheck-mode)
+  :config
+  (setq flycheck-highlighting-mode (quote columns)))
 
 ;; magit
 (use-package magit
