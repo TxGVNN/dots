@@ -176,7 +176,10 @@
 ;; anzu
 (use-package anzu
   :ensure t
-  :init (global-anzu-mode))
+  :init (global-anzu-mode)
+  :config
+  (define-key isearch-mode-map [remap isearch-query-replace]  #'anzu-isearch-query-replace)
+  (define-key isearch-mode-map [remap isearch-query-replace-regexp] #'anzu-isearch-query-replace-regexp))
 ;; symbol-overlay
 (use-package symbol-overlay
   :ensure t
@@ -227,14 +230,9 @@
   :config (doom-themes-org-config))
 ;; modeline
 (use-package doom-modeline
+  ;; Consider returning to smart-mode-line
   :ensure t
   :pin txgvnn
-  :init
-  (setq doom-modeline-buffer-file-name-style 'truncate-with-project)
-  (setq doom-modeline-minor-modes t)
-  (setq doom-modeline-lsp nil)
-  (setq doom-modeline-icon nil)
-  (setq doom-modeline-major-mode-icon nil)
   :hook (after-init . doom-modeline-init))
 
 ;;; Options
@@ -262,7 +260,12 @@
   (package-install 'markdown-mode)
   (package-install 'regex-tool))
 
-;;: Hook
+;;; Hook
+;; flymake on g-n & g-p bindings
+(add-hook 'flymake-mode-hook
+          '(lambda()
+             (setq next-error-function #'flymake-goto-next-error)
+             (setq previous-error-function #'flymake-goto-prev-error)))
 ;; hide the minor modes
 (defvar hidden-minor-modes
   '(global-whitespace-mode flycheck-mode which-key-mode projectile-mode git-gutter-mode helm-mode undo-tree-mode company-mode smartparens-mode indent-guide-mode volatile-highlights-mode anzu-mode symbol-overlay-mode))
@@ -352,6 +355,7 @@
     (write-file (concat "/sudo::" buffer-file-name))))
 
 (defalias 'yes-or-no-p 'y-or-n-p)
+(global-set-key (kbd "M-X") 'execute-extended-command)
 (global-set-key (kbd "C-x C-b") 'ibuffer)
 (global-set-key (kbd "C-x j") 'mode-line-other-buffer)
 (global-set-key (kbd "C-x m") 'compile)
@@ -379,6 +383,7 @@
 (global-set-key (kbd "C-h l") 'show-lossage)
 (global-set-key (kbd "M-z") 'zap-up-to-char)
 
+(setq auto-save-file-name-transforms `((".*" ,temporary-file-directory t)))
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -402,11 +407,12 @@
  '(kept-new-versions 6)
  '(menu-bar-mode nil)
  '(org-agenda-files (quote ("~/.gxt/org")))
+ '(org-babel-load-languages (quote ((emacs-lisp . t) (shell . t))))
  '(org-enforce-todo-dependencies t)
  '(org-todo-keywords
    (quote
     ((sequence "TODO(t)" "|" "DONE(d)")
-     (sequence "WAITING(w)" "|" "CANCELED(c)"))))
+     (sequence "BLOCKED(b)" "WAITING(w)" "|" "REJECTED(r)"))))
  '(read-quoted-char-radix 16)
  '(recentf-mode t)
  '(safe-local-variable-values
@@ -483,11 +489,13 @@ Please install:
    pip install python-language-server"
   (interactive)
   (package-install 'python-mode)
-  (package-install 'lsp-mode))
+  (package-install 'lsp-mode)
+  (package-install 'company-lsp))
 (use-package python-mode
   :defer t
   :hook
-  (python-mode . (lambda() (lsp))))
+  (python-mode . (lambda() (lsp)
+                   (setq company-backends (mapcar #'company-mode/backend-with-yas company-backends)))))
 
 ;; php-mode
 (defun develop-php()
@@ -546,23 +554,24 @@ tar -vxf jdt-language-server-latest.tar.gz -C ~/.emacs.d/eclipse.jdt.ls/server/"
   :init
   (add-hook 'java-mode-hook '
             (lambda () (require 'lsp-java) (lsp)
-              (add-to-list 'company-backends '(company-lsp :with company-yasnippet)))))
+              (setq company-backends (mapcar #'company-mode/backend-with-yas company-backends)))))
 
 ;; js-mode
 (defun develop-js()
   "JS development.
 npm i -g javascript-typescript-langserver"
   (interactive)
-  (package-install 'lsp-mode))
+  (package-install 'lsp-mode)
+  (package-install 'company-lsp))
 (use-package lsp-mode
   :defer t
   :config
   (require 'lsp)
   (require 'lsp-clients)
   :hook
-  (js-mode . (lambda()
-               (lsp)
-               (define-key js-mode-map (kbd "M-.") 'xref-find-definitions))))
+  (js-mode . (lambda() (lsp)
+               (define-key js-mode-map (kbd "M-.") 'xref-find-definitions)
+               (setq company-backends (mapcar #'company-mode/backend-with-yas company-backends)))))
 
 ;; k8s-mode
 (use-package k8s-mode
