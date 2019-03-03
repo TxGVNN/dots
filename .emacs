@@ -278,7 +278,7 @@
 
 ;;; Customize
 ;; defun
-(defun indent-buffer ()
+(defun indent-and-delete-trailing-whitespace ()
   "Indent and delete trailing whitespace in buffer."
   (interactive)
   (save-excursion (indent-region (point-min) (point-max) nil))
@@ -290,14 +290,6 @@
                     (buffer-file-name))))
     (when filename (kill-new filename)
           (message (format "Yanked %s" filename)))))
-(defun untabify-buffer ()
-  "Convert all tabs in buffer to multiple spaces."
-  (interactive)
-  (save-excursion (untabify (point-min) (point-max) nil)))
-(defun tabify-buffer ()
-  "Convert 4 spaces in buffer to tab."
-  (interactive)
-  (save-excursion (tabify (point-min) (point-max) nil)))
 (defun split-window-vertically-last-buffer (prefix)
   "Split window vertically.
 - PREFIX: default(1) is switch to last buffer"
@@ -365,14 +357,14 @@
 (global-set-key (kbd "M-s r") 'isearch-backward-regexp)
 (global-set-key (kbd "C-M-_") 'dabbrev-completion)
 (global-set-key (kbd "C-x x .") 'delete-trailing-whitespace)
-(global-set-key (kbd "C-x x ;") 'indent-buffer)
+(global-set-key (kbd "C-x x ;") 'indent-and-delete-trailing-whitespace)
 (global-set-key (kbd "C-x x b") 'rename-buffer)
 (global-set-key (kbd "C-x x g") 'org-agenda)
 (global-set-key (kbd "C-x x p") 'yank-file-path)
 (global-set-key (kbd "C-x x r") 'revert-buffer)
 (global-set-key (kbd "C-x x s") 'share-buffer-online)
-(global-set-key (kbd "C-x x t") 'untabify-buffer)
-(global-set-key (kbd "C-x x T") 'tabify-buffer)
+(global-set-key (kbd "C-x x t") 'untabify)
+(global-set-key (kbd "C-x x T") 'tabify)
 (global-set-key (kbd "C-x x M-w") 'copy-to-clipboard)
 (global-set-key (kbd "C-x x C-y") 'paste-from-clipboard)
 (global-set-key (kbd "C-x x C-s") 'sudo-save)
