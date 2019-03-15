@@ -8,7 +8,6 @@
 
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
-(add-to-list 'package-archives '("txgvnn" . "https://txgvnn.github.io/packages/"))
 (package-initialize)
 
 ;;; bootstrap `use-package'
@@ -17,40 +16,52 @@
   (package-install 'use-package))
 
 ;;; Packages
-;; helm
-(use-package helm
+;; ivy
+(use-package ivy
   :ensure t
-  :init
-  (require 'helm)
-  (require 'helm-config)
-  (setq helm-mode-line-string "")
-  (setq helm-split-window-inside-p t)
-  (setq helm-autoresize-max-height 0)
-  (setq helm-autoresize-min-height 25)
-  (helm-autoresize-mode)
-  (helm-mode)
+  :init (ivy-mode)
+  :bind ("C-x C-r" . ivy-resume)
+  :config
+  (setq ivy-extra-directories '("./"))
+  (setq ivy-on-del-error-function #'ignore)
+  (setq ivy-magic-tilde nil)
+  (setq ivy-magic-slash-non-match-action 'ivy-magic-slash-non-match-action))
+;; counsel
+(use-package counsel
+  :ensure t
   :bind
-  (("M-x" . helm-M-x)
-   ("C-x C-f" . helm-find-files)
-   ("C-x b" . helm-buffers-list)
-   ("C-c m" . helm-imenu)
-   ("M-y" . helm-show-kill-ring)
-   :map helm-map
-   ("<tab>" . helm-execute-persistent-action)
-   ("C-i" . helm-execute-persistent-action)
-   ("C-z" . helm-select-action)))
+  ("M-x" . counsel-M-x)
+  ("C-x C-f" . counsel-find-file)
+  ("C-c m" . counsel-imenu)
+  ("M-y" . counsel-yank-pop)
+  ("M-s d" . counsel-ag)
+  (:map counsel-find-file-map ("C-k" . counsel-up-directory))
+  :hook
+  (org-mode . (lambda() (define-key org-mode-map (kbd "C-c m") 'counsel-org-goto)))
+  :config
+  (setq counsel-yank-pop-separator
+        (concat "\n" (apply 'concat (make-list 50 "---")) "\n"))
+  (setq counsel-find-file-at-point t)
+  (use-package smex :ensure t))
+
+;; swiper
+(use-package swiper
+  :ensure t
+  :config
+  (defun swiper-at-point (sym)
+    "Use `swiper' to search for the symbol at point."
+    (interactive (list (thing-at-point 'symbol)))
+    (swiper sym))
+  :bind ("M-s w" . swiper-at-point))
+
 ;; projectile
 (use-package projectile
   :ensure t
-  :init
-  (setq projectile-completion-system 'helm)
+  :init (projectile-mode)
+  :config
   (setq projectile-project-compilation-cmd "make ")
-  (projectile-mode)
+  (setq projectile-completion-system 'ivy)
   (define-key projectile-mode-map (kbd "C-x p") 'projectile-command-map))
-;; helm-swoop
-(use-package helm-swoop
-  :ensure t
-  :bind ("M-s w" . helm-swoop))
 
 ;; crux
 (use-package crux
@@ -65,7 +76,6 @@
   ("C-c M-d" . crux-duplicate-and-comment-current-line-or-region)
   ("C-c D" . crux-delete-file-and-buffer)
   ("C-c f" . crux-recentf-find-file)
-  ("C-c k" . crux-kill-other-buffers)
   ("C-c r" . crux-rename-buffer-and-file)
   ("C-c t" . crux-visit-term-buffer)
   ("C-h RET" . crux-find-user-init-file)
@@ -128,23 +138,10 @@
 (use-package persp-projectile
   :after (perspective)
   :ensure t)
-;; helm-projectile
-(use-package helm-projectile
+(use-package counsel-projectile
   :ensure t
-  :config
-  (define-key projectile-mode-map [remap projectile-find-other-file] #'helm-projectile-find-other-file)
-  (define-key projectile-mode-map [remap projectile-find-file] #'helm-projectile-find-file)
-  (define-key projectile-mode-map [remap projectile-find-file-in-known-projects] #'helm-projectile-find-file-in-known-projects)
-  (define-key projectile-mode-map [remap projectile-find-file-dwim] #'helm-projectile-find-file-dwim)
-  (define-key projectile-mode-map [remap projectile-find-dir] #'helm-projectile-find-dir)
-  (define-key projectile-mode-map [remap projectile-recentf] #'helm-projectile-recentf)
-  (define-key projectile-mode-map [remap projectile-switch-to-buffer] #'helm-projectile-switch-to-buffer)
-  (define-key projectile-mode-map [remap projectile-grep] #'helm-projectile-grep)
-  (define-key projectile-mode-map [remap projectile-ack] #'helm-projectile-ack)
-  (define-key projectile-mode-map [remap projectile-ag] #'helm-projectile-ag)
-  (define-key projectile-mode-map [remap projectile-ripgrep] #'helm-projectile-rg)
-  (define-key projectile-mode-map [remap projectile-browse-dirty-projects] #'helm-projectile-browse-dirty-projects)
-  (helm-projectile-commander-bindings))
+  :bind (:map projectile-mode-map ("C-x p p" . projectile-persp-switch-project))
+  :init (counsel-projectile-mode))
 
 ;; multiple-cursors
 (use-package multiple-cursors
@@ -225,40 +222,29 @@
 ;; themes
 (use-package doom-themes
   :ensure t
-  :pin txgvnn
   :init (load-theme 'doom-one t)
   :config (doom-themes-org-config))
-;; modeline
-(use-package doom-modeline
-  ;; Consider returning to smart-mode-line
-  :ensure t
-  :pin txgvnn
-  :hook (after-init . doom-modeline-init))
 
 ;;; Options
-;; helm-ag
-(use-package helm-ag
-  :bind ("M-s d" . helm-ag))
 ;; ace-jump-mode
 (use-package ace-jump-mode
   :bind ("M-s a" . ace-jump-mode))
 ;; which keybindings in my major?
 (use-package discover-my-major
-  :bind ("C-h M" . discover-my-major))
+  :bind
+  ("C-h m" . discover-my-mode)
+  ("C-h M" . discover-my-major))
 ;; google-translate
 (use-package google-translate
   :init
   (setq google-translate-translation-directions-alist '(("en" . "vi")))
   :bind ("M-s t" . google-translate-smooth-translate))
+
 (defun develop-utils()
   "Utility packages."
   (interactive)
   (package-install 'ace-jump-mode)
-  (package-install 'discover-my-major)
-  (package-install 'helm-ag)
-  (package-install 'interaction-log)
-  (package-install 'markdown-mode)
-  (package-install 'regex-tool))
+  (package-install 'discover-my-major))
 
 ;;; Hook
 ;; flymake on g-n & g-p bindings
@@ -266,9 +252,10 @@
           '(lambda()
              (setq next-error-function #'flymake-goto-next-error)
              (setq previous-error-function #'flymake-goto-prev-error)))
+
 ;; hide the minor modes
 (defvar hidden-minor-modes
-  '(global-whitespace-mode flycheck-mode which-key-mode projectile-mode git-gutter-mode helm-mode undo-tree-mode company-mode smartparens-mode indent-guide-mode volatile-highlights-mode anzu-mode symbol-overlay-mode))
+  '(global-whitespace-mode ivy-mode which-key-mode projectile-mode git-gutter-mode undo-tree-mode company-mode smartparens-mode volatile-highlights-mode anzu-mode symbol-overlay-mode))
 (defun purge-minor-modes ()
   "Dont show on modeline."
   (dolist (x hidden-minor-modes nil)
@@ -331,20 +318,6 @@
   (if (display-graphic-p)
       (progn (clipboard-yank))
     (insert (shell-command-to-string "xsel -o -b"))))
-(defun show-lossage ()
-  "Show logssage."
-  (interactive)
-  (if (locate-library "interaction-log")
-      (progn
-        (load-library "interaction-log")
-        (call-interactively 'interaction-log-mode))
-    (view-lossage)))
-(defun sudo-save ()
-  "Save buffer with sudo."
-  (interactive)
-  (if (not buffer-file-name)
-      (write-file (concat "/sudo::" (helm-read-file-name "sudo-save to:")))
-    (write-file (concat "/sudo::" buffer-file-name))))
 
 (defalias 'yes-or-no-p 'y-or-n-p)
 (global-set-key (kbd "M-X") 'execute-extended-command)
@@ -359,7 +332,7 @@
 (global-set-key (kbd "C-x x .") 'delete-trailing-whitespace)
 (global-set-key (kbd "C-x x ;") 'indent-and-delete-trailing-whitespace)
 (global-set-key (kbd "C-x x b") 'rename-buffer)
-(global-set-key (kbd "C-x x g") 'org-agenda)
+(global-set-key (kbd "C-x x o") 'org-agenda)
 (global-set-key (kbd "C-x x p") 'yank-file-path)
 (global-set-key (kbd "C-x x r") 'revert-buffer)
 (global-set-key (kbd "C-x x s") 'share-buffer-online)
@@ -367,12 +340,10 @@
 (global-set-key (kbd "C-x x T") 'tabify)
 (global-set-key (kbd "C-x x M-w") 'copy-to-clipboard)
 (global-set-key (kbd "C-x x C-y") 'paste-from-clipboard)
-(global-set-key (kbd "C-x x C-s") 'sudo-save)
 (global-set-key (kbd "C-x 2") 'split-window-vertically-last-buffer)
 (global-set-key (kbd "C-x 3") 'split-window-horizontally-last-buffer)
 (global-set-key (kbd "C-x 4 C-v") 'scroll-other-window)
 (global-set-key (kbd "C-x 4 M-v") 'scroll-other-window-down)
-(global-set-key (kbd "C-h l") 'show-lossage)
 (global-set-key (kbd "M-z") 'zap-up-to-char)
 
 (setq auto-save-file-name-transforms `((".*" ,temporary-file-directory t)))
@@ -383,6 +354,7 @@
  ;; If there is more than one, they won't work right.
  '(Buffer-menu-use-header-line nil)
  '(auto-revert-check-vc-info t)
+ '(auto-revert-mode-text " ~")
  '(backup-by-copying t)
  '(backup-directory-alist (quote (("." . "~/.emacs.d/backup"))))
  '(browse-url-browser-function (quote eww-browse-url))
@@ -401,6 +373,7 @@
  '(org-agenda-files (quote ("~/.gxt/org")))
  '(org-babel-load-languages (quote ((emacs-lisp . t) (shell . t))))
  '(org-enforce-todo-dependencies t)
+ '(org-todo-keyword-faces (quote (("BLOCKED" . error) ("WAITING" . warning))))
  '(org-todo-keywords
    (quote
     ((sequence "TODO(t)" "|" "DONE(d)")
@@ -425,8 +398,111 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- )
+ '(ivy-virtual ((t (:inherit (quote italic) :foreground unspecified))))
+ '(vc-state-base ((t (:inherit font-lock-string-face :weight bold)))))
 
+;;; Modeline
+;;`file-local-name' is introduced in 25.2.2.
+(unless (fboundp 'file-local-name)
+  (defun file-local-name (file)
+    "Return the local name component of FILE."
+    (or (file-remote-p file 'localname) file)))
+
+(setq mode-line-position
+      '((line-number-mode ("(%l" (column-number-mode ",%c")))
+        (-4 ":%p" ) (")")))
+
+(defun modeline-project-root ()
+  "Get the path to the root of your project.
+Return `default-directory' if no project was found."
+  (file-local-name
+   (or
+    (when (featurep 'projectile)
+      (ignore-errors (projectile-project-root)))
+    default-directory)))
+
+(defun truncate-relative-path (path)
+  "Return the truncate of relative PATH."
+  (save-match-data
+    (let ((pos 0) matches)
+      (setq path (concat "/" path))
+      (while (string-match "\\(\/\\.?.\\)" path pos)
+        (setq matches (concat matches (match-string 0 path)))
+        (setq pos (match-end 0)))
+      (concat matches "/"))))
+
+(defun modeline-buffer-file-name ()
+  "Propertized variable `buffer-file-name'."
+  (let* ((buffer-file-truename (file-local-name (or (buffer-file-name (buffer-base-buffer)) "")))
+         (project-root (modeline-project-root)))
+    (concat
+     ;; project
+     (propertize
+      (concat (file-name-nondirectory (directory-file-name project-root)) "/")
+      'face '(:inherit font-lock-string-face :weight bold))
+     ;; relative path
+     (propertize
+      (when-let (relative-path (file-relative-name
+                                (or (file-name-directory buffer-file-truename) "./")
+                                project-root))
+        (if (string= relative-path "./") ""
+          (substring (truncate-relative-path relative-path) 1)))
+      'face 'font-lock-comment-face)
+     ;; file name
+     (propertize (file-name-nondirectory buffer-file-truename)
+                 'face 'mode-line-buffer-id))))
+
+(defvar-local modeline-buffer-info nil)
+(defvar mode-line-buffer-info
+  '(:propertize
+    (:eval (or modeline-buffer-info
+               (setq modeline-buffer-info
+                     (if buffer-file-name
+                         (modeline-buffer-file-name)
+                       (propertize "%b" 'face '(:weight bold))))))))
+(put 'mode-line-buffer-info 'risky-local-variable t)
+
+(defsubst modeline-column (pos)
+  "Get the column of the position `POS'."
+  (save-excursion (goto-char pos)
+                  (current-column)))
+(defun selection-info()
+  "Information about the current selection."
+  (when mark-active
+    (cl-destructuring-bind (beg . end)
+        (cons (region-beginning) (region-end))
+      (propertize
+       (let ((lines (count-lines beg (min end (point-max)))))
+         (concat (cond ((bound-and-true-p rectangle-mark-mode)
+                        (let ((cols (abs (- (modeline-column end)
+                                            (modeline-column beg)))))
+                          (format "(%dx%d)" lines cols)))
+                       ((> lines 1)
+                        (format "(%d,%d)" lines (- end beg)))
+                       ((format "(%d,%d)" 0 (- end beg))))))
+       'face 'font-lock-warning-face))))
+
+(setq-default mode-line-format
+              '("%e"
+                mode-line-front-space
+                mode-line-mule-info
+                mode-line-client
+                mode-line-modified
+                mode-line-remote
+                ;; mode-line-frame-identification -- this is for text-mode emacs only
+                " "
+                mode-line-buffer-info
+                ;; mode-line-buffer-identification
+                " "
+                mode-line-position
+                (:eval (selection-info))
+                (vc-mode vc-mode)
+                " "
+                mode-line-modes
+                mode-line-misc-info
+                mode-line-end-spaces))
+
+;;; Languages
 ;; .emacs
 (defun develop-dot()
   "Update 'user-init-file - .emacs."
