@@ -1,5 +1,4 @@
 ;;; GNUS settings
-;; (use-package ebdb) for contacts
 ;; (STATELESS BEGIN)
 (use-package smtpmail-multi
   :ensure t
@@ -13,8 +12,7 @@
   (require 'ebdb-gnus))
 (use-package company-ebdb
   :ensure t
-  :config
-  (add-to-list 'company-backends 'company-ebdb))
+  :config (add-to-list 'company-backends 'company-ebdb))
 
 (add-hook 'gnus-group-mode-hook 'gnus-topic-mode)
 (setq gnus-large-newsgroup 50)

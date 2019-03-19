@@ -20,7 +20,9 @@
 (use-package ivy
   :ensure t
   :init (ivy-mode)
-  :bind ("C-x C-r" . ivy-resume)
+  :bind
+  ("C-x C-r" . ivy-resume)
+  ("C-x b" . ivy-switch-buffer)
   :config
   (setq ivy-extra-directories '("./"))
   (setq ivy-on-del-error-function #'ignore)
@@ -31,9 +33,11 @@
   :ensure t
   :bind
   ("M-x" . counsel-M-x)
+  ("M-X" . execute-extended-command)
   ("C-x C-f" . counsel-find-file)
   ("C-c m" . counsel-imenu)
   ("M-y" . counsel-yank-pop)
+  ("M-Y" . yank-pop)
   ("M-s d" . counsel-ag)
   (:map counsel-find-file-map ("C-k" . counsel-up-directory))
   :hook
@@ -54,14 +58,10 @@
     (swiper sym))
   :bind ("M-s w" . swiper-at-point))
 
-;; projectile
-(use-package projectile
-  :ensure t
-  :init (projectile-mode)
-  :config
-  (setq projectile-project-compilation-cmd "make ")
-  (setq projectile-completion-system 'ivy)
-  (define-key projectile-mode-map (kbd "C-x p") 'projectile-command-map))
+;; ace-jump-mode
+(use-package ace-jump-mode
+  :bind ("M-g a" . ace-jump-mode)
+  :bind ("M-g l" . ace-jump-line-mode))
 
 ;; crux
 (use-package crux
@@ -107,9 +107,11 @@
 ;; magit
 (use-package magit
   :ensure t
-  :init (global-magit-file-mode)
   :config (define-key magit-file-mode-map (kbd "C-x g") nil)
-  :bind ("C-x g g" . magit-status))
+  :bind
+  ("C-x g g" . magit-status)
+  ("C-x M-g" . magit-dispatch)
+  ("C-c M-g" . magit-file-dispatch))
 ;; git-gutter
 (use-package git-gutter
   :ensure t
@@ -126,7 +128,17 @@
   :ensure t
   :init (global-set-key (kbd "C-x o") 'ace-window)
   :config (setq aw-scope (quote frame)))
-;; layout
+
+;; projectile
+(use-package projectile
+  :ensure t
+  :init (projectile-mode)
+  :config
+  (setq projectile-project-compilation-cmd "make ")
+  (setq projectile-completion-system 'ivy)
+  (define-key projectile-mode-map (kbd "C-x p") 'projectile-command-map))
+
+;; perspective
 (use-package perspective
   :ensure t
   :init
@@ -135,13 +147,11 @@
   :config
   (define-key perspective-map (kbd "z") 'perspective-map)
   (persp-mode))
+;; pers-perspective
 (use-package persp-projectile
   :after (perspective)
-  :ensure t)
-(use-package counsel-projectile
   :ensure t
-  :bind (:map projectile-mode-map ("C-x p p" . projectile-persp-switch-project))
-  :init (counsel-projectile-mode))
+  :bind (:map projectile-mode-map ("C-x p p" . projectile-persp-switch-project)))
 
 ;; multiple-cursors
 (use-package multiple-cursors
@@ -226,9 +236,6 @@
   :config (doom-themes-org-config))
 
 ;;; Options
-;; ace-jump-mode
-(use-package ace-jump-mode
-  :bind ("M-s a" . ace-jump-mode))
 ;; which keybindings in my major?
 (use-package discover-my-major
   :bind
@@ -243,15 +250,18 @@
 (defun develop-utils()
   "Utility packages."
   (interactive)
-  (package-install 'ace-jump-mode)
+  (package-install 'google-translate)
   (package-install 'discover-my-major))
 
-;;; Hook
+;;; Hooks
 ;; flymake on g-n & g-p bindings
 (add-hook 'flymake-mode-hook
           '(lambda()
              (setq next-error-function #'flymake-goto-next-error)
              (setq previous-error-function #'flymake-goto-prev-error)))
+;; Apply .dir-locals to major-mode after load .dir-local
+;; https://stackoverflow.com/questions/19280851/how-to-keep-dir-local-variables-when-switching-major-modes
+(add-hook 'after-change-major-mode-hook 'hack-local-variables)
 
 ;; hide the minor modes
 (defvar hidden-minor-modes
@@ -320,7 +330,6 @@
     (insert (shell-command-to-string "xsel -o -b"))))
 
 (defalias 'yes-or-no-p 'y-or-n-p)
-(global-set-key (kbd "M-X") 'execute-extended-command)
 (global-set-key (kbd "C-x C-b") 'ibuffer)
 (global-set-key (kbd "C-x j") 'mode-line-other-buffer)
 (global-set-key (kbd "C-x m") 'compile)
@@ -398,7 +407,6 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(ivy-virtual ((t (:inherit (quote italic) :foreground unspecified))))
  '(vc-state-base ((t (:inherit font-lock-string-face :weight bold)))))
 
 ;;; Modeline
@@ -649,7 +657,7 @@ npm i -g javascript-typescript-langserver"
   :hook (k8s-mode . yas-minor-mode))
 
 ;; keep personal settings not in the .emacs file
-(let ((personal-settings "~/.personal.el"))
+(let ((personal-settings "~/.emacs.d/personal.el"))
   (when (file-exists-p personal-settings)
     (load-file personal-settings)))
 
