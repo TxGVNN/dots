@@ -150,8 +150,13 @@
 ;; pers-perspective
 (use-package persp-projectile
   :after (perspective)
+  :ensure t)
+
+;; counsel-projectile
+(use-package counsel-projectile
   :ensure t
-  :bind (:map projectile-mode-map ("C-x p p" . projectile-persp-switch-project)))
+  :bind (:map projectile-mode-map ("C-x p p" . projectile-persp-switch-project))
+  :init (counsel-projectile-mode))
 
 ;; multiple-cursors
 (use-package multiple-cursors
@@ -407,6 +412,7 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(ivy-virtual ((t (:inherit unspecified :foreground unspecified))))
  '(vc-state-base ((t (:inherit font-lock-string-face :weight bold)))))
 
 ;;; Modeline
