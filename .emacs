@@ -342,6 +342,7 @@
 (global-set-key (kbd "M-s g") 'rgrep)
 (global-set-key (kbd "M-s s") 'isearch-forward-regexp)
 (global-set-key (kbd "M-s r") 'isearch-backward-regexp)
+(global-set-key (kbd "M-/") 'hippie-expand)
 (global-set-key (kbd "C-M-_") 'dabbrev-completion)
 (global-set-key (kbd "C-x x .") 'delete-trailing-whitespace)
 (global-set-key (kbd "C-x x ;") 'indent-and-delete-trailing-whitespace)
@@ -360,7 +361,9 @@
 (global-set-key (kbd "C-x 4 M-v") 'scroll-other-window-down)
 (global-set-key (kbd "M-z") 'zap-up-to-char)
 
-(setq auto-save-file-name-transforms `((".*" ,temporary-file-directory t)))
+(setq auto-save-file-name-transforms `((".*" ,temporary-file-directory t))
+      backup-directory-alist `(("." . ,(concat user-emacs-directory "backups")))
+      tramp-auto-save-directory `,(concat user-emacs-directory "backups"))
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -370,7 +373,6 @@
  '(auto-revert-check-vc-info t)
  '(auto-revert-mode-text " ~")
  '(backup-by-copying t)
- '(backup-directory-alist (quote (("." . "~/.emacs.d/backup"))))
  '(browse-url-browser-function (quote eww-browse-url))
  '(column-number-mode t)
  '(default-input-method "vietnamese-telex")
@@ -404,7 +406,6 @@
  '(tab-stop-list (quote (4 8 12 16 20 24 28 32 36)))
  '(tab-width 4)
  '(tool-bar-mode nil)
- '(tramp-auto-save-directory "~/.emacs.d/backup")
  '(version-control t)
  '(whitespace-style (quote (tabs empty indentation big-indent tab-mark))))
 (custom-set-faces
