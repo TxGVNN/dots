@@ -60,6 +60,7 @@
 
 ;; ace-jump-mode
 (use-package ace-jump-mode
+  :ensure t
   :bind ("M-g a" . ace-jump-mode)
   :bind ("M-g l" . ace-jump-line-mode))
 
@@ -93,11 +94,6 @@
   ("M-g <up>" . move-text-up)
   ("M-g <down>" . move-text-down))
 
-;; which-key
-(use-package which-key
-  :ensure t
-  :init (which-key-mode))
-
 ;; flycheck
 (use-package flycheck
   :ensure t
@@ -117,6 +113,7 @@
   :ensure t
   :init (global-git-gutter-mode)
   (add-hook 'magit-post-refresh-hook #'git-gutter:update-all-windows)
+  :config (setq git-gutter:lighter "")
   :bind
   ("C-x g p" . git-gutter:previous-hunk)
   ("C-x g n" . git-gutter:next-hunk)
@@ -132,7 +129,10 @@
 ;; projectile
 (use-package projectile
   :ensure t
-  :init (projectile-mode)
+  :init
+  (setq projectile-dynamic-mode-line nil)
+  (setq projectile-mode-line-prefix "")
+  (projectile-mode)
   :config
   (setq projectile-project-compilation-cmd "make ")
   (setq projectile-completion-system 'ivy)
@@ -176,11 +176,6 @@
 (use-package rainbow-delimiters
   :ensure t
   :hook (prog-mode . rainbow-delimiters-mode))
-;; indent-guide
-(use-package indent-guide
-  :ensure t
-  :hook (html-mode . indent-guide-mode)
-  :config (set-face-foreground 'indent-guide-face "dimgray"))
 ;; volatile-highlights
 (use-package volatile-highlights
   :ensure t
@@ -190,6 +185,7 @@
   :ensure t
   :init (global-anzu-mode)
   :config
+  (setq anzu-mode-lighter "")
   (define-key isearch-mode-map [remap isearch-query-replace]  #'anzu-isearch-query-replace)
   (define-key isearch-mode-map [remap isearch-query-replace-regexp] #'anzu-isearch-query-replace-regexp))
 ;; symbol-overlay
@@ -217,6 +213,7 @@
   :ensure t
   :init (global-company-mode)
   :config
+  (setq company-lighter-base "@")
   (defun company-mode/backend-with-yas (backend)
     (if (and (listp backend) (member 'company-yasnippet backend)) backend
       (append (if (consp backend) backend (list backend))
@@ -228,6 +225,7 @@
 (use-package undo-tree
   :ensure t
   :init
+  (setq undo-tree-mode-lighter "")
   (setq undo-tree-visualizer-timestamps t)
   (setq undo-tree-history-directory-alist
         `((".*" . ,temporary-file-directory)))
@@ -241,11 +239,10 @@
   :config (doom-themes-org-config))
 
 ;;; Options
-;; which keybindings in my major?
-(use-package discover-my-major
-  :bind
-  ("C-h m" . discover-my-mode)
-  ("C-h M" . discover-my-major))
+;; which-key
+(cond ((package-installed-p 'which-key)
+       (setq which-key-lighter "")
+       (which-key-mode)))
 ;; google-translate
 (use-package google-translate
   :init
@@ -255,8 +252,7 @@
 (defun develop-utils()
   "Utility packages."
   (interactive)
-  (package-install 'google-translate)
-  (package-install 'discover-my-major))
+  (package-install 'google-translate))
 
 ;;; Hooks
 ;; flymake on g-n & g-p bindings
@@ -270,7 +266,7 @@
 
 ;; hide the minor modes
 (defvar hidden-minor-modes
-  '(global-whitespace-mode ivy-mode which-key-mode projectile-mode git-gutter-mode undo-tree-mode company-mode smartparens-mode volatile-highlights-mode anzu-mode symbol-overlay-mode))
+  '(global-whitespace-mode ivy-mode smartparens-mode volatile-highlights-mode symbol-overlay-mode))
 (defun purge-minor-modes ()
   "Dont show on modeline."
   (dolist (x hidden-minor-modes nil)
@@ -645,6 +641,7 @@ tar -vxf jdt-language-server-latest.tar.gz -C ~/.emacs.d/eclipse.jdt.ls/server/"
 npm i -g javascript-typescript-langserver"
   (interactive)
   (package-install 'lsp-mode)
+  (package-install 'indent-guide)
   (package-install 'company-lsp))
 (use-package lsp-mode
   :defer t
@@ -655,6 +652,10 @@ npm i -g javascript-typescript-langserver"
   (js-mode . (lambda() (lsp)
                (define-key js-mode-map (kbd "M-.") 'xref-find-definitions)
                (setq company-backends (mapcar #'company-mode/backend-with-yas company-backends)))))
+(use-package indent-guide
+  :defer t
+  :hook (html-mode . indent-guide-mode)
+  :config (set-face-foreground 'indent-guide-face "dimgray"))
 
 ;; k8s-mode
 (use-package k8s-mode

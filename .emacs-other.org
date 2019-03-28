@@ -79,7 +79,6 @@
 #+END_SRC
 
 * Others
-** 
 #+BEGIN_SRC
 (defun show-lossage ()
   "Show logssage."
@@ -91,5 +90,4 @@
     (view-lossage)))
 
 (global-set-key (kbd "C-h l") 'show-lossage)
-
 #+END_SRC
