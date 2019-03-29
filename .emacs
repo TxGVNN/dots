@@ -58,11 +58,11 @@
     (swiper sym))
   :bind ("M-s w" . swiper-at-point))
 
-;; ace-jump-mode
-(use-package ace-jump-mode
+;; avy
+(use-package avy
   :ensure t
-  :bind ("M-g a" . ace-jump-mode)
-  :bind ("M-g l" . ace-jump-line-mode))
+  :bind ("M-g a" . avy-goto-char)
+  :bind ("M-g l" . avy-goto-line))
 
 ;; crux
 (use-package crux

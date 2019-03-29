@@ -56,7 +56,7 @@
   :pin emacs24
   :ensure t
   :init
-  (setq projectile-completion-system 'helm)
+  ;; (setq projectile-completion-system 'ivy)
   (setq projectile-project-compilation-cmd "make ")
   (projectile-mode)
   (define-key projectile-mode-map (kbd "C-x p") 'projectile-command-map))
