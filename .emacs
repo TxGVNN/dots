@@ -76,7 +76,6 @@
   ("C-c d" . crux-duplicate-current-line-or-region)
   ("C-c M-d" . crux-duplicate-and-comment-current-line-or-region)
   ("C-c D" . crux-delete-file-and-buffer)
-  ("C-c f" . crux-recentf-find-file)
   ("C-c r" . crux-rename-buffer-and-file)
   ("C-c t" . crux-visit-term-buffer)
   ("C-h RET" . crux-find-user-init-file)
@@ -391,7 +390,6 @@
     ((sequence "TODO(t)" "|" "DONE(d)")
      (sequence "BLOCKED(b)" "WAITING(w)" "|" "REJECTED(r)"))))
  '(read-quoted-char-radix 16)
- '(recentf-mode t)
  '(safe-local-variable-values
    (quote
     ((eval setq default-directory
