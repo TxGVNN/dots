@@ -488,7 +488,7 @@ Return `default-directory' if no project was found."
                         (let ((cols (abs (- (modeline-column end)
                                             (modeline-column beg)))))
                           (format "(%dx%d)" lines cols)))
-                       ((> lines 1)
+                       ((> lines 0)
                         (format "(%d,%d)" lines (- end beg)))
                        ((format "(%d,%d)" 0 (- end beg))))))
        'face 'font-lock-warning-face))))
