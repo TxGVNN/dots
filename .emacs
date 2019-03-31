@@ -472,6 +472,10 @@ Return `default-directory' if no project was found."
                          (modeline-buffer-file-name)
                        (propertize "%b" 'face '(:weight bold))))))))
 (put 'mode-line-buffer-info 'risky-local-variable t)
+;; Don't know yet why Emacs 26 doesn't need
+(unless (>= emacs-major-version 26)
+  (add-hook 'after-save-hook '(lambda () (setq modeline-buffer-info nil)))
+  (advice-add 'rename-buffer :after '(lambda (&rest _) (setq modeline-buffer-info nil))))
 
 (defsubst modeline-column (pos)
   "Get the column of the position `POS'."
