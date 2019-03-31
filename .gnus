@@ -1,4 +1,10 @@
-;;; GNUS settings
+;;; .gnus --- GNUS Settings
+
+;;; Commentary:
+;; autoload by gnus
+
+;;; Code:
+
 ;; (STATELESS BEGIN)
 (use-package smtpmail-multi
   :ensure t
@@ -108,24 +114,20 @@
 (setq message-alternative-emails
       (regexp-opt email-addresses))
 ;;; setup message-dont-reply-to-names
-(mapc
- (lambda(arg)
-   (when (string-match "\\(.+?\\)\<\\(.+?\\)\>" arg)
-     (add-to-list 'message-dont-reply-to-names (match-string 2 arg)))
-   ) email-addresses)
+(mapc (lambda(arg)
+        (when (string-match "\\(.+?\\)\<\\(.+?\\)\>" arg)
+          (add-to-list 'message-dont-reply-to-names (match-string 2 arg)))
+        ) email-addresses)
 
-;; Gnus from manipulation
-(setq gnus-from-selected-index 0)
-(defun gnus-loop-from ()
+(defun gnus-message-mail-switching ()
+  "Switch to another account."
   (interactive)
-  (setq gnus-article-current-point (point))
-  (goto-char (point-min))
-  (if (eq gnus-from-selected-index (length email-addresses))
-      (setq gnus-from-selected-index 0) nil)
-  (while (re-search-forward "^From:.*$" nil t)
-    (replace-match (concat "From: " (nth gnus-from-selected-index email-addresses))))
-  (goto-char gnus-article-current-point)
-  (setq gnus-from-selected-index (+ gnus-from-selected-index 1)))
+  (message-kill-buffer)
+  (gnus-summary-mail-other-window 1))
 
-(define-key message-mode-map (kbd "C-c f") 'gnus-loop-from)
+(define-key message-mode-map (kbd "C-c f") 'gnus-message-mail-switching)
 ;; (STATELESS END)
+
+(provide '.gnus)
+
+;;; .gnus ends here
