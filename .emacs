@@ -27,8 +27,7 @@
   (setq ivy-extra-directories '("./"))
   (setq ivy-on-del-error-function #'ignore)
   (setq ivy-magic-tilde nil)
-  (setq ivy-magic-slash-non-match-action 'ivy-magic-slash-non-match-action)
-  (set-face-attribute 'ivy-virtual nil :inherit 'unspecified :foreground 'unspecified))
+  (setq ivy-magic-slash-non-match-action 'ivy-magic-slash-non-match-action))
 ;; counsel
 (use-package counsel
   :ensure t
@@ -139,6 +138,11 @@
   (setq projectile-project-compilation-cmd "make ")
   (setq projectile-completion-system 'ivy)
   (define-key projectile-mode-map (kbd "C-x p") 'projectile-command-map))
+;; counsel-projectile
+(use-package counsel-projectile
+  :ensure t
+  :after (projectile)
+  :init (counsel-projectile-mode))
 
 ;; perspective
 (use-package perspective
@@ -149,16 +153,6 @@
   :config
   (define-key perspective-map (kbd "z") 'perspective-map)
   (persp-mode))
-;; pers-perspective
-(use-package persp-projectile
-  :after (perspective)
-  :ensure t)
-
-;; counsel-projectile
-(use-package counsel-projectile
-  :ensure t
-  :bind (:map projectile-mode-map ("C-x p p" . projectile-persp-switch-project))
-  :init (counsel-projectile-mode))
 
 ;; multiple-cursors
 (use-package multiple-cursors
@@ -197,7 +191,6 @@
   (define-key symbol-overlay-map (kbd "N") 'symbol-overlay-switch-forward)
   (define-key symbol-overlay-map (kbd "P") 'symbol-overlay-switch-backward)
   (define-key symbol-overlay-map (kbd "c") 'symbol-overlay-remove-all)
-  (set-face-attribute 'symbol-overlay-default-face nil :inherit 'bold :underline t)
   :bind ("M-s H" . symbol-overlay-put)
   :hook (prog-mode . symbol-overlay-mode))
 
@@ -411,6 +404,8 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(ivy-virtual ((t (:inherit unspecified :foreground unspecified))))
+ '(symbol-overlay-default-face ((t (:inherit bold :underline t))))
  '(vc-state-base ((t (:inherit font-lock-string-face :weight bold)))))
 
 ;;; Modeline
@@ -640,6 +635,16 @@ tar -vxf jdt-language-server-latest.tar.gz -C ~/.emacs.d/eclipse.jdt.ls/server/"
             (lambda () (require 'lsp-java) (lsp)
               (setq company-backends (mapcar #'company-mode/backend-with-yas company-backends)))))
 
+;; html-mode
+(defun develop-html()
+  "HTML development."
+  (interactive)
+  (package-install 'indent-guide))
+(use-package indent-guide
+  :defer t
+  :hook (html-mode . indent-guide-mode)
+  :config (set-face-foreground 'indent-guide-face "dimgray"))
+
 ;; js-mode
 (defun develop-js()
   "JS development.
@@ -657,10 +662,6 @@ npm i -g javascript-typescript-langserver"
   (js-mode . (lambda() (lsp)
                (define-key js-mode-map (kbd "M-.") 'xref-find-definitions)
                (setq company-backends (mapcar #'company-mode/backend-with-yas company-backends)))))
-(use-package indent-guide
-  :defer t
-  :hook (html-mode . indent-guide-mode)
-  :config (set-face-foreground 'indent-guide-face "dimgray"))
 
 ;; k8s-mode
 (use-package k8s-mode
