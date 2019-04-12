@@ -10,12 +10,12 @@
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
 (package-initialize)
 
-;;; bootstrap `use-package'
+;;; BOOTSTRAP `use-package'
 (unless (package-installed-p 'use-package)
   (package-refresh-contents)
   (package-install 'use-package))
 
-;;; Packages
+;;; PACKAGES
 ;; ivy
 (use-package ivy
   :ensure t
@@ -27,7 +27,20 @@
   (setq ivy-extra-directories '("./"))
   (setq ivy-on-del-error-function #'ignore)
   (setq ivy-magic-tilde nil)
-  (setq ivy-magic-slash-non-match-action 'ivy-magic-slash-non-match-action))
+  (setq ivy-magic-slash-non-match-action 'ivy-magic-slash-non-match-action)
+  ;; Can not exit minibuffer - https://github.com/abo-abo/swiper/issues/1953
+  (defvar ivy-recursive-restore-in-progress nil)
+  (defun ivy-note-when-inside-recursive-restore (orig-fun &rest args)
+    (let ((ivy-recursive-restore-in-progress t))
+      (apply orig-fun args)))
+  (defun ivy-no-read-while-exiting-recursion (orig-fun &rest args)
+    (if ivy-recursive-restore-in-progress
+        (error "Cannot use `ivy-read' while restoring recursive state")
+      (apply orig-fun args)))
+  (advice-add 'ivy-recursive-restore :around
+              #'ivy-note-when-inside-recursive-restore)
+  (advice-add 'ivy-read :around #'ivy-no-read-while-exiting-recursion))
+
 ;; counsel
 (use-package counsel
   :ensure t
@@ -44,7 +57,7 @@
   (org-mode . (lambda() (define-key org-mode-map (kbd "C-c m") 'counsel-org-goto)))
   :config
   (setq counsel-yank-pop-separator
-        (concat "\n" (apply 'concat (make-list 50 "---")) "\n"))
+        (concat "\n" (apply 'concat (make-list 25 "---")) "\n"))
   (setq counsel-find-file-at-point t)
   (use-package smex :ensure t))
 
@@ -150,9 +163,9 @@
   :init
   (setq persp-mode-prefix-key (kbd "C-z"))
   (setq persp-initial-frame-name "0")
+  (persp-mode)
   :config
-  (define-key perspective-map (kbd "z") 'perspective-map)
-  (persp-mode))
+  (define-key perspective-map (kbd "z") 'perspective-map))
 
 ;; multiple-cursors
 (use-package multiple-cursors
@@ -234,7 +247,7 @@
   :init (load-theme 'doom-one t)
   :config (doom-themes-org-config))
 
-;;; Options
+;;; OPTIONS
 ;; which-key
 (cond ((package-installed-p 'which-key)
        (setq which-key-lighter "")
@@ -250,7 +263,7 @@
   (interactive)
   (package-install 'google-translate))
 
-;;; Hooks
+;;; HOOKS
 ;; flymake on g-n & g-p bindings
 (add-hook 'flymake-mode-hook
           '(lambda()
@@ -270,7 +283,7 @@
       (when trg (setcar trg "")))))
 (add-hook 'after-change-major-mode-hook 'purge-minor-modes)
 
-;;; Customize
+;;; CUSTOMIZE
 ;; defun
 (defun indent-and-delete-trailing-whitespace ()
   "Indent and delete trailing whitespace in buffer."
@@ -408,7 +421,7 @@
  '(symbol-overlay-default-face ((t (:inherit bold :underline t))))
  '(vc-state-base ((t (:inherit font-lock-string-face :weight bold)))))
 
-;;; Modeline
+;;; MODELINE
 ;;`file-local-name' is introduced in 25.2.2.
 (unless (fboundp 'file-local-name)
   (defun file-local-name (file)
@@ -513,7 +526,7 @@ Return `default-directory' if no project was found."
                 mode-line-misc-info
                 mode-line-end-spaces))
 
-;;; Languages
+;;; LANGUAGES
 ;; .emacs
 (defun develop-dot()
   "Update 'user-init-file - .emacs."
@@ -532,9 +545,6 @@ Return `default-directory' if no project was found."
   (setq c-basic-offset 4)
   (setq c-indent-level 4))
 (add-hook 'c-mode-common-hook 'my-c-mode-common-hook)
-
-;; mutt support.
-(setq auto-mode-alist (append '(("/tmp/mutt.*" . mail-mode)) auto-mode-alist))
 
 ;; go-mode
 (defun develop-go()
@@ -663,12 +673,79 @@ npm i -g javascript-typescript-langserver"
                (define-key js-mode-map (kbd "M-.") 'xref-find-definitions)
                (setq company-backends (mapcar #'company-mode/backend-with-yas company-backends)))))
 
-;; k8s-mode
-(use-package k8s-mode
-  :defer t
-  :config
-  (setq k8s-search-documentation-browser-function 'browse-url-firefox)
-  :hook (k8s-mode . yas-minor-mode))
+;;; PATCHING
+(with-eval-after-load 'perspective
+  (defun ivy-switch-to-buffer ()
+    "Switch to another buffer in the CURRENT PERSP."
+    (interactive)
+    (if (not (bound-and-true-p persp-mode))
+        (ivy-switch-buffer)
+      (setq this-command #'ivy-switch-buffer)
+      (ivy-read "Switch to buffer: " (remove nil (mapcar 'buffer-name (persp-buffers (persp-curr))))
+                :keymap ivy-switch-buffer-map
+                :preselect (buffer-name (other-buffer (current-buffer)))
+                :action #'ivy--switch-buffer-action
+                :matcher #'ivy--switch-buffer-matcher
+                :caller 'ivy-switch-buffer)))
+  (define-key ivy-mode-map (kbd "C-x b") 'ivy-switch-to-buffer)
+
+  (defun ivy-switch-buffer-with-persp (&optional _)
+    "Clone from persp-switch-to-buffer."
+    (interactive)
+    (let (buffer)
+      (setq buffer (window-normalize-buffer-to-switch-to (read-buffer-to-switch "Switch to buffer: ")))
+      (if (memq buffer (persp-buffers (persp-curr)))
+          (switch-to-buffer buffer)
+        (let ((other-persp (persp-buffer-in-other-p buffer)))
+          (when (eq (car-safe other-persp) (selected-frame))
+            (persp-switch (cdr other-persp)))
+          (switch-to-buffer buffer)))))
+  (ivy-add-actions
+   'ivy-switch-buffer
+   '(("p" ivy-switch-buffer-with-persp "persp-switch-to-buffer")))
+
+  ;; find file with perspective and projectile
+  (defun counsel-find-file-action (x)
+    "Find file X."
+    (with-ivy-window
+      (if (and counsel-find-file-speedup-remote
+               (file-remote-p ivy--directory))
+          (let ((find-file-hook nil))
+            (find-file (expand-file-name x ivy--directory)))
+        (if (and (bound-and-true-p persp-mode) (bound-and-true-p projectile-mode))
+            (let (project-name (project-name-root (projectile-project-root (expand-file-name x))))
+              (when project-name-root
+                (setq project-name (funcall projectile-project-name-function project-name-root))
+                (persp-switch project-name))))
+        (find-file (expand-file-name x ivy--directory)))))
+
+  ;; counsel-projectile with perspective
+  (if (fboundp 'counsel-projectile)
+      (defun counsel-projectile-switch-project-action (project)
+        "Jump to a file or buffer in PROJECT."
+        (if (bound-and-true-p persp-mode)
+            (let* ((projectile-switch-project-action
+                    (lambda ()
+                      (counsel-projectile ivy-current-prefix-arg)))
+                   (name (or projectile-project-name
+                             (funcall projectile-project-name-function project)))
+                   (persp (gethash name (perspectives-hash))))
+              (cond
+               ;; project-specific perspective already exists
+               ((and persp (not (equal persp (persp-curr))))
+                (persp-switch name))
+               ;; persp exists but not match with projectile-name
+               ((and persp (not (equal persp name)))
+                (persp-switch name)
+                (counsel-projectile-switch-project-by-name project))
+               ;; project-specific perspective doesn't exist
+               ((not persp)
+                (persp-switch name)
+                (counsel-projectile-switch-project-by-name project))))
+          (let ((projectile-switch-project-action
+                 (lambda ()
+                   (counsel-projectile ivy-current-prefix-arg))))
+            (counsel-projectile-switch-project-by-name project))))))
 
 ;; keep personal settings not in the .emacs file
 (let ((personal-settings "~/.emacs.d/personal.el"))
