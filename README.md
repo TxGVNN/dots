@@ -30,8 +30,3 @@ Setup `.authinfo.gpg`(by gnupg) instead of `.authinfo` if you wanna to protect y
 ```
 wget -O ~/.screenrc https://raw.githubusercontent.com/txgvnn/dots/master/.screenrc
 ```
-
-## Vim
-```
-wget -O ~/.vimrc https://raw.githubusercontent.com/txgvnn/dots/master/.vimrc
-```

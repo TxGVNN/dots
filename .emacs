@@ -311,15 +311,6 @@
   (split-window-horizontally)
   (other-window 1 nil)
   (if (= prefix 1 ) (switch-to-next-buffer)))
-(defun share-buffer-online (downloads)
-  "Share buffer to online.
-- DOWNLOADS: The max-downloads"
-  (interactive "p")
-  (let ((filename (if (equal major-mode 'dired-mode) default-directory
-                    (buffer-file-name))))
-    (when filename (async-shell-command
-                    (format "curl --progress-bar -H 'Max-Downloads: %d' --upload-file %s https://transfer.sh"
-                            downloads filename)))))
 (defun copy-to-clipboard ()
   "Copy to clipboard."
   (interactive)
@@ -338,6 +329,27 @@
   (if (display-graphic-p)
       (progn (clipboard-yank))
     (insert (shell-command-to-string "xsel -o -b"))))
+(defun linux-stat-file()
+  "Run stat command in linux in current file."
+  (interactive)
+  (let ((filename (if (equal major-mode 'dired-mode) default-directory
+                    (buffer-file-name))))
+    (when filename
+      (shell-command (format "stat %s" filename)))))
+(defun share-to-online (downloads)
+  "Share buffer to online.
+- DOWNLOADS: The max-downloads"
+  (interactive "p")
+  (let* ((filename (if (equal major-mode 'dired-mode) default-directory
+                     (buffer-file-name)))
+         (temp-file (make-temp-file ".sharing")))
+    (if (region-active-p)
+        (write-region (point) (mark) temp-file)
+      (write-region (point-min) (point-max) temp-file))
+    (shell-command
+     (format "curl -q -H 'Max-Downloads: %d' --upload-file %s https://transfer.sh"
+             downloads temp-file))
+    (dired-delete-file temp-file)))
 
 (defalias 'yes-or-no-p 'y-or-n-p)
 (global-set-key (kbd "C-x C-b") 'ibuffer)
@@ -355,7 +367,8 @@
 (global-set-key (kbd "C-x x o") 'org-agenda)
 (global-set-key (kbd "C-x x p") 'yank-file-path)
 (global-set-key (kbd "C-x x r") 'revert-buffer)
-(global-set-key (kbd "C-x x s") 'share-buffer-online)
+(global-set-key (kbd "C-x x a") 'linux-stat-file)
+(global-set-key (kbd "C-x x s") 'share-to-online)
 (global-set-key (kbd "C-x x t") 'untabify)
 (global-set-key (kbd "C-x x T") 'tabify)
 (global-set-key (kbd "C-x x M-w") 'copy-to-clipboard)
