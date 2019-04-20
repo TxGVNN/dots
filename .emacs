@@ -8,6 +8,7 @@
 
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
+(add-to-list 'package-archives '("txgvnn" . "https://txgvnn.github.io/packages/"))
 (package-initialize)
 
 ;;; BOOTSTRAP `use-package'
@@ -42,7 +43,7 @@
   (advice-add 'ivy-read :around #'ivy-no-read-while-exiting-recursion))
 
 ;; counsel
-(use-package counsel
+(use-package counsel :pin txgvnn
   :ensure t
   :bind
   ("M-x" . counsel-M-x)
@@ -242,7 +243,7 @@
   (global-undo-tree-mode))
 
 ;; themes
-(use-package doom-themes
+(use-package doom-themes :pin txgvnn
   :ensure t
   :init (load-theme 'doom-one t)
   :config (doom-themes-org-config))
@@ -269,6 +270,8 @@
           '(lambda()
              (setq next-error-function #'flymake-goto-next-error)
              (setq previous-error-function #'flymake-goto-prev-error)))
+;; show-trailing-whitespace on prog-mode
+(add-hook 'prog-mode-hook '(lambda()(setq show-trailing-whitespace t)))
 ;; Apply .dir-locals to major-mode after load .dir-local
 ;; https://stackoverflow.com/questions/19280851/how-to-keep-dir-local-variables-when-switching-major-modes
 (add-hook 'after-change-major-mode-hook 'hack-local-variables)
@@ -346,9 +349,10 @@
     (if (region-active-p)
         (write-region (point) (mark) temp-file)
       (write-region (point-min) (point-max) temp-file))
-    (shell-command
-     (format "curl -q -H 'Max-Downloads: %d' --upload-file %s https://transfer.sh"
-             downloads temp-file))
+    (when (yes-or-no-p (format "Share online (%d)?" downloads))
+      (shell-command
+       (format "curl -q -H 'Max-Downloads: %d' --upload-file %s https://transfer.sh"
+               downloads temp-file)))
     (dired-delete-file temp-file)))
 
 (defalias 'yes-or-no-p 'y-or-n-p)
@@ -377,6 +381,8 @@
 (global-set-key (kbd "C-x 3") 'split-window-horizontally-last-buffer)
 (global-set-key (kbd "C-x 4 C-v") 'scroll-other-window)
 (global-set-key (kbd "C-x 4 M-v") 'scroll-other-window-down)
+(global-set-key (kbd "C-x 4 M-<") 'beginning-of-buffer-other-window)
+(global-set-key (kbd "C-x 4 M->") 'end-of-buffer-other-window)
 (global-set-key (kbd "M-z") 'zap-up-to-char)
 
 (setq auto-save-file-name-transforms `((".*" ,temporary-file-directory t))
@@ -419,7 +425,6 @@
            (locate-dominating-file buffer-file-name ".dir-locals.el")))))
  '(scroll-bar-mode nil)
  '(show-paren-mode t)
- '(show-trailing-whitespace t)
  '(tab-stop-list (quote (4 8 12 16 20 24 28 32 36)))
  '(tab-width 4)
  '(tool-bar-mode nil)
@@ -687,6 +692,21 @@ npm i -g javascript-typescript-langserver"
                (setq company-backends (mapcar #'company-mode/backend-with-yas company-backends)))))
 
 ;;; PATCHING
+(with-eval-after-load 'crux
+  (defun crux-visit-term-buffer (&optional prefix)
+    "Create or visit a terminal buffer.
+If PREFIX is not nil, create visit in default-directory"
+    (interactive "P")
+    (let ((session ""))
+      (if prefix
+          (setq session (concat "(" (file-name-nondirectory (directory-file-name default-directory)) ")")))
+      (crux-start-or-switch-to (lambda ()
+                                 (ansi-term crux-shell (format "%s-term%s" crux-term-buffer-name session)))
+                               (format "*%s-term%s*" crux-term-buffer-name session))
+      (when (and (null (get-buffer-process (current-buffer)))
+                 (y-or-n-p "The process has died.  Do you want to restart it? "))
+        (kill-buffer-and-window)
+        (crux-visit-term-buffer prefix)))))
 (with-eval-after-load 'perspective
   (defun ivy-switch-to-buffer ()
     "Switch to another buffer in the CURRENT PERSP."
