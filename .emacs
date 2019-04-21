@@ -343,6 +343,10 @@
                     (buffer-file-name))))
     (when filename
       (shell-command (format "stat %s" filename)))))
+(defun save-current-buffer-to-temp ()
+  "Save buffer to a new temp file."
+  (interactive)
+  (write-file (string-trim (shell-command-to-string "mktemp -ut")) t))
 (defun share-to-online (downloads)
   "Share buffer to online.
 - DOWNLOADS: The max-downloads"
@@ -376,6 +380,7 @@
 (global-set-key (kbd "C-x x p") 'yank-file-path)
 (global-set-key (kbd "C-x x r") 'revert-buffer)
 (global-set-key (kbd "C-x x a") 'linux-stat-file)
+(global-set-key (kbd "C-x x x") 'save-current-buffer-to-temp)
 (global-set-key (kbd "C-x x s") 'share-to-online)
 (global-set-key (kbd "C-x x t") 'untabify)
 (global-set-key (kbd "C-x x T") 'tabify)
