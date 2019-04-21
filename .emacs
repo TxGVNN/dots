@@ -265,13 +265,17 @@
   (package-install 'google-translate))
 
 ;;; HOOKS
+(defun add-to-hooks (func &rest hooks)
+  "Add FUNC to mutil HOOKS."
+  (dolist (hook hooks) (add-hook hook func)))
 ;; flymake on g-n & g-p bindings
 (add-hook 'flymake-mode-hook
           '(lambda()
              (setq next-error-function #'flymake-goto-next-error)
              (setq previous-error-function #'flymake-goto-prev-error)))
 ;; show-trailing-whitespace on prog-mode
-(add-hook 'prog-mode-hook '(lambda()(setq show-trailing-whitespace t)))
+(add-to-hooks '(lambda()(setq show-trailing-whitespace t))
+              'prog-mode-hook 'org-mode-hook)
 ;; Apply .dir-locals to major-mode after load .dir-local
 ;; https://stackoverflow.com/questions/19280851/how-to-keep-dir-local-variables-when-switching-major-modes
 (add-hook 'after-change-major-mode-hook 'hack-local-variables)
