@@ -93,6 +93,7 @@
   ("C-c r" . crux-rename-buffer-and-file)
   ("C-c t" . crux-visit-term-buffer)
   ("C-h RET" . crux-find-user-init-file)
+  ("C-x x e" . crux-open-with)
   ("C-x 7" . crux-swap-windows))
 
 ;; vlf - view large files
@@ -181,6 +182,9 @@
 ;; smartparens
 (use-package smartparens
   :ensure t
+  :config (require 'smartparens-config)
+  (add-hook 'multiple-cursors-mode-enabled-hook (lambda()(turn-off-smartparens-mode)))
+  (add-hook 'multiple-cursors-mode-disabled-hook (lambda()(turn-on-smartparens-mode)))
   :hook (prog-mode . smartparens-mode))
 ;; rainbow-delimiters
 (use-package rainbow-delimiters
@@ -270,9 +274,9 @@
   (dolist (hook hooks) (add-hook hook func)))
 ;; flymake on g-n & g-p bindings
 (add-hook 'flymake-mode-hook
-          '(lambda()
-             (setq next-error-function #'flymake-goto-next-error)
-             (setq previous-error-function #'flymake-goto-prev-error)))
+          (lambda()
+            (setq next-error-function #'flymake-goto-next-error)
+            (setq previous-error-function #'flymake-goto-prev-error)))
 ;; show-trailing-whitespace on prog-mode
 (add-to-hooks '(lambda()(setq show-trailing-whitespace t))
               'prog-mode-hook 'org-mode-hook)
@@ -343,17 +347,21 @@
                     (buffer-file-name))))
     (when filename
       (shell-command (format "stat %s" filename)))))
-(defun save-current-buffer-to-temp ()
-  "Save buffer to a new temp file."
+(defun save-region-to-temp ()
+  "Save region to a new temp file."
   (interactive)
-  (write-file (string-trim (shell-command-to-string "mktemp -ut")) t))
+  (let ((filename (make-temp-file ".scratch.")))
+    (if (region-active-p)
+        (write-region (point) (mark) filename)
+      (write-region (point-min) (point-max) filename))
+    (switch-to-buffer (find-file-noselect filename))))
 (defun share-to-online (downloads)
   "Share buffer to online.
 - DOWNLOADS: The max-downloads"
   (interactive "p")
   (let* ((filename (if (equal major-mode 'dired-mode) default-directory
                      (buffer-file-name)))
-         (temp-file (make-temp-file ".sharing")))
+         (temp-file (make-temp-file ".sharing.")))
     (if (region-active-p)
         (write-region (point) (mark) temp-file)
       (write-region (point-min) (point-max) temp-file))
@@ -380,7 +388,7 @@
 (global-set-key (kbd "C-x x p") 'yank-file-path)
 (global-set-key (kbd "C-x x r") 'revert-buffer)
 (global-set-key (kbd "C-x x a") 'linux-stat-file)
-(global-set-key (kbd "C-x x x") 'save-current-buffer-to-temp)
+(global-set-key (kbd "C-x x x") 'save-region-to-temp)
 (global-set-key (kbd "C-x x s") 'share-to-online)
 (global-set-key (kbd "C-x x t") 'untabify)
 (global-set-key (kbd "C-x x T") 'tabify)
@@ -508,10 +516,8 @@ Return `default-directory' if no project was found."
                          (modeline-buffer-file-name)
                        (propertize "%b" 'face '(:weight bold))))))))
 (put 'mode-line-buffer-info 'risky-local-variable t)
-;; Don't know yet why Emacs 26 doesn't need
-(unless (>= emacs-major-version 26)
-  (add-hook 'after-save-hook '(lambda () (setq modeline-buffer-info nil)))
-  (advice-add 'rename-buffer :after '(lambda (&rest _) (setq modeline-buffer-info nil))))
+(add-hook 'after-save-hook (lambda()(setq modeline-buffer-info nil)))
+(advice-add 'rename-buffer :after (lambda (&rest _) (setq modeline-buffer-info nil)))
 
 (defsubst modeline-column (pos)
   "Get the column of the position `POS'."
@@ -646,7 +652,7 @@ Please install:
 (use-package ansible
   :defer t
   :init
-  (add-hook 'ansible-hook '
+  (add-hook 'ansible-hook
             (lambda ()
               (ansible-doc-mode)
               (add-to-list 'company-backends '(company-ansible :with company-yasnippet))
@@ -668,7 +674,7 @@ tar -vxf jdt-language-server-latest.tar.gz -C ~/.emacs.d/eclipse.jdt.ls/server/"
 (use-package lsp-java
   :defer t
   :init
-  (add-hook 'java-mode-hook '
+  (add-hook 'java-mode-hook
             (lambda () (require 'lsp-java) (lsp)
               (setq company-backends (mapcar #'company-mode/backend-with-yas company-backends)))))
 
