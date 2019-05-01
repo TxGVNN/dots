@@ -23,7 +23,6 @@
   :init (ivy-mode)
   :bind
   ("C-x C-r" . ivy-resume)
-  ("C-x b" . ivy-switch-buffer)
   :config
   (setq ivy-extra-directories '("./"))
   (setq ivy-on-del-error-function #'ignore)
@@ -340,6 +339,22 @@
   (if (display-graphic-p)
       (progn (clipboard-yank))
     (insert (shell-command-to-string "xsel -o -b"))))
+(defun mark-backword (&optional arg allow-extend)
+  "Reverse of mark-word(ARG ALLOW-EXTEND)."
+  (interactive "P\np")
+  (cond ((and allow-extend
+              (or (and (eq last-command this-command) (mark t))
+                  (region-active-p)))
+         (setq arg (if arg (prefix-numeric-value arg)
+                     (if (> (mark) (point)) -1 1)))
+         (set-mark (save-excursion
+                     (goto-char (mark))
+                     (backward-word arg) (point))))
+        (t (push-mark
+            (save-excursion
+              (backward-word (prefix-numeric-value arg))
+              (point)) nil t))))
+
 (defun linux-stat-file()
   "Run stat command in linux in current file."
   (interactive)
@@ -379,7 +394,7 @@
 (global-set-key (kbd "M-s g") 'rgrep)
 (global-set-key (kbd "M-s s") 'isearch-forward-regexp)
 (global-set-key (kbd "M-s r") 'isearch-backward-regexp)
-(global-set-key (kbd "M-/") 'hippie-expand)
+(global-set-key (kbd "M-#") 'mark-backword)
 (global-set-key (kbd "C-M-_") 'dabbrev-completion)
 (global-set-key (kbd "C-x x .") 'delete-trailing-whitespace)
 (global-set-key (kbd "C-x x ;") 'indent-and-delete-trailing-whitespace)
@@ -416,6 +431,7 @@
  '(backup-by-copying t)
  '(browse-url-browser-function (quote eww-browse-url))
  '(column-number-mode t)
+ '(compilation-scroll-output t)
  '(default-input-method "vietnamese-telex")
  '(delete-old-versions t)
  '(delete-selection-mode t)
@@ -573,6 +589,7 @@ Return `default-directory' if no project was found."
 
 ;; c-mode
 (defun my-c-mode-common-hook ()
+  "C-mode hook."
   (c-set-offset 'substatement-open 0)
   (setq c++-tab-always-indent t)
   (setq c-basic-offset 4)
@@ -735,7 +752,8 @@ If PREFIX is not nil, create visit in default-directory"
                 :action #'ivy--switch-buffer-action
                 :matcher #'ivy--switch-buffer-matcher
                 :caller 'ivy-switch-buffer)))
-  (define-key ivy-mode-map (kbd "C-x b") 'ivy-switch-to-buffer)
+  (with-eval-after-load 'ivy
+    (define-key ivy-mode-map (kbd "C-x b") 'ivy-switch-to-buffer))
 
   (defun ivy-switch-buffer-with-persp (&optional _)
     "Clone from persp-switch-to-buffer."
@@ -748,9 +766,10 @@ If PREFIX is not nil, create visit in default-directory"
           (when (eq (car-safe other-persp) (selected-frame))
             (persp-switch (cdr other-persp)))
           (switch-to-buffer buffer)))))
-  (ivy-add-actions
-   'ivy-switch-buffer
-   '(("p" ivy-switch-buffer-with-persp "persp-switch-to-buffer")))
+  (with-eval-after-load 'ivy
+    (ivy-add-actions
+     'ivy-switch-buffer
+     '(("p" ivy-switch-buffer-with-persp "persp-switch-to-buffer"))))
 
   ;; find file with perspective and projectile
   (defun counsel-find-file-action (x)
