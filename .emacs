@@ -184,6 +184,9 @@
   :config (require 'smartparens-config)
   (add-hook 'multiple-cursors-mode-enabled-hook (lambda()(turn-off-smartparens-mode)))
   (add-hook 'multiple-cursors-mode-disabled-hook (lambda()(turn-on-smartparens-mode)))
+  :bind (:map smartparens-mode-map
+              ("C-M-f" . 'sp-forward-sexp)
+              ("C-M-b" . 'sp-backward-sexp))
   :hook (prog-mode . smartparens-mode))
 ;; rainbow-delimiters
 (use-package rainbow-delimiters
@@ -365,7 +368,9 @@
 (defun save-region-to-temp ()
   "Save region to a new temp file."
   (interactive)
-  (let ((filename (make-temp-file ".scratch.")))
+  (let ((filename
+         (make-temp-file
+          (format ".%s_%s_" (buffer-name) (format-time-string "%y-%m-%d_%H-%M" (time-to-seconds))))))
     (if (region-active-p)
         (write-region (point) (mark) filename)
       (write-region (point-min) (point-max) filename))
@@ -374,9 +379,7 @@
   "Share buffer to online.
 - DOWNLOADS: The max-downloads"
   (interactive "p")
-  (let* ((filename (if (equal major-mode 'dired-mode) default-directory
-                     (buffer-file-name)))
-         (temp-file (make-temp-file ".sharing.")))
+  (let ((temp-file (make-temp-file ".sharing.")))
     (if (region-active-p)
         (write-region (point) (mark) temp-file)
       (write-region (point-min) (point-max) temp-file))
