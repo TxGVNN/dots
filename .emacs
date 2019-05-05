@@ -107,13 +107,15 @@
   ("M-g <up>" . move-text-up)
   ("M-g <down>" . move-text-down))
 
-;; flycheck
-(use-package flycheck
-  :ensure t
-  :hook (prog-mode . flycheck-mode)
-  :config
-  (setq flycheck-mode-line-prefix "FC"
-        flycheck-highlighting-mode (quote columns)))
+;; checker kbd("C-h .")
+(if (version< emacs-version "26.1")
+    (use-package flycheck
+      :ensure t
+      :hook (prog-mode . flycheck-mode))
+  (use-package flymake
+    :config
+    (define-key flymake-mode-map (kbd "C-c ! l") 'flymake-show-diagnostics-buffer)
+    :hook (prog-mode . flymake-mode)))
 
 ;; magit
 (use-package magit
@@ -357,7 +359,12 @@
             (save-excursion
               (backward-word (prefix-numeric-value arg))
               (point)) nil t))))
-
+(defun insert-temp-filename()
+  "Insert new temp filename."
+  (interactive)
+  (insert
+   (concat (file-name-as-directory temporary-file-directory)
+           (make-temp-name "tmp"))))
 (defun linux-stat-file()
   "Run stat command in linux in current file."
   (interactive)
@@ -375,6 +382,11 @@
         (write-region (point) (mark) filename)
       (write-region (point-min) (point-max) filename))
     (switch-to-buffer (find-file-noselect filename))))
+(defun eww-search-local-help ()
+  "Search with keyword from local-help."
+  (interactive)
+  (let ((help (help-at-pt-kbd-string)))
+    (if help (eww help) (message "Nothing!"))))
 (defun share-to-online (downloads)
   "Share buffer to online.
 - DOWNLOADS: The max-downloads"
@@ -394,6 +406,7 @@
 (global-set-key (kbd "C-x j") 'mode-line-other-buffer)
 (global-set-key (kbd "C-x m") 'compile)
 (global-set-key (kbd "M-s e") 'eww)
+(global-set-key (kbd "M-s E") 'eww-search-local-help)
 (global-set-key (kbd "M-s g") 'rgrep)
 (global-set-key (kbd "M-s s") 'isearch-forward-regexp)
 (global-set-key (kbd "M-s r") 'isearch-backward-regexp)
@@ -406,6 +419,7 @@
 (global-set-key (kbd "C-x x p") 'yank-file-path)
 (global-set-key (kbd "C-x x r") 'revert-buffer)
 (global-set-key (kbd "C-x x a") 'linux-stat-file)
+(global-set-key (kbd "C-x x n") 'insert-temp-filename)
 (global-set-key (kbd "C-x x x") 'save-region-to-temp)
 (global-set-key (kbd "C-x x s") 'share-to-online)
 (global-set-key (kbd "C-x x t") 'untabify)
@@ -742,6 +756,12 @@ If PREFIX is not nil, create visit in default-directory"
                  (y-or-n-p "The process has died.  Do you want to restart it? "))
         (kill-buffer-and-window)
         (crux-visit-term-buffer prefix)))))
+
+(with-eval-after-load 'flycheck
+  (defun flycheck-display-error-at-point-soon () nil)
+  (setq flycheck-mode-line-prefix "FC"
+        flycheck-highlighting-mode (quote columns)))
+
 (with-eval-after-load 'perspective
   (defun ivy-switch-to-buffer ()
     "Switch to another buffer in the CURRENT PERSP."
