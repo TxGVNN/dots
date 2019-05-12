@@ -123,6 +123,7 @@
   :config (define-key magit-file-mode-map (kbd "C-x g") nil)
   :bind
   ("C-x g g" . magit-status)
+  ("C-x g f" . magit-find-file)
   ("C-x M-g" . magit-dispatch)
   ("C-c M-g" . magit-file-dispatch))
 ;; git-gutter
@@ -377,7 +378,9 @@
   (interactive)
   (let ((filename
          (make-temp-file
-          (format ".%s_%s_" (buffer-name) (format-time-string "%y-%m-%d_%H-%M" (time-to-seconds))))))
+          (format "%s_%s_" (buffer-name)
+                  (format-time-string "%m-%d_%H-%M" (time-to-seconds)))
+          nil (file-name-extension (buffer-name) t))))
     (if (region-active-p)
         (write-region (point) (mark) filename)
       (write-region (point-min) (point-max) filename))
@@ -391,13 +394,14 @@
   "Share buffer to online.
 - DOWNLOADS: The max-downloads"
   (interactive "p")
-  (let ((temp-file (make-temp-file ".sharing.")))
+  (let ((temp-file
+         (make-temp-file ".sharing." nil (file-name-extension (buffer-name) t))))
     (if (region-active-p)
         (write-region (point) (mark) temp-file)
       (write-region (point-min) (point-max) temp-file))
     (when (yes-or-no-p (format "Share online (%d)?" downloads))
       (shell-command
-       (format "curl -q -H 'Max-Downloads: %d' --upload-file %s https://transfer.sh"
+       (format "curl -q -H 'Max-Downloads: %d' --upload-file %s https://transfer.sh 2>/dev/null"
                downloads temp-file)))
     (dired-delete-file temp-file)))
 
@@ -762,6 +766,37 @@ If PREFIX is not nil, create visit in default-directory"
   (setq flycheck-mode-line-prefix "FC"
         flycheck-highlighting-mode (quote columns)))
 
+(with-eval-after-load 'flymake
+  (defun flymake--highlight-line (diagnostic)
+    "Highlight buffer with info in DIAGNOSTIC."
+    (when-let* ((ov (make-overlay
+                     (flymake--diag-beg diagnostic)
+                     (+ 1 (flymake--diag-beg diagnostic)))))
+      (let ((alist (assoc-default (flymake--diag-type diagnostic)
+                                  flymake-diagnostic-types-alist)))
+        (overlay-put ov 'category (assoc-default 'flymake-category alist))
+        (cl-loop for (k . v) in alist
+                 unless (eq k 'category)
+                 do (overlay-put ov k v)))
+      (cl-flet ((default-maybe
+                  (prop value)
+                  (unless (or (plist-member (overlay-properties ov) prop)
+                              (let ((cat (overlay-get ov 'flymake-category)))
+                                (and cat (plist-member (symbol-plist cat) prop))))
+                    (overlay-put ov prop value))))
+        (default-maybe 'bitmap 'flymake-error-bitmap)
+        (default-maybe 'face 'flymake-error)
+        (default-maybe 'before-string
+          (flymake--fringe-overlay-spec (overlay-get ov 'bitmap)))
+        (default-maybe 'help-echo
+          (lambda (window _ov pos)
+            (with-selected-window window
+              (mapconcat #'flymake--diag-text (flymake-diagnostics pos) "\n"))))
+        (default-maybe 'severity (warning-numeric-level :error))
+        (default-maybe 'priority (+ 100 (overlay-get ov 'severity))))
+      (overlay-put ov 'evaporate t)
+      (overlay-put ov 'flymake-diagnostic diagnostic))))
+
 (with-eval-after-load 'perspective
   (defun ivy-switch-to-buffer ()
     "Switch to another buffer in the CURRENT PERSP."
@@ -836,6 +871,21 @@ If PREFIX is not nil, create visit in default-directory"
                  (lambda ()
                    (counsel-projectile ivy-current-prefix-arg))))
             (counsel-projectile-switch-project-by-name project))))))
+
+(with-eval-after-load 'counsel-projectile
+  (defun counsel-projectile-find-file-action-find-file-jump (file)
+    "Call `counsel-find-file' from FILE's directory."
+    (let* ((f (projectile-expand-root file))
+           (default-directory (file-name-directory f)))
+      (counsel-file-jump)))
+  (ivy-add-actions
+   'counsel-projectile
+   '(("f" counsel-projectile-find-file-action-find-file-jump
+      "counsel-file-jump")))
+  (ivy-add-actions
+   'counsel-projectile-find-file
+   '(("f" counsel-projectile-find-file-action-find-file-jump
+      "counsel-file-jump"))))
 
 ;; keep personal settings not in the .emacs file
 (let ((personal-settings "~/.emacs.d/personal.el"))
