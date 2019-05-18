@@ -47,7 +47,7 @@
   (define-key projectile-mode-map [remap projectile-browse-dirty-projects] #'helm-projectile-browse-dirty-projects)
   (helm-projectile-commander-bindings))
 #+END_SRC
-* Configuration for Emacs verison 24
+* Configuration for Emacs 24
 #+BEGIN_SRC emacs-lisp
 (add-to-list 'package-archives '("emacs24" . "https://txgvnn.github.io/emacs24/"))
 
