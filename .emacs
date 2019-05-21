@@ -115,6 +115,7 @@
   (use-package flymake
     :config
     (define-key flymake-mode-map (kbd "C-c ! l") 'flymake-show-diagnostics-buffer)
+    (remove-hook 'flymake-diagnostic-functions 'flymake-proc-legacy-flymake)
     :hook (prog-mode . flymake-mode)))
 
 ;; magit
@@ -766,36 +767,14 @@ If PREFIX is not nil, create visit in default-directory"
   (setq flycheck-mode-line-prefix "FC"
         flycheck-highlighting-mode (quote columns)))
 
-(with-eval-after-load 'flymake
-  (defun flymake--highlight-line (diagnostic)
-    "Highlight buffer with info in DIAGNOSTIC."
-    (when-let* ((ov (make-overlay
-                     (flymake--diag-beg diagnostic)
-                     (+ 1 (flymake--diag-beg diagnostic)))))
-      (let ((alist (assoc-default (flymake--diag-type diagnostic)
-                                  flymake-diagnostic-types-alist)))
-        (overlay-put ov 'category (assoc-default 'flymake-category alist))
-        (cl-loop for (k . v) in alist
-                 unless (eq k 'category)
-                 do (overlay-put ov k v)))
-      (cl-flet ((default-maybe
-                  (prop value)
-                  (unless (or (plist-member (overlay-properties ov) prop)
-                              (let ((cat (overlay-get ov 'flymake-category)))
-                                (and cat (plist-member (symbol-plist cat) prop))))
-                    (overlay-put ov prop value))))
-        (default-maybe 'bitmap 'flymake-error-bitmap)
-        (default-maybe 'face 'flymake-error)
-        (default-maybe 'before-string
-          (flymake--fringe-overlay-spec (overlay-get ov 'bitmap)))
-        (default-maybe 'help-echo
-          (lambda (window _ov pos)
-            (with-selected-window window
-              (mapconcat #'flymake--diag-text (flymake-diagnostics pos) "\n"))))
-        (default-maybe 'severity (warning-numeric-level :error))
-        (default-maybe 'priority (+ 100 (overlay-get ov 'severity))))
-      (overlay-put ov 'evaporate t)
-      (overlay-put ov 'flymake-diagnostic diagnostic))))
+(use-package advice-patch
+  :ensure t
+  :config
+  ;; flymake--highlight-line only a char
+  (with-eval-after-load 'flymake
+    (setq byte-compile-warnings nil)
+    (advice-patch 'flymake--highlight-line  '(+ 1 (flymake--diag-beg diagnostic)) '(flymake--diag-end diagnostic))
+    (setq byte-compile-warnings t)))
 
 (with-eval-after-load 'perspective
   (defun ivy-switch-to-buffer ()
