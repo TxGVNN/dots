@@ -767,14 +767,15 @@ If PREFIX is not nil, create visit in default-directory"
   (setq flycheck-mode-line-prefix "FC"
         flycheck-highlighting-mode (quote columns)))
 
-(use-package advice-patch
-  :ensure t
-  :config
-  ;; flymake--highlight-line only a char
-  (with-eval-after-load 'flymake
-    (setq byte-compile-warnings nil)
-    (advice-patch 'flymake--highlight-line  '(+ 1 (flymake--diag-beg diagnostic)) '(flymake--diag-end diagnostic))
-    (setq byte-compile-warnings t)))
+(unless (version< emacs-version "26.1")
+  (use-package advice-patch
+    :ensure t
+    :config
+    ;; flymake--highlight-line only a char
+    (with-eval-after-load 'flymake
+      (setq byte-compile-warnings nil)
+      (advice-patch 'flymake--highlight-line  '(+ 1 (flymake--diag-beg diagnostic)) '(flymake--diag-end diagnostic))
+      (setq byte-compile-warnings t))))
 
 (with-eval-after-load 'perspective
   (defun ivy-switch-to-buffer ()
