@@ -484,7 +484,7 @@
  '(tab-width 4)
  '(tool-bar-mode nil)
  '(version-control t)
- '(whitespace-style (quote (tabs empty indentation big-indent tab-mark))))
+ '(whitespace-style (quote (face tabs trailing space-before-tab newline empty tab-mark))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
