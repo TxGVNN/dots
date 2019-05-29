@@ -373,7 +373,7 @@
   (let ((filename (if (equal major-mode 'dired-mode) default-directory
                     (buffer-file-name))))
     (when filename
-      (shell-command (format "stat %s" filename)))))
+      (shell-command (format "stat %s; file %s" filename filename)))))
 (defun save-region-to-temp ()
   "Save region to a new temp file."
   (interactive)
@@ -472,7 +472,7 @@
  '(org-todo-keywords
    (quote
     ((sequence "TODO(t)" "|" "DONE(d)")
-     (sequence "BLOCKED(b)" "WAITING(w)" "|" "REJECTED(r)"))))
+     (sequence "WIP(i)" "BLOCKED(b)" "WAITING(w)" "|" "REJECTED(r)"))))
  '(read-quoted-char-radix 16)
  '(safe-local-variable-values
    (quote
@@ -484,7 +484,9 @@
  '(tab-width 4)
  '(tool-bar-mode nil)
  '(version-control t)
- '(whitespace-style (quote (face tabs trailing space-before-tab newline empty tab-mark))))
+ '(whitespace-style
+   (quote
+    (face tabs trailing space-before-tab newline empty tab-mark))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -608,6 +610,15 @@ Return `default-directory' if no project was found."
     (diff user-init-file upstream)
     (other-window 1 nil)
     (message "Override %s by %s to update" user-init-file upstream)))
+
+;; summary-mode
+(eval-after-load 'gnus-summary-mode
+  (setq gnus-summary-line-format "%U%R%z %d %-23,23f (%4,4L) %{%B%}%s\n"
+        gnus-sum-thread-tree-root            ""
+        gnus-sum-thread-tree-false-root      "──> "
+        gnus-sum-thread-tree-leaf-with-other "├─> "
+        gnus-sum-thread-tree-vertical        "│ "
+        gnus-sum-thread-tree-single-leaf     "└─> "))
 
 ;; c-mode
 (defun my-c-mode-common-hook ()
