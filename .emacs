@@ -234,12 +234,14 @@
   :init (global-company-mode)
   :config
   (setq company-lighter-base "@")
-  (defun company-mode/backend-with-yas (backend)
-    (if (and (listp backend) (member 'company-yasnippet backend)) backend
-      (append (if (consp backend) backend (list backend))
-              '(:with company-yasnippet))))
-  (setq company-backends (mapcar #'company-mode/backend-with-yas company-backends))
-  :bind ("M-]" . company-complete))
+  (defun company-complete-custom (&optional prefix)
+    "Company and Yasnippet(PREFIX)."
+    (interactive "P")
+    (if (company--active-p) (company-cancel))
+    (if prefix
+        (call-interactively 'company-yasnippet)
+      (call-interactively 'company-complete)))
+  :bind ("M-]" . company-complete-custom))
 
 ;; undo-tree
 (use-package undo-tree
@@ -457,6 +459,7 @@
  '(default-input-method "vietnamese-telex")
  '(delete-old-versions t)
  '(delete-selection-mode t)
+ '(eldoc-minor-mode-string " ED")
  '(enable-local-variables :all)
  '(global-hl-line-mode t)
  '(global-whitespace-mode t)
@@ -649,9 +652,10 @@ Please install:
     (add-hook 'before-save-hook 'gofmt-before-save) ; gofmt before every save
     (setq gofmt-command "goimports")
     (go-guru-hl-identifier-mode)                    ; highlight identifiers
+    (go-eldoc-setup)
     (local-set-key (kbd "M-.") 'godef-jump)
     (local-set-key (kbd "M-,") 'pop-tag-mark)
-    (add-to-list 'company-backends '(company-go :with company-yasnippet)))
+    (add-to-list 'company-backends 'company-go))
   (add-hook 'go-mode-hook 'my-go-mode-hook))
 
 ;; python-mode
@@ -660,14 +664,24 @@ Please install:
 Please install:
    pip install python-language-server"
   (interactive)
-  (package-install 'python-mode)
   (package-install 'lsp-mode)
   (package-install 'company-lsp))
-(use-package python-mode
+(use-package python-mode ;; built-in
   :defer t
-  :hook
-  (python-mode . (lambda() (lsp)
-                   (setq company-backends (mapcar #'company-mode/backend-with-yas company-backends)))))
+  :config
+  (defun python-docs (w)
+    "Launch PyDOC on the Word at Point"
+    (interactive
+     (list (let* ((word (thing-at-point 'word))
+                  (input (read-string
+                          (format "pydoc entry%s: "
+                                  (if (not word) "" (format " (default %s)" word))))))
+             (if (string= input "")
+                 (if (not word) (error "No pydoc args given") word) input))))
+    (shell-command (concat "python -c \"from pydoc import help;help(\'" w "\')\"") "*PYDOCS*")
+    (view-buffer-other-window "*PYDOCS*" t 'kill-buffer-and-window))
+
+  :hook (python-mode . (lambda() (lsp))))
 
 ;; php-mode
 (defun develop-php()
@@ -679,7 +693,7 @@ Please install:
   :defer t
   :hook
   (php-mode . (lambda ()
-                (add-to-list 'company-backends '(company-ac-php-backend :with company-yasnippet)))))
+                (add-to-list 'company-backends 'company-ac-php-backend))))
 
 ;; terraform-mode
 (defun develop-terraform()
@@ -690,7 +704,7 @@ Please install:
   :defer t
   :hook
   (terraform-mode . (lambda ()
-                      (add-to-list 'company-backends '(company-terraform :with company-yasnippet)))))
+                      (add-to-list 'company-backends 'company-terraform))))
 
 ;; ansible-mode
 (defun develop-ansible ()
@@ -705,7 +719,7 @@ Please install:
   (add-hook 'ansible-hook
             (lambda ()
               (ansible-doc-mode)
-              (add-to-list 'company-backends '(company-ansible :with company-yasnippet))
+              (add-to-list 'company-backends 'company-ansible)
               (yas-minor-mode-on))))
 (use-package ansible-doc
   :defer t
@@ -725,8 +739,7 @@ tar -vxf jdt-language-server-latest.tar.gz -C ~/.emacs.d/eclipse.jdt.ls/server/"
   :defer t
   :init
   (add-hook 'java-mode-hook
-            (lambda () (require 'lsp-java) (lsp)
-              (setq company-backends (mapcar #'company-mode/backend-with-yas company-backends)))))
+            (lambda () (require 'lsp-java) (lsp))))
 
 ;; html-mode
 (defun develop-html()
@@ -753,8 +766,7 @@ npm i -g javascript-typescript-langserver"
   (require 'lsp-clients)
   :hook
   (js-mode . (lambda() (lsp)
-               (define-key js-mode-map (kbd "M-.") 'xref-find-definitions)
-               (setq company-backends (mapcar #'company-mode/backend-with-yas company-backends)))))
+               (define-key js-mode-map (kbd "M-.") 'xref-find-definitions))))
 
 ;;; PATCHING
 (with-eval-after-load 'crux
