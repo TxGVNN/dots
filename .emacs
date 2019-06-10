@@ -219,15 +219,22 @@
   :hook (prog-mode . symbol-overlay-mode))
 
 ;; yasnippet
-(use-package yasnippet-snippets
+(use-package yasnippet
   :ensure t
   :config
   (define-key yas-minor-mode-map [(tab)] nil)
   (define-key yas-minor-mode-map (kbd "TAB") nil)
-  (define-key yas-minor-mode-map (kbd "C-c & TAB") yas-maybe-expand)
+  (define-key yas-minor-mode-map (kbd "C-c y i") 'yas-insert-snippet)
+  (define-key yas-minor-mode-map (kbd "C-c y n") 'yas-new-snippet)
+  (define-key yas-minor-mode-map (kbd "C-c y v") 'yas-visit-snippet-file)
+  (define-key yas-minor-mode-map (kbd "C-c y TAB") yas-maybe-expand)
   :hook
   ((prog-mode org-mode markdown-mode)
    . yas-minor-mode))
+;; My yasnippet-snippets
+(use-package yasnippet-snippets
+  :ensure t :pin txgvnn)
+
 ;; company
 (use-package company
   :ensure t
@@ -239,7 +246,8 @@
     (interactive "P")
     (if (company--active-p) (company-cancel))
     (if prefix
-        (call-interactively 'company-yasnippet)
+        (if (not company-mode) (yas-expand)
+          (call-interactively 'company-yasnippet))
       (call-interactively 'company-complete)))
   :bind ("M-]" . company-complete-custom))
 
@@ -274,6 +282,7 @@
 (defun develop-utils()
   "Utility packages."
   (interactive)
+  (package-install 'json-mode)
   (package-install 'google-translate))
 
 ;;; HOOKS
@@ -680,7 +689,14 @@ Please install:
                  (if (not word) (error "No pydoc args given") word) input))))
     (shell-command (concat "python -c \"from pydoc import help;help(\'" w "\')\"") "*PYDOCS*")
     (view-buffer-other-window "*PYDOCS*" t 'kill-buffer-and-window))
-
+  (defun python-print-debug-at-point()
+    "Print debug."
+    (interactive)
+    (let (var)
+      (setq var (substring-no-properties (thing-at-point 'symbol)))
+      (move-end-of-line nil)
+      (newline-and-indent)
+      (insert (format "print(\"%s: {}\".format(%s))" var var))))
   :hook (python-mode . (lambda() (lsp))))
 
 ;; php-mode
@@ -688,11 +704,13 @@ Please install:
   "PHP development."
   (interactive)
   (package-install 'php-mode)
+  (package-install 'ggtags)
   (package-install 'company-php))
 (use-package php-mode
   :defer t
   :hook
   (php-mode . (lambda ()
+                (ggtags-mode)
                 (add-to-list 'company-backends 'company-ac-php-backend))))
 
 ;; terraform-mode
@@ -757,7 +775,6 @@ tar -vxf jdt-language-server-latest.tar.gz -C ~/.emacs.d/eclipse.jdt.ls/server/"
 npm i -g javascript-typescript-langserver"
   (interactive)
   (package-install 'lsp-mode)
-  (package-install 'indent-guide)
   (package-install 'company-lsp))
 (use-package lsp-mode
   :defer t
