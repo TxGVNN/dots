@@ -48,10 +48,12 @@
   ("M-x" . counsel-M-x)
   ("M-X" . execute-extended-command)
   ("C-x C-f" . counsel-find-file)
+  ("C-x B" . counsel-switch-buffer)
   ("C-c m" . counsel-imenu)
   ("M-y" . counsel-yank-pop)
   ("M-Y" . yank-pop)
   ("M-s d" . counsel-ag)
+  ("C-h b" . counsel-descbinds)
   (:map counsel-find-file-map ("C-k" . counsel-up-directory))
   :hook
   (org-mode . (lambda() (define-key org-mode-map (kbd "C-c m") 'counsel-org-goto)))
@@ -131,8 +133,8 @@
 (use-package git-gutter
   :ensure t
   :init (global-git-gutter-mode)
-  (add-hook 'magit-post-refresh-hook #'git-gutter:update-all-windows)
   :config (setq git-gutter:lighter "")
+  (add-hook 'magit-post-refresh-hook #'git-gutter:update-all-windows)
   :bind
   ("C-x g p" . git-gutter:previous-hunk)
   ("C-x g n" . git-gutter:next-hunk)
@@ -241,6 +243,8 @@
   :init (global-company-mode)
   :config
   (setq company-lighter-base "@")
+  (define-key company-active-map (kbd "C-n") #'company-select-next)
+  (define-key company-active-map (kbd "C-p") #'company-select-previous)
   (defun company-complete-custom (&optional prefix)
     "Company and Yasnippet(PREFIX)."
     (interactive "P")
@@ -675,9 +679,7 @@ Please install:
   (interactive)
   (package-install 'lsp-mode)
   (package-install 'company-lsp))
-(use-package python-mode ;; built-in
-  :defer t
-  :config
+(with-eval-after-load 'python ;; built-in
   (defun python-docs (w)
     "Launch PyDOC on the Word at Point"
     (interactive
@@ -696,8 +698,8 @@ Please install:
       (setq var (substring-no-properties (thing-at-point 'symbol)))
       (move-end-of-line nil)
       (newline-and-indent)
-      (insert (format "print(\"%s: {}\".format(%s))" var var))))
-  :hook (python-mode . (lambda() (lsp))))
+      (insert (format "print(\"%d:%s: {}\".format(%s))" (line-number-at-pos) var var)))))
+(add-hook 'python-mode-hook 'lsp)
 
 ;; php-mode
 (defun develop-php()
