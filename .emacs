@@ -109,6 +109,12 @@
   ("M-g <up>" . move-text-up)
   ("M-g <down>" . move-text-down))
 
+;; switch-window
+(use-package ace-window
+  :ensure t
+  :init (global-set-key (kbd "C-x o") 'ace-window)
+  :config (setq aw-scope (quote frame)))
+
 ;; checker kbd("C-h .")
 (if (version< emacs-version "26.1")
     (use-package flycheck
@@ -120,15 +126,6 @@
     (remove-hook 'flymake-diagnostic-functions 'flymake-proc-legacy-flymake)
     :hook (prog-mode . flymake-mode)))
 
-;; magit
-(use-package magit
-  :ensure t
-  :config (define-key magit-file-mode-map (kbd "C-x g") nil)
-  :bind
-  ("C-x g g" . magit-status)
-  ("C-x g f" . magit-find-file)
-  ("C-x M-g" . magit-dispatch)
-  ("C-c M-g" . magit-file-dispatch))
 ;; git-gutter
 (use-package git-gutter
   :ensure t
@@ -140,12 +137,15 @@
   ("C-x g n" . git-gutter:next-hunk)
   ("C-x g s" . git-gutter:stage-hunk)
   ("C-x g r" . git-gutter:revert-hunk))
-
-;; switch-window
-(use-package ace-window
+;; magit
+(use-package magit
   :ensure t
-  :init (global-set-key (kbd "C-x o") 'ace-window)
-  :config (setq aw-scope (quote frame)))
+  :config (define-key magit-file-mode-map (kbd "C-x g") nil)
+  :bind
+  ("C-x g g" . magit-status)
+  ("C-x g f" . magit-find-file)
+  ("C-x M-g" . magit-dispatch)
+  ("C-c M-g" . magit-file-dispatch))
 
 ;; projectile
 (use-package projectile
@@ -240,8 +240,7 @@
 ;; company
 (use-package company
   :ensure t
-  :init (global-company-mode)
-  :config
+  :config (global-company-mode)
   (setq company-lighter-base "@")
   (define-key company-active-map (kbd "C-n") #'company-select-next)
   (define-key company-active-map (kbd "C-p") #'company-select-previous)
@@ -484,11 +483,11 @@
  '(org-agenda-files (quote ("~/.gxt/org")))
  '(org-babel-load-languages (quote ((emacs-lisp . t) (shell . t))))
  '(org-enforce-todo-dependencies t)
- '(org-todo-keyword-faces (quote (("BLOCKED" . error) ("WAITING" . warning))))
+ '(org-todo-keyword-faces (quote (("BLOCKED" . error) ("WIP" . warning))))
  '(org-todo-keywords
    (quote
     ((sequence "TODO(t)" "|" "DONE(d)")
-     (sequence "WIP(i)" "BLOCKED(b)" "WAITING(w)" "|" "REJECTED(r)"))))
+     (sequence "WIP(w)" "BLOCKED(b)" "|" "REJECTED(r)"))))
  '(read-quoted-char-radix 16)
  '(safe-local-variable-values
    (quote
@@ -523,42 +522,13 @@
       '((line-number-mode ("(%l" (column-number-mode ",%c")))
         (-4 ":%p" ) (")")))
 
-(defun modeline-project-root ()
-  "Get the path to the root of your project.
-Return `default-directory' if no project was found."
-  (file-local-name
-   (or
-    (when (featurep 'projectile)
-      (ignore-errors (projectile-project-root)))
-    default-directory)))
-
-(defun truncate-relative-path (path)
-  "Return the truncate of relative PATH."
-  (save-match-data
-    (let ((pos 0) matches)
-      (setq path (concat "/" path))
-      (while (string-match "\\(\/\\.?.\\)" path pos)
-        (setq matches (concat matches (match-string 0 path)))
-        (setq pos (match-end 0)))
-      (concat matches "/"))))
-
 (defun modeline-buffer-file-name ()
   "Propertized variable `buffer-file-name'."
-  (let* ((buffer-file-truename (file-local-name (or (buffer-file-name (buffer-base-buffer)) "")))
-         (project-root (modeline-project-root)))
+  (let ((buffer-file-truename (file-local-name (or (buffer-file-name (buffer-base-buffer)) ""))))
     (concat
-     ;; project
-     (propertize
-      (concat (file-name-nondirectory (directory-file-name project-root)) "/")
-      'face '(:inherit font-lock-string-face :weight bold))
-     ;; relative path
-     (propertize
-      (when-let (relative-path (file-relative-name
-                                (or (file-name-directory buffer-file-truename) "./")
-                                project-root))
-        (if (string= relative-path "./") ""
-          (substring (truncate-relative-path relative-path) 1)))
-      'face 'font-lock-comment-face)
+     ;; directory
+     (propertize (concat (file-name-nondirectory (directory-file-name default-directory)) "/")
+                 'face '(:inherit font-lock-string-face :weight bold))
      ;; file name
      (propertize (file-name-nondirectory buffer-file-truename)
                  'face 'mode-line-buffer-id))))
@@ -706,13 +676,11 @@ Please install:
   "PHP development."
   (interactive)
   (package-install 'php-mode)
-  (package-install 'ggtags)
   (package-install 'company-php))
 (use-package php-mode
   :defer t
   :hook
   (php-mode . (lambda ()
-                (ggtags-mode)
                 (add-to-list 'company-backends 'company-ac-php-backend))))
 
 ;; terraform-mode
@@ -817,6 +785,7 @@ If PREFIX is not nil, create visit in default-directory"
     (with-eval-after-load 'flymake
       (setq byte-compile-warnings nil)
       (advice-patch 'flymake--highlight-line  '(+ 1 (flymake--diag-beg diagnostic)) '(flymake--diag-end diagnostic))
+      (advice-patch 'flymake--mode-line-format '" FlyM" '" Flymake")
       (setq byte-compile-warnings t))))
 
 (with-eval-after-load 'perspective
