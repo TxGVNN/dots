@@ -81,6 +81,7 @@
 
 ;; crux
 (use-package crux
+  :pin txgvnn
   :ensure t
   :bind
   ("C-^" . crux-top-join-line)
@@ -756,22 +757,6 @@ npm i -g javascript-typescript-langserver"
                (define-key js-mode-map (kbd "M-.") 'xref-find-definitions))))
 
 ;;; PATCHING
-(with-eval-after-load 'crux
-  (defun crux-visit-term-buffer (&optional prefix)
-    "Create or visit a terminal buffer.
-If PREFIX is not nil, create visit in default-directory"
-    (interactive "P")
-    (let ((session ""))
-      (if prefix
-          (setq session (concat "(" (file-name-nondirectory (directory-file-name default-directory)) ")")))
-      (crux-start-or-switch-to (lambda ()
-                                 (ansi-term crux-shell (format "%s-term%s" crux-term-buffer-name session)))
-                               (format "*%s-term%s*" crux-term-buffer-name session))
-      (when (and (null (get-buffer-process (current-buffer)))
-                 (y-or-n-p "The process has died.  Do you want to restart it? "))
-        (kill-buffer-and-window)
-        (crux-visit-term-buffer prefix)))))
-
 (with-eval-after-load 'flycheck
   (defun flycheck-display-error-at-point-soon () nil)
   (setq flycheck-mode-line-prefix "FC"
