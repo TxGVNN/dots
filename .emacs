@@ -69,8 +69,7 @@
   :config
   (defun swiper-at-point (sym)
     "Use `swiper' to search for the symbol at point."
-    (interactive (list (thing-at-point 'symbol)))
-    (swiper sym))
+    (interactive (list (thing-at-point 'symbol))) (swiper sym))
   :bind ("M-s w" . swiper-at-point))
 
 ;; avy
@@ -513,43 +512,15 @@
  '(vc-state-base ((t (:inherit font-lock-string-face :weight bold)))))
 
 ;;; MODELINE
-;;`file-local-name' is introduced in 25.2.2.
-(unless (fboundp 'file-local-name)
-  (defun file-local-name (file)
-    "Return the local name component of FILE."
-    (or (file-remote-p file 'localname) file)))
-
 (setq mode-line-position
       '((line-number-mode ("(%l" (column-number-mode ",%c")))
         (-4 ":%p" ) (")")))
-
-(defun modeline-buffer-file-name ()
-  "Propertized variable `buffer-file-name'."
-  (let ((buffer-file-truename (file-local-name (or (buffer-file-name (buffer-base-buffer)) ""))))
-    (concat
-     ;; directory
-     (propertize (concat (file-name-nondirectory (directory-file-name default-directory)) "/")
-                 'face '(:inherit font-lock-string-face :weight bold))
-     ;; file name
-     (propertize (file-name-nondirectory buffer-file-truename)
-                 'face 'mode-line-buffer-id))))
-
-(defvar-local modeline-buffer-info nil)
-(defvar mode-line-buffer-info
-  '(:propertize
-    (:eval (or modeline-buffer-info
-               (setq modeline-buffer-info
-                     (if buffer-file-name
-                         (modeline-buffer-file-name)
-                       (propertize "%b" 'face '(:weight bold))))))))
-(put 'mode-line-buffer-info 'risky-local-variable t)
-(add-hook 'after-save-hook (lambda()(setq modeline-buffer-info nil)))
-(advice-add 'rename-buffer :after (lambda (&rest _) (setq modeline-buffer-info nil)))
+(setq-default mode-line-buffer-identification
+              (propertized-buffer-identification "%b"))
 
 (defsubst modeline-column (pos)
   "Get the column of the position `POS'."
-  (save-excursion (goto-char pos)
-                  (current-column)))
+  (save-excursion (goto-char pos) (current-column)))
 (defun selection-info()
   "Information about the current selection."
   (when mark-active
@@ -561,8 +532,7 @@
                         (let ((cols (abs (- (modeline-column end)
                                             (modeline-column beg)))))
                           (format "(%dx%d)" lines cols)))
-                       ((> lines 0)
-                        (format "(%d,%d)" lines (- end beg)))
+                       ((> lines 0) (format "(%d,%d)" lines (- end beg)))
                        ((format "(%d,%d)" 0 (- end beg))))))
        'face 'font-lock-warning-face))))
 
@@ -575,8 +545,7 @@
                 mode-line-remote
                 ;; mode-line-frame-identification -- this is for text-mode emacs only
                 " "
-                mode-line-buffer-info
-                ;; mode-line-buffer-identification
+                mode-line-buffer-identification
                 " "
                 mode-line-position
                 (:eval (selection-info))
