@@ -172,6 +172,7 @@
   (setq persp-initial-frame-name "0")
   (persp-mode)
   :config
+  (global-set-key (kbd "<f5>") 'persp-switch-last)
   (define-key perspective-map (kbd "z") 'perspective-map))
 
 ;; multiple-cursors
@@ -208,6 +209,8 @@
   :init (global-anzu-mode)
   :config
   (setq anzu-mode-lighter "")
+  (global-set-key [remap query-replace] 'anzu-query-replace)
+  (global-set-key [remap query-replace-regexp] 'anzu-query-replace-regexp)
   (define-key isearch-mode-map [remap isearch-query-replace]  #'anzu-isearch-query-replace)
   (define-key isearch-mode-map [remap isearch-query-replace-regexp] #'anzu-isearch-query-replace-regexp))
 ;; symbol-overlay
@@ -278,9 +281,14 @@
        (which-key-mode)))
 ;; google-translate
 (use-package google-translate
-  :init
-  (setq google-translate-translation-directions-alist '(("en" . "vi")))
-  :bind ("M-s t" . google-translate-smooth-translate))
+  :config
+  (defun google-translate-query(&optional prefix)
+    (interactive "P")
+    (setq google-translate-translation-directions-alist '(("en" . "vi")))
+    (if prefix
+        (setq google-translate-translation-directions-alist '(("vi" . "en"))))
+    (call-interactively 'google-translate-smooth-translate))
+  :bind ("M-s t" . google-translate-query))
 
 (defun develop-utils()
   "Utility packages."
