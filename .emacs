@@ -335,7 +335,7 @@
   (let ((filename (if (equal major-mode 'dired-mode) default-directory
                     (buffer-file-name))))
     (when filename (kill-new filename)
-          (message (format "Yanked %s" filename)))))
+          (message (format "Yanked %s (%s)" filename (what-line))))))
 (defun split-window-vertically-last-buffer (prefix)
   "Split window vertically.
 - PREFIX: default(1) is switch to last buffer"
@@ -427,6 +427,19 @@
        (format "curl -q -H 'Max-Downloads: %d' --upload-file %s https://transfer.sh 2>/dev/null"
                downloads temp-file)))
     (dired-delete-file temp-file)))
+
+(defvar linum-func
+  (if (fboundp 'display-line-numbers-mode)
+      'display-line-numbers-mode 'linum-mode))
+(defun goto-line-with-feedback ()
+  "Show line numbers temporarily when goto-line."
+  (interactive)
+  (unwind-protect
+      (progn
+        (funcall linum-func)
+        (goto-line (read-number "Goto line: ")))
+    (funcall linum-func 0)))
+(global-set-key [remap goto-line] #'goto-line-with-feedback)
 
 (defalias 'yes-or-no-p 'y-or-n-p)
 (global-set-key (kbd "C-x C-b") 'ibuffer)
