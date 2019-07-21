@@ -417,16 +417,27 @@
   "Share buffer to online.
 - DOWNLOADS: The max-downloads"
   (interactive "p")
-  (let ((temp-file
-         (make-temp-file ".sharing." nil (file-name-extension (buffer-name) t))))
+  (let* ((temp-file
+          (make-temp-file ".sharing." nil (file-name-extension (buffer-name) t)))
+         (msg "") file-hash)
     (if (region-active-p)
         (write-region (point) (mark) temp-file)
       (write-region (point-min) (point-max) temp-file))
+    (when (yes-or-no-p (format "Encrypt?" downloads))
+      (let (( file-hash (md5 (buffer-string))))
+        (shell-command (format "openssl aes-128-cbc -md md5 -pbkdf2 -k %s -in '%s' -out '%s.enc'"
+                               file-hash temp-file temp-file))
+        (dired-delete-file temp-file)
+        (setq temp-file (format "%s.enc" temp-file))
+        (setq msg (format "# openssl aes-128-cbc -d -md md5 -pbkdf2 -k %s -in %s # -out"
+                          file-hash (file-name-nondirectory temp-file)))))
     (when (yes-or-no-p (format "Share online (%d)?" downloads))
-      (shell-command
-       (format "curl -q -H 'Max-Downloads: %d' --upload-file %s https://transfer.sh 2>/dev/null"
-               downloads temp-file)))
-    (dired-delete-file temp-file)))
+      (message "%s %s"
+               (shell-command-to-string
+                (format "curl -q -H 'Max-Downloads: %d' --upload-file '%s' https://transfer.sh 2>/dev/null"
+                        downloads temp-file))
+               msg)
+      (dired-delete-file temp-file))))
 
 (defvar linum-func
   (if (fboundp 'display-line-numbers-mode)
