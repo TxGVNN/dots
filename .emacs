@@ -417,19 +417,19 @@
   "Share buffer to online.
 - DOWNLOADS: The max-downloads"
   (interactive "p")
-  (let* ((temp-file
-          (make-temp-file ".sharing." nil (file-name-extension (buffer-name) t)))
-         (msg "") file-hash)
+  (let ((temp-file
+         (make-temp-file ".sharing." nil (file-name-extension (buffer-name) t)))
+        (msg "") file-hash)
     (if (region-active-p)
         (write-region (point) (mark) temp-file)
       (write-region (point-min) (point-max) temp-file))
-    (when (yes-or-no-p (format "Encrypt?" downloads))
+    (when (yes-or-no-p "Encrypt?")
       (let (( file-hash (md5 (buffer-string))))
-        (shell-command (format "openssl aes-128-cbc -md md5 -pbkdf2 -k %s -in '%s' -out '%s.enc'"
+        (shell-command (format "openssl aes-128-cbc -md md5 -k %s -in '%s' -out '%s.enc'"
                                file-hash temp-file temp-file))
         (dired-delete-file temp-file)
         (setq temp-file (format "%s.enc" temp-file))
-        (setq msg (format "# openssl aes-128-cbc -d -md md5 -pbkdf2 -k %s -in %s # -out"
+        (setq msg (format "# openssl aes-128-cbc -d -md md5 -k %s -in %s 2>/dev/null"
                           file-hash (file-name-nondirectory temp-file)))))
     (when (yes-or-no-p (format "Share online (%d)?" downloads))
       (message "%s %s"
@@ -485,6 +485,7 @@
 (global-set-key (kbd "C-x 4 M->") 'end-of-buffer-other-window)
 (global-set-key (kbd "M-z") 'zap-up-to-char)
 
+(prefer-coding-system 'utf-8)
 (setq auto-save-file-name-transforms `((".*" ,temporary-file-directory t))
       backup-directory-alist `(("." . ,(concat user-emacs-directory "backups")))
       tramp-auto-save-directory `,(concat user-emacs-directory "backups"))
