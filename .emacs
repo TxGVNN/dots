@@ -243,8 +243,8 @@
 ;; company
 (use-package company
   :ensure t
-  :config (global-company-mode)
-  (setq company-lighter-base "@")
+  :init (global-company-mode)
+  :config (setq company-lighter-base "@")
   (define-key company-active-map (kbd "C-n") #'company-select-next)
   (define-key company-active-map (kbd "C-p") #'company-select-previous)
   (defun company-complete-custom (&optional prefix)
