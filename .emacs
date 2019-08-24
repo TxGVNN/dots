@@ -689,7 +689,8 @@ Please install:
 (defun develop-terraform()
   "Terraform development."
   (interactive)
-  (package-install 'company-terraform))
+  (package-install 'company-terraform)
+  (package-install 'terraform-doc))
 (use-package company-terraform
   :defer t
   :hook
