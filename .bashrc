@@ -100,7 +100,7 @@ function sshtmux(){
 alias cd="cdenv"
 alias em="emacs -nw"
 # Export
-export HISTTIMEFORMAT="%F %T "
+# export HISTTIMEFORMAT="%F %T "
 ## Check pseudoterminal or not?
 export TERM=xterm-256color
 if [[ $(tty) != */dev/pts/* ]]; then

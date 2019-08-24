@@ -300,21 +300,21 @@
 (defun add-to-hooks (func &rest hooks)
   "Add FUNC to mutil HOOKS."
   (dolist (hook hooks) (add-hook hook func)))
+;; enable whitespace-mode
+(add-to-hooks 'whitespace-mode
+              'prog-mode-hook 'org-mode-hook)
 ;; flymake on g-n & g-p bindings
 (add-hook 'flymake-mode-hook
           (lambda()
             (setq next-error-function #'flymake-goto-next-error)
             (setq previous-error-function #'flymake-goto-prev-error)))
-;; show-trailing-whitespace on prog-mode
-(add-to-hooks '(lambda()(setq show-trailing-whitespace t))
-              'prog-mode-hook 'org-mode-hook)
 ;; Apply .dir-locals to major-mode after load .dir-local
 ;; https://stackoverflow.com/questions/19280851/how-to-keep-dir-local-variables-when-switching-major-modes
 (add-hook 'after-change-major-mode-hook 'hack-local-variables)
 
 ;; hide the minor modes
 (defvar hidden-minor-modes
-  '(global-whitespace-mode ivy-mode smartparens-mode volatile-highlights-mode symbol-overlay-mode))
+  '(whitespace-mode ivy-mode smartparens-mode volatile-highlights-mode symbol-overlay-mode))
 (defun purge-minor-modes ()
   "Dont show on modeline."
   (dolist (x hidden-minor-modes nil)
@@ -507,7 +507,6 @@
  '(eldoc-minor-mode-string " ED")
  '(enable-local-variables :all)
  '(global-hl-line-mode t)
- '(global-whitespace-mode t)
  '(indent-tabs-mode nil)
  '(inhibit-startup-screen t)
  '(initial-scratch-message nil)
@@ -757,6 +756,18 @@ npm i -g javascript-typescript-langserver"
   :hook
   (js-mode . (lambda() (lsp)
                (define-key js-mode-map (kbd "M-.") 'xref-find-definitions))))
+
+;; gitlab-mode
+(defun develop-gitlab-ci()
+  "Gitlab-CI development."
+  (interactive)
+  (package-install 'gitlab-ci-mode)
+  (package-install 'gitlab-ci-mode-flycheck))
+(defun gitlab-ci-mode-my-hook ()
+  (gitlab-ci-mode-flycheck-enable)
+  (if (fboundp 'flycheck-mode)
+      (flycheck-mode)))
+(add-hook 'gitlab-ci-mode-hook 'gitlab-ci-mode-my-hook)
 
 ;;; PATCHING
 (with-eval-after-load 'flycheck
