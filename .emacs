@@ -832,37 +832,17 @@ npm i -g javascript-typescript-langserver"
               (when project-name-root
                 (setq project-name (funcall projectile-project-name-function project-name-root))
                 (persp-switch project-name))))
-        (find-file (expand-file-name x ivy--directory)))))
-
-  ;; counsel-projectile with perspective
-  (if (fboundp 'counsel-projectile)
-      (defun counsel-projectile-switch-project-action (project)
-        "Jump to a file or buffer in PROJECT."
-        (if (bound-and-true-p persp-mode)
-            (let* ((projectile-switch-project-action
-                    (lambda ()
-                      (counsel-projectile ivy-current-prefix-arg)))
-                   (name (or projectile-project-name
-                             (funcall projectile-project-name-function project)))
-                   (persp (gethash name (perspectives-hash))))
-              (cond
-               ;; project-specific perspective already exists
-               ((and persp (not (equal persp (persp-curr))))
-                (persp-switch name))
-               ;; persp exists but not match with projectile-name
-               ((and persp (not (equal persp name)))
-                (persp-switch name)
-                (counsel-projectile-switch-project-by-name project))
-               ;; project-specific perspective doesn't exist
-               ((not persp)
-                (persp-switch name)
-                (counsel-projectile-switch-project-by-name project))))
-          (let ((projectile-switch-project-action
-                 (lambda ()
-                   (counsel-projectile ivy-current-prefix-arg))))
-            (counsel-projectile-switch-project-by-name project))))))
+        (find-file (expand-file-name x ivy--directory))))))
 
 (with-eval-after-load 'counsel-projectile
+  (advice-patch 'counsel-projectile-switch-project-by-name
+                '(run-hook-with-args 'projectile-before-switch-project-hook
+                                     (funcall projectile-project-name-function project))
+                '(run-hooks 'projectile-before-switch-project-hook))
+  (add-hook 'projectile-before-switch-project-hook
+            (lambda (project-to-switch)
+              (if (and project-to-switch (bound-and-true-p persp-mode))
+                  (persp-switch project-to-switch))))
   (defun counsel-projectile-find-file-action-find-file-jump (file)
     "Call `counsel-find-file' from FILE's directory."
     (let* ((f (projectile-expand-root file))
