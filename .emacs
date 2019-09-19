@@ -302,7 +302,8 @@
   (dolist (hook hooks) (add-hook hook func)))
 ;; enable whitespace-mode
 (add-to-hooks 'whitespace-mode
-              'prog-mode-hook 'org-mode-hook)
+              'prog-mode-hook 'org-mode-hook
+              'markdown-mode-hook)
 ;; flymake on g-n & g-p bindings
 (add-hook 'flymake-mode-hook
           (lambda()
@@ -413,8 +414,8 @@
   (interactive)
   (let ((help (help-at-pt-kbd-string)))
     (if help (eww help) (message "Nothing!"))))
-(defun share-to-online (downloads)
-  "Share buffer to online.
+(defun share-to-transfer.sh (downloads)
+  "Share buffer to transfer.sh.
 - DOWNLOADS: The max-downloads"
   (interactive "p")
   (let ((temp-file
@@ -438,12 +439,18 @@
                         downloads temp-file))
                msg)
       (dired-delete-file temp-file))))
+(defvar share-to-online-func
+  'share-to-transfer.sh)
+(defun share-to-online ()
+  "Share buffer to online."
+  (interactive)
+  (call-interactively share-to-online-func))
 
 (defvar linum-func
   (if (fboundp 'display-line-numbers-mode)
       'display-line-numbers-mode 'linum-mode))
 (defun goto-line-with-feedback ()
-  "Show line numbers temporarily when goto-line."
+  "Show line numbers temporarily when 'goto-line."
   (interactive)
   (unwind-protect
       (progn
@@ -619,29 +626,28 @@
 
 ;; go-mode
 (defun develop-go()
-  "Go development.
+  "Go develoment.
 Please install:
-   go get -u golang.org/x/tools/cmd/...
-   go get -u golang.org/x/tools/cmd/goimports
-   go get -u golang.org/x/tools/cmd/guru
-   go get -u github.com/rogpeppe/godef/...
-   go get -u github.com/nsf/gocode
-   go get -u github.com/dougm/goflymake"
+   GO111MODULE=on go get golang.org/x/tools/gopls@latest
+   go get -u github.com/sourcegraph/go-langserver"
   (interactive)
-  (package-install 'go-projectile)
-  (package-install 'company-go))
-(use-package go-projectile
+  (package-install 'lsp-mode))
+(use-package go-mode
   :defer t
   :init
-  (defun my-go-mode-hook ()
-    (add-hook 'before-save-hook 'gofmt-before-save) ; gofmt before every save
-    (setq gofmt-command "goimports")
-    (go-guru-hl-identifier-mode)                    ; highlight identifiers
-    (go-eldoc-setup)
-    (local-set-key (kbd "M-.") 'godef-jump)
-    (local-set-key (kbd "M-,") 'pop-tag-mark)
-    (add-to-list 'company-backends 'company-go))
-  (add-hook 'go-mode-hook 'my-go-mode-hook))
+  (add-hook 'go-mode-hook #'lsp-deferred)
+  ;; gofmt before every save
+  (add-hook 'before-save-hook 'gofmt-before-save))
+(with-eval-after-load 'go-mode
+  (setq gofmt-command "goimports")
+  (defun go-print-debug-at-point()
+    "Print debug."
+    (interactive)
+    (let (var)
+      (setq var (substring-no-properties (thing-at-point 'symbol)))
+      (move-end-of-line nil)
+      (newline-and-indent)
+      (insert (format "fmt.Printf(\"D: %d:%s, %%+v \", %s)" (line-number-at-pos) var var)))))
 
 ;; python-mode
 (defun develop-python()
@@ -671,7 +677,8 @@ Please install:
       (move-end-of-line nil)
       (newline-and-indent)
       (insert (format "print(\"%d:%s: {}\".format(%s))" (line-number-at-pos) var var)))))
-(add-hook 'python-mode-hook 'lsp)
+(add-hook 'python-mode-hook #'lsp-deferred)
+
 
 ;; php-mode
 (defun develop-php()
@@ -729,9 +736,7 @@ tar -vxf jdt-language-server-latest.tar.gz -C ~/.emacs.d/eclipse.jdt.ls/server/"
 (use-package lsp-java
   :defer t
   :init
-  (add-hook 'java-mode-hook
-            (lambda () (require 'lsp-java) (lsp))))
-
+  (add-hook 'java-mode-hook #'lsp-deferred))
 ;; html-mode
 (defun develop-html()
   "HTML development."
@@ -749,14 +754,10 @@ npm i -g javascript-typescript-langserver"
   (interactive)
   (package-install 'lsp-mode)
   (package-install 'company-lsp))
-(use-package lsp-mode
+(use-package js-mode
   :defer t
-  :config
-  (require 'lsp)
-  (require 'lsp-clients)
-  :hook
-  (js-mode . (lambda() (lsp)
-               (define-key js-mode-map (kbd "M-.") 'xref-find-definitions))))
+  :init (add-hook 'js-mode-hook #'lsp-deferred)
+  :config (define-key js-mode-map (kbd "M-.") 'xref-find-definitions))
 
 ;; gitlab-mode
 (defun develop-gitlab-ci()
@@ -770,7 +771,22 @@ npm i -g javascript-typescript-langserver"
       (flycheck-mode)))
 (add-hook 'gitlab-ci-mode-hook 'gitlab-ci-mode-my-hook)
 
+;; yaml-mode
+(use-package yaml-mode
+  :defer t
+  :hook (yaml-mode . whitespace-mode))
+
+;; dockerfile-mode
+(use-package dockerfile-mode
+  :defer t
+  :hook (dockerfile-mode . whitespace-mode))
+
 ;;; PATCHING
+(advice-add 'base64-encode-region
+            :before (lambda (&rest _args)
+                      "Pass prefix arg as third arg to `base64-encode-region'."
+                      (interactive "r\nP")))
+
 (with-eval-after-load 'flycheck
   (defun flycheck-display-error-at-point-soon () nil)
   (setq flycheck-mode-line-prefix "FC"
