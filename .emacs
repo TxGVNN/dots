@@ -289,7 +289,11 @@
         (setq google-translate-translation-directions-alist '(("vi" . "en"))))
     (call-interactively 'google-translate-smooth-translate))
   :bind ("M-s t" . google-translate-query))
-
+(use-package debpaste
+  :defer t
+  :init
+  (setq debpaste-base-url "https://paste.debian.net/"
+        debpaste-paste-is-hidden t))
 (defun develop-utils()
   "Utility packages."
   (interactive)
@@ -336,7 +340,7 @@
   (let ((filename (if (equal major-mode 'dired-mode) default-directory
                     (buffer-file-name))))
     (when filename (kill-new filename)
-          (message (format "Yanked %s (%s)" filename (what-line))))))
+          (message "Yanked %s (%s)" filename (what-line)))))
 (defun split-window-vertically-last-buffer (prefix)
   "Split window vertically.
 - PREFIX: default(1) is switch to last buffer"
@@ -430,15 +434,40 @@
                                file-hash temp-file temp-file))
         (dired-delete-file temp-file)
         (setq temp-file (format "%s.enc" temp-file))
-        (setq msg (format "# openssl aes-128-cbc -d -md md5 -k %s -in %s 2>/dev/null"
-                          file-hash (file-name-nondirectory temp-file)))))
+        (setq msg (format "openssl aes-128-cbc -d -md md5 -k %s -in - 2>/dev/null"
+                          file-hash))))
     (when (yes-or-no-p (format "Share online (%d)?" downloads))
-      (message "%s %s"
+      (message "curl %s | %s"
                (shell-command-to-string
                 (format "curl -q -H 'Max-Downloads: %d' --upload-file '%s' https://transfer.sh 2>/dev/null"
                         downloads temp-file))
                msg)
       (dired-delete-file temp-file))))
+
+(defun share-to-paste.debian.net ()
+  "Share buffer to transfer.sh.
+- DOWNLOADS: The max-downloads"
+  (interactive)
+  (let ((temp-file
+         (make-temp-file ".sharing." nil (file-name-extension (buffer-name) t)))
+        (msg "") file-hash)
+    (if (region-active-p)
+        (write-region (point) (mark) temp-file)
+      (write-region (point-min) (point-max) temp-file))
+    (when (yes-or-no-p "Encrypt?")
+      (let (( file-hash (md5 (buffer-string))))
+        (shell-command (format "openssl aes-128-cbc -md md5 -k %s -in '%s' | base64 > '%s.enc'"
+                               file-hash temp-file temp-file))
+        (dired-delete-file temp-file)
+        (setq temp-file (format "%s.enc" temp-file))
+        (setq msg (format "base64 -d | openssl aes-128-cbc -d -md md5 -k %s -in - 2>/dev/null"
+                          file-hash))))
+    (when (yes-or-no-p "Share to paste.debian.net?")
+      (find-file-read-only temp-file)
+      (debpaste-paste-buffer (get-file-buffer temp-file))
+      (message "curl %s | %s" (debpaste-get-param-val 'download-url (debpaste-get-posted-info)) msg)
+      (dired-delete-file temp-file))))
+
 (defvar share-to-online-func
   'share-to-transfer.sh)
 (defun share-to-online ()
@@ -513,6 +542,7 @@
  '(delete-selection-mode t)
  '(eldoc-minor-mode-string " ED")
  '(enable-local-variables :all)
+ '(ffap-machine-p-known (quote reject))
  '(global-hl-line-mode t)
  '(indent-tabs-mode nil)
  '(inhibit-startup-screen t)
