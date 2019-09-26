@@ -406,7 +406,7 @@
   (interactive)
   (let ((filename
          (make-temp-file
-          (format "%s_%s_" (buffer-name)
+          (format "%s_%s_" (file-name-base (buffer-name))
                   (format-time-string "%m-%d_%H-%M" (time-to-seconds)))
           nil (file-name-extension (buffer-name) t))))
     (if (region-active-p)
@@ -645,6 +645,10 @@
         gnus-sum-thread-tree-vertical        "│ "
         gnus-sum-thread-tree-single-leaf     "└─> "))
 
+;; term
+(with-eval-after-load 'term
+  (define-key term-raw-map (kbd "C-c C-y") 'term-paste))
+
 ;; c-mode
 (defun my-c-mode-common-hook ()
   "C-mode hook."
@@ -864,7 +868,17 @@ npm i -g javascript-typescript-langserver"
     (ivy-add-actions
      'ivy-switch-buffer
      '(("p" ivy-switch-buffer-with-persp "persp-switch-to-buffer"))))
-
+  (defun persp-update-modestring ()
+    "Override persp-update-modestring."
+    (when persp-show-modestring
+      (let ((open (list (nth 0 persp-modestring-dividers)))
+            (close (list (nth 1 persp-modestring-dividers)))
+            (sep (nth 2 persp-modestring-dividers)))
+        (set-frame-parameter
+         nil 'persp--modestring
+         (append open
+                 (cons (persp-format-name (persp-name (persp-curr)))())
+                 close)))))
   ;; find file with perspective and projectile
   (defun counsel-find-file-action (x)
     "Find file X."
@@ -902,6 +916,20 @@ npm i -g javascript-typescript-langserver"
    'counsel-projectile-find-file
    '(("f" counsel-projectile-find-file-action-find-file-jump
       "counsel-file-jump"))))
+
+(with-eval-after-load 'projectile
+  (defun projectile-run-term (program)
+    "Override project-run-term."
+    (interactive (list nil))
+    (let* ((project (projectile-ensure-project (projectile-project-root)))
+           (termname (concat "term " (projectile-project-name project)))
+           (buffer (concat "*" termname "*")))
+      (unless (get-buffer buffer)
+        (require 'term)
+        (projectile-with-default-dir project
+          (ansi-term (or explicit-shell-file-name
+                         (getenv "SHELL") "/bin/sh") termname)))
+      (switch-to-buffer buffer))))
 
 ;; keep personal settings not in the .emacs file
 (let ((personal-settings "~/.emacs.d/personal.el"))
