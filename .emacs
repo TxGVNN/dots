@@ -294,6 +294,10 @@
   :init
   (setq debpaste-base-url "https://paste.debian.net/"
         debpaste-paste-is-hidden t))
+(use-package git-link
+  :defer t
+  :init (setq git-link-use-commit t))
+
 (defun develop-utils()
   "Utility packages."
   (interactive)
@@ -428,16 +432,16 @@
     (if (region-active-p)
         (write-region (point) (mark) temp-file)
       (write-region (point-min) (point-max) temp-file))
-    (when (yes-or-no-p "Encrypt?")
-      (let (( file-hash (md5 (buffer-string))))
-        (shell-command (format "openssl aes-128-cbc -md md5 -k %s -in '%s' -out '%s.enc'"
-                               file-hash temp-file temp-file))
-        (dired-delete-file temp-file)
-        (setq temp-file (format "%s.enc" temp-file))
-        (setq msg (format "openssl aes-128-cbc -d -md md5 -k %s -in - 2>/dev/null"
-                          file-hash))))
-    (when (yes-or-no-p (format "Share online (%d)?" downloads))
-      (message "curl %s | %s"
+    (when (yes-or-no-p (format "Share to transfer-sh.ml (%d)?" downloads))
+      (when (yes-or-no-p "Encrypt?")
+        (let ((file-hash (md5 (buffer-string))))
+          (shell-command (format "openssl aes-128-cbc -md md5 -k %s -in '%s' -out '%s.enc'"
+                                 file-hash temp-file temp-file))
+          (dired-delete-file temp-file)
+          (setq temp-file (format "%s.enc" temp-file))
+          (setq msg (format "| openssl aes-128-cbc -d -md md5 -k %s -in - 2>/dev/null"
+                            file-hash))))
+      (message "curl %s 2>/dev/null %s"
                (shell-command-to-string
                 (format "curl -q -H 'Max-Downloads: %d' --upload-file '%s' https://transfer.sh 2>/dev/null"
                         downloads temp-file))
@@ -454,18 +458,18 @@
     (if (region-active-p)
         (write-region (point) (mark) temp-file)
       (write-region (point-min) (point-max) temp-file))
-    (when (yes-or-no-p "Encrypt?")
-      (let (( file-hash (md5 (buffer-string))))
-        (shell-command (format "openssl aes-128-cbc -md md5 -k %s -in '%s' | base64 > '%s.enc'"
-                               file-hash temp-file temp-file))
-        (dired-delete-file temp-file)
-        (setq temp-file (format "%s.enc" temp-file))
-        (setq msg (format "base64 -d | openssl aes-128-cbc -d -md md5 -k %s -in - 2>/dev/null"
-                          file-hash))))
     (when (yes-or-no-p "Share to paste.debian.net?")
+      (when (yes-or-no-p "Encrypt?")
+        (let (( file-hash (md5 (buffer-string))))
+          (shell-command (format "openssl aes-128-cbc -md md5 -k %s -in '%s' | base64 > '%s.enc'"
+                                 file-hash temp-file temp-file))
+          (dired-delete-file temp-file)
+          (setq temp-file (format "%s.enc" temp-file))
+          (setq msg (format "| base64 -d | openssl aes-128-cbc -d -md md5 -k %s -in - 2>/dev/null"
+                            file-hash))))
       (find-file-read-only temp-file)
       (debpaste-paste-buffer (get-file-buffer temp-file))
-      (message "curl %s | %s" (debpaste-get-param-val 'download-url (debpaste-get-posted-info)) msg)
+      (message "curl %s 2>dev/null %s" (debpaste-get-param-val 'download-url (debpaste-get-posted-info)) msg)
       (dired-delete-file temp-file))))
 
 (defvar share-to-online-func
@@ -681,7 +685,7 @@ Please install:
       (setq var (substring-no-properties (thing-at-point 'symbol)))
       (move-end-of-line nil)
       (newline-and-indent)
-      (insert (format "fmt.Printf(\"D: %d:%s, %%+v \", %s)" (line-number-at-pos) var var)))))
+      (insert (format "fmt.Printf(\"D: %d:%s, %%+v\\n\", %s)" (line-number-at-pos) var var)))))
 
 ;; python-mode
 (defun develop-python()
