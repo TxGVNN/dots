@@ -669,6 +669,7 @@ Please install:
    GO111MODULE=on go get golang.org/x/tools/gopls@latest
    go get -u github.com/sourcegraph/go-langserver"
   (interactive)
+  (package-install 'go-mode)
   (package-install 'lsp-mode))
 (use-package go-mode
   :defer t
@@ -685,7 +686,8 @@ Please install:
       (setq var (substring-no-properties (thing-at-point 'symbol)))
       (move-end-of-line nil)
       (newline-and-indent)
-      (insert (format "fmt.Printf(\"D: %d:%s, %%+v\\n\", %s)" (line-number-at-pos) var var)))))
+      (insert (format "fmt.Printf(\"D: %s+%d %s, %%+v\\n\", %s)"
+                      (file-name-nondirectory (buffer-file-name)) (line-number-at-pos) var var)))))
 
 ;; python-mode
 (defun develop-python()
@@ -714,7 +716,8 @@ Please install:
       (setq var (substring-no-properties (thing-at-point 'symbol)))
       (move-end-of-line nil)
       (newline-and-indent)
-      (insert (format "print(\"%d:%s: {}\".format(%s))" (line-number-at-pos) var var)))))
+      (insert (format "print(\"D: %s+%d %s, {}\".format(%s))"
+                      (file-name-nondirectory (buffer-file-name)) (line-number-at-pos) var var)))))
 (add-hook 'python-mode-hook #'lsp-deferred)
 
 
