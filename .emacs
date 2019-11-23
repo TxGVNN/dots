@@ -20,30 +20,18 @@
 ;; ivy
 (use-package ivy
   :ensure t
-  :init (ivy-mode)
   :bind
   ("C-x C-r" . ivy-resume)
-  :config
+  :init
   (setq ivy-extra-directories '("./"))
   (setq ivy-on-del-error-function #'ignore)
   (setq ivy-magic-tilde nil)
   (setq ivy-magic-slash-non-match-action 'ivy-magic-slash-non-match-action)
-  ;; Can not exit minibuffer - https://github.com/abo-abo/swiper/issues/1953
-  (defvar ivy-recursive-restore-in-progress nil)
-  (defun ivy-note-when-inside-recursive-restore (orig-fun &rest args)
-    (let ((ivy-recursive-restore-in-progress t))
-      (apply orig-fun args)))
-  (defun ivy-no-read-while-exiting-recursion (orig-fun &rest args)
-    (if ivy-recursive-restore-in-progress
-        (error "Cannot use `ivy-read' while restoring recursive state")
-      (apply orig-fun args)))
-  (advice-add 'ivy-recursive-restore :around
-              #'ivy-note-when-inside-recursive-restore)
-  (advice-add 'ivy-read :around #'ivy-no-read-while-exiting-recursion))
+  :config (ivy-mode))
 
 ;; counsel
-(use-package counsel :pin txgvnn
-  :ensure t
+(use-package counsel
+  :ensure t :pin txgvnn
   :bind
   ("M-x" . counsel-M-x)
   ("M-X" . execute-extended-command)
@@ -80,8 +68,7 @@
 
 ;; crux
 (use-package crux
-  :pin txgvnn
-  :ensure t
+  :ensure t :pin txgvnn
   :bind
   ("C-^" . crux-top-join-line)
   ("C-a" . crux-move-beginning-of-line)
@@ -129,9 +116,9 @@
 ;; git-gutter
 (use-package git-gutter
   :ensure t
-  :init (global-git-gutter-mode)
-  :config (setq git-gutter:lighter "")
+  :init (setq git-gutter:lighter "")
   (add-hook 'magit-post-refresh-hook #'git-gutter:update-all-windows)
+  (global-git-gutter-mode)
   :bind
   ("C-x g p" . git-gutter:previous-hunk)
   ("C-x g n" . git-gutter:next-hunk)
@@ -153,16 +140,18 @@
   :init
   (setq projectile-dynamic-mode-line nil)
   (setq projectile-mode-line-prefix "")
-  (projectile-mode)
-  :config
   (setq projectile-project-compilation-cmd "make ")
   (setq projectile-completion-system 'ivy)
-  (define-key projectile-mode-map (kbd "C-x p") 'projectile-command-map))
+  :config
+  (define-key projectile-mode-map (kbd "C-x p") 'projectile-command-map)
+  (projectile-mode))
 ;; counsel-projectile
 (use-package counsel-projectile
   :ensure t
   :after (projectile)
-  :init (counsel-projectile-mode))
+  :config
+  (define-key projectile-mode-map [remap projectile-compile-project] #'counsel-compile)
+  (counsel-projectile-mode))
 
 ;; perspective
 (use-package perspective
@@ -202,17 +191,17 @@
 ;; volatile-highlights
 (use-package volatile-highlights
   :ensure t
-  :init (volatile-highlights-mode))
+  :config (volatile-highlights-mode))
 ;; anzu
 (use-package anzu
   :ensure t
-  :init (global-anzu-mode)
-  :config
+  :init
   (setq anzu-mode-lighter "")
   (global-set-key [remap query-replace] 'anzu-query-replace)
   (global-set-key [remap query-replace-regexp] 'anzu-query-replace-regexp)
   (define-key isearch-mode-map [remap isearch-query-replace]  #'anzu-isearch-query-replace)
-  (define-key isearch-mode-map [remap isearch-query-replace-regexp] #'anzu-isearch-query-replace-regexp))
+  (define-key isearch-mode-map [remap isearch-query-replace-regexp] #'anzu-isearch-query-replace-regexp)
+  :config (global-anzu-mode))
 ;; symbol-overlay
 (use-package symbol-overlay
   :ensure t
@@ -243,8 +232,9 @@
 ;; company
 (use-package company
   :ensure t
-  :init (global-company-mode)
-  :config (setq company-lighter-base "@")
+  :init (setq company-lighter-base "@")
+  :bind ("M-]" . company-complete-custom)
+  :config
   (define-key company-active-map (kbd "C-n") #'company-select-next)
   (define-key company-active-map (kbd "C-p") #'company-select-previous)
   (defun company-complete-custom (&optional prefix)
@@ -255,7 +245,7 @@
         (if (not company-mode) (yas-expand)
           (call-interactively 'company-yasnippet))
       (call-interactively 'company-complete)))
-  :bind ("M-]" . company-complete-custom))
+  (global-company-mode))
 
 ;; undo-tree
 (use-package undo-tree
@@ -266,11 +256,11 @@
   (setq undo-tree-history-directory-alist
         `((".*" . ,temporary-file-directory)))
   (setq undo-tree-auto-save-history t)
-  (global-undo-tree-mode))
+  :config (global-undo-tree-mode))
 
 ;; themes
-(use-package doom-themes :pin txgvnn
-  :ensure t
+(use-package doom-themes
+  :ensure t :pin txgvnn
   :init (load-theme 'doom-one t)
   :config (doom-themes-org-config))
 
@@ -903,13 +893,13 @@ npm i -g javascript-typescript-langserver"
 
 (with-eval-after-load 'counsel-projectile
   (advice-patch 'counsel-projectile-switch-project-by-name
-                '(run-hook-with-args 'projectile-before-switch-project-hook
-                                     (funcall projectile-project-name-function project))
+                '(run-hook-with-args 'projectile-before-switch-project-hook project)
                 '(run-hooks 'projectile-before-switch-project-hook))
+
   (add-hook 'projectile-before-switch-project-hook
             (lambda (project-to-switch)
               (if (and project-to-switch (bound-and-true-p persp-mode))
-                  (persp-switch project-to-switch))))
+                  (persp-switch (funcall projectile-project-name-function project-to-switch)))))
   (defun counsel-projectile-find-file-action-find-file-jump (file)
     "Call `counsel-find-file' from FILE's directory."
     (let* ((f (projectile-expand-root file))
