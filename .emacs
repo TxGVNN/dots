@@ -813,6 +813,8 @@ npm i -g javascript-typescript-langserver"
   :hook (dockerfile-mode . whitespace-mode))
 
 ;;; PATCHING
+(use-package advice-patch :ensure t)
+
 (advice-add 'base64-encode-region
             :before (lambda (&rest _args)
                       "Pass prefix arg as third arg to `base64-encode-region'."
@@ -824,15 +826,11 @@ npm i -g javascript-typescript-langserver"
         flycheck-highlighting-mode (quote columns)))
 
 (unless (version< emacs-version "26.1")
-  (use-package advice-patch
-    :ensure t
-    :config
-    ;; flymake--highlight-line only a char
-    (with-eval-after-load 'flymake
-      (setq byte-compile-warnings nil)
-      (advice-patch 'flymake--highlight-line  '(+ 1 (flymake--diag-beg diagnostic)) '(flymake--diag-end diagnostic))
-      (advice-patch 'flymake--mode-line-format '" FlyM" '" Flymake")
-      (setq byte-compile-warnings t))))
+  (with-eval-after-load 'flymake
+    (setq byte-compile-warnings nil)
+    (advice-patch 'flymake--highlight-line  '(+ 1 (flymake--diag-beg diagnostic)) '(flymake--diag-end diagnostic))
+    (advice-patch 'flymake--mode-line-format '" FlyM" '" Flymake")
+    (setq byte-compile-warnings t)))
 
 (with-eval-after-load 'perspective
   (defun ivy-switch-to-buffer ()
