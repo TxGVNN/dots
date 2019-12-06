@@ -72,7 +72,7 @@ declare -f "cdenv" > /dev/null || function cdenv(){
 }
 
 function cdtmp(){
-    cd "$(mktemp -d -t ${USER}_$(date +%F_%H-%I)_XXX)" || exit 1
+    cd "$(mktemp -d -t ${USER}_$(date +%F_%H-%M)_XXX)" || exit 1
 }
 
 function lstmp(){
