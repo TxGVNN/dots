@@ -27,7 +27,9 @@
   (setq ivy-on-del-error-function #'ignore)
   (setq ivy-magic-tilde nil)
   (setq ivy-magic-slash-non-match-action 'ivy-magic-slash-non-match-action)
-  :config (ivy-mode))
+  :config
+  (define-key ivy-minibuffer-map (kbd "TAB") 'ivy-partial)
+  (ivy-mode))
 
 ;; counsel
 (use-package counsel
@@ -63,6 +65,7 @@
 ;; avy
 (use-package avy
   :ensure t
+  :config (setq avy-background t)
   :bind ("M-g a" . avy-goto-char)
   :bind ("M-g l" . avy-goto-line))
 
@@ -83,11 +86,6 @@
   ("C-h RET" . crux-find-user-init-file)
   ("C-x x e" . crux-open-with)
   ("C-x 7" . crux-swap-windows))
-
-;; vlf - view large files
-(use-package vlf
-  :ensure t
-  :config (require 'vlf-setup))
 
 ;; move-text
 (use-package move-text
@@ -147,11 +145,13 @@
   (projectile-mode))
 ;; counsel-projectile
 (use-package counsel-projectile
-  :ensure t
+  :ensure t :defer t
   :after (projectile)
-  :config
-  (define-key projectile-mode-map [remap projectile-compile-project] #'counsel-compile)
-  (counsel-projectile-mode))
+  :init
+  (define-key projectile-mode-map [remap projectile-switch-project] #'counsel-projectile-switch-project)
+  (define-key projectile-mode-map [remap projectile-find-file] #'counsel-projectile-find-file)
+  (define-key projectile-mode-map [remap projectile-ag] #'counsel-projectile-ag)
+  (define-key projectile-mode-map [remap projectile-compile-project] #'counsel-compile))
 
 ;; perspective
 (use-package perspective
@@ -227,7 +227,7 @@
    . yas-minor-mode))
 ;; My yasnippet-snippets
 (use-package yasnippet-snippets
-  :ensure t :pin txgvnn)
+  :ensure t :defer t :pin txgvnn)
 
 ;; company
 (use-package company
@@ -265,6 +265,8 @@
   :config (doom-themes-org-config))
 
 ;;; OPTIONS
+;; vlf - view large files
+(use-package vlf :ensure t :defer t)
 ;; which-key
 (cond ((package-installed-p 'which-key)
        (setq which-key-lighter "")
@@ -388,6 +390,10 @@
   (insert
    (concat (file-name-as-directory temporary-file-directory)
            (make-temp-name "tmp"))))
+(defun insert-datetime()
+  "Insert YYYmmdd-HHMM."
+  (interactive)
+  (insert (format-time-string "%Y%m%d-%H%M" (current-time))))
 (defun linux-stat-file()
   "Run stat command in linux in current file."
   (interactive)
@@ -412,17 +418,18 @@
   (interactive)
   (let ((help (help-at-pt-kbd-string)))
     (if help (eww help) (message "Nothing!"))))
-(defun share-to-transfer.sh (downloads)
+(defun share-to-transfer_sh (downloads)
   "Share buffer to transfer.sh.
 - DOWNLOADS: The max-downloads"
   (interactive "p")
   (let ((temp-file
          (make-temp-file ".sharing." nil (file-name-extension (buffer-name) t)))
+        (url "https://upload.vinahost.vn")
         (msg "") file-hash)
     (if (region-active-p)
         (write-region (point) (mark) temp-file)
       (write-region (point-min) (point-max) temp-file))
-    (when (yes-or-no-p (format "Share to transfer-sh.ml (%d)?" downloads))
+    (when (yes-or-no-p (format "Share to %s (%d)?" url downloads))
       (when (yes-or-no-p "Encrypt?")
         (let ((file-hash (md5 (buffer-string))))
           (shell-command (format "openssl aes-128-cbc -md md5 -k %s -in '%s' -out '%s.enc'"
@@ -431,11 +438,10 @@
           (setq temp-file (format "%s.enc" temp-file))
           (setq msg (format "| openssl aes-128-cbc -d -md md5 -k %s -in - 2>/dev/null"
                             file-hash))))
-      (message "curl %s 2>/dev/null %s"
+      (message "curl -L %s 2>/dev/null %s"
                (shell-command-to-string
-                (format "curl -q -H 'Max-Downloads: %d' --upload-file '%s' https://transfer.sh 2>/dev/null"
-                        downloads temp-file))
-               msg)
+                (format "curl -q -H 'Max-Downloads: %d' --upload-file '%s' %s 2>/dev/null"
+                        downloads temp-file url)) msg)
       (dired-delete-file temp-file))))
 
 (defun share-to-paste.debian.net ()
@@ -463,7 +469,7 @@
       (dired-delete-file temp-file))))
 
 (defvar share-to-online-func
-  'share-to-transfer.sh)
+  'share-to-transfer_sh)
 (defun share-to-online ()
   "Share buffer to online."
   (interactive)
@@ -501,6 +507,7 @@
 (global-set-key (kbd "C-x x r") 'revert-buffer)
 (global-set-key (kbd "C-x x a") 'linux-stat-file)
 (global-set-key (kbd "C-x x n") 'insert-temp-filename)
+(global-set-key (kbd "C-x x d") 'insert-datetime)
 (global-set-key (kbd "C-x x x") 'save-region-to-temp)
 (global-set-key (kbd "C-x x s") 'share-to-online)
 (global-set-key (kbd "C-x x t") 'untabify)
@@ -661,13 +668,12 @@ Please install:
   (interactive)
   (package-install 'go-mode)
   (package-install 'lsp-mode))
-(use-package go-mode
-  :defer t
-  :init
-  (add-hook 'go-mode-hook #'lsp-deferred)
-  ;; gofmt before every save
-  (add-hook 'before-save-hook 'gofmt-before-save))
 (with-eval-after-load 'go-mode
+  (add-hook 'go-mode-hook
+            (lambda ()
+              (lsp-deferred)
+              ;; gofmt before every save
+              (add-hook 'before-save-hook 'gofmt-before-save)))
   (setq gofmt-command "goimports")
   (defun go-print-debug-at-point()
     "Print debug."
@@ -783,11 +789,20 @@ tar -vxf jdt-language-server-latest.tar.gz -C ~/.emacs.d/eclipse.jdt.ls/server/"
   "JS development.
 npm i -g javascript-typescript-langserver"
   (interactive)
+  (package-install 'eslint-fix)
+  (package-install 'flymake-eslint)
+  (package-install 'prettier-js)
   (package-install 'lsp-mode)
   (package-install 'company-lsp))
 (use-package js-mode
   :defer t
-  :init (add-hook 'js-mode-hook #'lsp-deferred)
+  :init
+  (add-hook 'js-mode-hook
+            (lambda ()
+              (prettier-js-mode)
+              (flymake-eslint-enable)
+              (lsp-deferred)
+              (add-hook 'after-save-hook 'eslint-fix nil t)))
   :config (define-key js-mode-map (kbd "M-.") 'xref-find-definitions))
 
 ;; gitlab-mode
@@ -927,7 +942,7 @@ npm i -g javascript-typescript-langserver"
       (switch-to-buffer buffer))))
 
 ;; keep personal settings not in the .emacs file
-(let ((personal-settings "~/.emacs.d/personal.el"))
+(let ((personal-settings (expand-file-name "personal.el" user-emacs-directory)))
   (when (file-exists-p personal-settings)
     (load-file personal-settings)))
 
