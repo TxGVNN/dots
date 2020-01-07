@@ -66,8 +66,10 @@
 (use-package avy
   :ensure t
   :config (setq avy-background t)
-  :bind ("M-g a" . avy-goto-char)
-  :bind ("M-g l" . avy-goto-line))
+  :bind
+  ("C-x C-@" . avy-pop-mark)
+  ("M-g a" . avy-goto-char)
+  ("M-g l" . avy-goto-line))
 
 ;; crux
 (use-package crux
@@ -240,7 +242,8 @@
   (defun company-complete-custom (&optional prefix)
     "Company and Yasnippet(PREFIX)."
     (interactive "P")
-    (if (company--active-p) (company-cancel))
+    (if (fboundp 'company--active-p)
+        (if (company--active-p) (company-cancel)))
     (if prefix
         (if (not company-mode) (yas-expand)
           (call-interactively 'company-yasnippet))
@@ -799,10 +802,11 @@ npm i -g javascript-typescript-langserver"
   :init
   (add-hook 'js-mode-hook
             (lambda ()
-              (prettier-js-mode)
-              (flymake-eslint-enable)
-              (lsp-deferred)
-              (add-hook 'after-save-hook 'eslint-fix nil t)))
+              (if (fboundp 'flymake-eslint)
+                  (flymake-eslint-enable))
+              (if (fboundp 'eslint-fix)
+                  (add-hook 'after-save-hook 'eslint-fix nil t))
+              (lsp-deferred)))
   :config (define-key js-mode-map (kbd "M-.") 'xref-find-definitions))
 
 ;; gitlab-mode
@@ -890,19 +894,20 @@ npm i -g javascript-typescript-langserver"
                  (cons (persp-format-name (persp-name (persp-curr)))())
                  close)))))
   ;; find file with perspective and projectile
-  (defun counsel-find-file-action (x)
-    "Find file X."
-    (with-ivy-window
-      (if (and counsel-find-file-speedup-remote
-               (file-remote-p ivy--directory))
-          (let ((find-file-hook nil))
-            (find-file (expand-file-name x ivy--directory)))
-        (if (and (bound-and-true-p persp-mode) (bound-and-true-p projectile-mode))
-            (let (project-name (project-name-root (projectile-project-root (expand-file-name x))))
-              (when project-name-root
-                (setq project-name (funcall projectile-project-name-function project-name-root))
-                (persp-switch project-name))))
-        (find-file (expand-file-name x ivy--directory))))))
+  (with-eval-after-load 'counsel
+    (defun counsel-find-file-action (x)
+      "Find file X."
+      (with-ivy-window
+        (if (and counsel-find-file-speedup-remote
+                 (file-remote-p ivy--directory))
+            (let ((find-file-hook nil))
+              (find-file (expand-file-name x ivy--directory)))
+          (if (and (bound-and-true-p persp-mode) (bound-and-true-p projectile-mode))
+              (let (project-name (project-name-root (projectile-project-root (expand-file-name x))))
+                (when project-name-root
+                  (setq project-name (funcall projectile-project-name-function project-name-root))
+                  (persp-switch project-name))))
+          (find-file (expand-file-name x ivy--directory)))))))
 
 (with-eval-after-load 'counsel-projectile
   (advice-patch 'counsel-projectile-switch-project-by-name
