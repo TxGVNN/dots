@@ -67,7 +67,6 @@
   :ensure t
   :config (setq avy-background t)
   :bind
-  ("C-x C-@" . avy-pop-mark)
   ("M-g a" . avy-goto-char)
   ("M-g l" . avy-goto-line))
 
@@ -358,14 +357,11 @@
   "Copy to clipboard."
   (interactive)
   (if (display-graphic-p)
-      (progn (message "Yanked region to x-clipboard!")
-             (call-interactively 'clipboard-kill-ring-save))
+      (progn (call-interactively 'clipboard-kill-ring-save))
     (if (region-active-p)
         (progn
           (shell-command-on-region (region-beginning) (region-end) "xsel -i -b")
-          (message "Yanked region to clipboard!")
-          (deactivate-mark))
-      (message "No region active; can't yank to clipboard!"))))
+          (deactivate-mark)))))
 (defun paste-from-clipboard ()
   "Paste from clipboard."
   (interactive)
@@ -492,6 +488,8 @@
 (global-set-key [remap goto-line] #'goto-line-with-feedback)
 
 (defalias 'yes-or-no-p 'y-or-n-p)
+(global-set-key (kbd "C-x C-@") 'pop-to-mark-command)
+(global-set-key (kbd "C-x C-SPC") 'pop-to-mark-command)
 (global-set-key (kbd "C-x C-b") 'ibuffer)
 (global-set-key (kbd "C-x j") 'mode-line-other-buffer)
 (global-set-key (kbd "C-x m") 'compile)
@@ -545,6 +543,7 @@
  '(delete-old-versions t)
  '(delete-selection-mode t)
  '(eldoc-minor-mode-string " ED")
+ '(electric-indent-mode nil)
  '(enable-local-variables :all)
  '(ffap-machine-p-known (quote reject))
  '(global-hl-line-mode t)
@@ -793,7 +792,6 @@ tar -vxf jdt-language-server-latest.tar.gz -C ~/.emacs.d/eclipse.jdt.ls/server/"
 npm i -g javascript-typescript-langserver"
   (interactive)
   (package-install 'eslint-fix)
-  (package-install 'flymake-eslint)
   (package-install 'prettier-js)
   (package-install 'lsp-mode)
   (package-install 'company-lsp))
