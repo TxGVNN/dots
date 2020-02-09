@@ -8,8 +8,9 @@
 
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
-(add-to-list 'package-archives '("txgvnn" . "https://txgvnn.github.io/packages/"))
-(package-initialize)
+(add-to-list 'package-archives '("me" . "https://txgvnn.github.io/packages/"))
+(when (< emacs-major-version 27)
+  (package-initialize))
 
 ;;; BOOTSTRAP `use-package'
 (unless (package-installed-p 'use-package)
@@ -19,9 +20,8 @@
 ;;; PACKAGES
 ;; ivy
 (use-package ivy
-  :ensure t
-  :bind
-  ("C-x C-r" . ivy-resume)
+  :ensure t :pin me
+  :bind ("C-x C-r" . ivy-resume)
   :init
   (setq ivy-extra-directories '("./"))
   (setq ivy-on-del-error-function #'ignore)
@@ -33,7 +33,7 @@
 
 ;; counsel
 (use-package counsel
-  :ensure t :pin txgvnn
+  :ensure t :pin me
   :bind
   ("M-x" . counsel-M-x)
   ("M-X" . execute-extended-command)
@@ -55,7 +55,7 @@
 
 ;; swiper
 (use-package swiper
-  :ensure t
+  :ensure t :pin me
   :config
   (defun swiper-at-point (sym)
     "Use `swiper' to search for the symbol at point."
@@ -72,7 +72,7 @@
 
 ;; crux
 (use-package crux
-  :ensure t :pin txgvnn
+  :ensure t :pin me
   :bind
   ("C-^" . crux-top-join-line)
   ("C-a" . crux-move-beginning-of-line)
@@ -228,7 +228,7 @@
    . yas-minor-mode))
 ;; My yasnippet-snippets
 (use-package yasnippet-snippets
-  :ensure t :defer t :pin txgvnn)
+  :ensure t :defer t :pin me)
 
 ;; company
 (use-package company
@@ -254,7 +254,6 @@
   :ensure t
   :init
   (setq undo-tree-mode-lighter "")
-  (setq undo-tree-visualizer-timestamps t)
   (setq undo-tree-history-directory-alist
         `((".*" . ,temporary-file-directory)))
   (setq undo-tree-auto-save-history t)
@@ -262,7 +261,7 @@
 
 ;; themes
 (use-package doom-themes
-  :ensure t :pin txgvnn
+  :ensure t :pin me
   :init (load-theme 'doom-one t)
   :config (doom-themes-org-config))
 
@@ -291,12 +290,6 @@
 (use-package git-link
   :defer t
   :init (setq git-link-use-commit t))
-
-(defun develop-utils()
-  "Utility packages."
-  (interactive)
-  (package-install 'json-mode)
-  (package-install 'google-translate))
 
 ;;; HOOKS
 (defun add-to-hooks (func &rest hooks)
@@ -392,7 +385,7 @@
 (defun insert-datetime()
   "Insert YYYmmdd-HHMM."
   (interactive)
-  (insert (format-time-string "%Y%m%d-%H%M" (current-time))))
+  (insert (format-time-string "%Y%m%d-%H%M" (current-time) t)))
 (defun linux-stat-file()
   "Run stat command in linux in current file."
   (interactive)
@@ -406,7 +399,7 @@
   (let ((filename
          (make-temp-file
           (format "%s_%s_" (file-name-base (buffer-name))
-                  (format-time-string "%m-%d_%H-%M" (time-to-seconds)))
+                  (format-time-string "%Y%m%d_%H%M" (time-to-seconds)))
           nil (file-name-extension (buffer-name) t))))
     (if (region-active-p)
         (write-region (point) (mark) filename)
@@ -423,7 +416,7 @@
   (interactive "p")
   (let ((temp-file
          (make-temp-file ".sharing." nil (file-name-extension (buffer-name) t)))
-        (url "https://upload.vinahost.vn")
+        (url "https://transfersh.com")
         (msg "") file-hash)
     (if (region-active-p)
         (write-region (point) (mark) temp-file)
@@ -431,11 +424,11 @@
     (when (yes-or-no-p (format "Share to %s (%d)?" url downloads))
       (when (yes-or-no-p "Encrypt?")
         (let ((file-hash (md5 (buffer-string))))
-          (shell-command (format "openssl aes-128-cbc -md md5 -k %s -in '%s' -out '%s.enc'"
+          (shell-command (format "openssl aes-256-cbc -md md5 -k %s -in '%s' -out '%s.enc'"
                                  file-hash temp-file temp-file))
           (dired-delete-file temp-file)
           (setq temp-file (format "%s.enc" temp-file))
-          (setq msg (format "| openssl aes-128-cbc -d -md md5 -k %s -in - 2>/dev/null"
+          (setq msg (format "| openssl aes-256-cbc -d -md md5 -k %s -in - 2>/dev/null"
                             file-hash))))
       (message "curl -L %s 2>/dev/null %s"
                (shell-command-to-string
@@ -456,15 +449,15 @@
     (when (yes-or-no-p "Share to paste.debian.net?")
       (when (yes-or-no-p "Encrypt?")
         (let (( file-hash (md5 (buffer-string))))
-          (shell-command (format "openssl aes-128-cbc -md md5 -k %s -in '%s' | base64 > '%s.enc'"
+          (shell-command (format "openssl aes-256-cbc -md md5 -k %s -in '%s' | base64 > '%s.enc'"
                                  file-hash temp-file temp-file))
           (dired-delete-file temp-file)
           (setq temp-file (format "%s.enc" temp-file))
-          (setq msg (format "| base64 -d | openssl aes-128-cbc -d -md md5 -k %s -in - 2>/dev/null"
+          (setq msg (format "| base64 -d | openssl aes-256-cbc -d -md md5 -k %s -in - 2>/dev/null"
                             file-hash))))
       (find-file-read-only temp-file)
       (debpaste-paste-buffer (get-file-buffer temp-file))
-      (message "curl %s 2>dev/null %s" (debpaste-get-param-val 'download-url (debpaste-get-posted-info)) msg)
+      (message "curl %s 2>/dev/null %s" (debpaste-get-param-val 'download-url (debpaste-get-posted-info)) msg)
       (dired-delete-file temp-file))))
 
 (defvar share-to-online-func
@@ -486,6 +479,54 @@
         (goto-line (read-number "Goto line: ")))
     (funcall linum-func 0)))
 (global-set-key [remap goto-line] #'goto-line-with-feedback)
+
+;; term
+(with-eval-after-load 'term
+  (define-key term-raw-map (kbd "C-c C-y") 'term-paste))
+
+;;; MODELINE
+(setq mode-line-position
+      '((line-number-mode ("(%l" (column-number-mode ",%c")))
+        (-4 ":%p" ) (")")))
+(setq-default mode-line-buffer-identification
+              (propertized-buffer-identification "%b"))
+
+(defsubst modeline-column (pos)
+  "Get the column of the position `POS'."
+  (save-excursion (goto-char pos) (current-column)))
+(defun selection-info()
+  "Information about the current selection."
+  (when mark-active
+    (cl-destructuring-bind (beg . end)
+        (cons (region-beginning) (region-end))
+      (propertize
+       (let ((lines (count-lines beg (min end (point-max)))))
+         (concat (cond ((bound-and-true-p rectangle-mark-mode)
+                        (let ((cols (abs (- (modeline-column end)
+                                            (modeline-column beg)))))
+                          (format "(%dx%d)" lines cols)))
+                       ((> lines 0) (format "(%d,%d)" lines (- end beg)))
+                       ((format "(%d,%d)" 0 (- end beg))))))
+       'face 'font-lock-warning-face))))
+
+(setq-default mode-line-format
+              '("%e"
+                mode-line-front-space
+                mode-line-mule-info
+                mode-line-client
+                mode-line-modified
+                mode-line-remote
+                mode-line-frame-identification
+                " "
+                mode-line-buffer-identification
+                " "
+                mode-line-position
+                (:eval (selection-info))
+                (vc-mode vc-mode)
+                " "
+                mode-line-modes
+                mode-line-misc-info
+                mode-line-end-spaces))
 
 (defalias 'yes-or-no-p 'y-or-n-p)
 (global-set-key (kbd "C-x C-@") 'pop-to-mark-command)
@@ -566,6 +607,8 @@
     ((eval setq default-directory
            (locate-dominating-file buffer-file-name ".dir-locals.el")))))
  '(scroll-bar-mode nil)
+ '(scroll-conservatively 100000)
+ '(scroll-preserve-screen-position 1)
  '(show-paren-mode t)
  '(tab-stop-list (quote (4 8 12 16 20 24 28 32 36)))
  '(tab-width 4)
@@ -583,49 +626,119 @@
  '(symbol-overlay-default-face ((t (:inherit bold :underline t))))
  '(vc-state-base ((t (:inherit font-lock-string-face :weight bold)))))
 
-;;; MODELINE
-(setq mode-line-position
-      '((line-number-mode ("(%l" (column-number-mode ",%c")))
-        (-4 ":%p" ) (")")))
-(setq-default mode-line-buffer-identification
-              (propertized-buffer-identification "%b"))
+;;; PATCHING
+(use-package advice-patch :ensure t)
 
-(defsubst modeline-column (pos)
-  "Get the column of the position `POS'."
-  (save-excursion (goto-char pos) (current-column)))
-(defun selection-info()
-  "Information about the current selection."
-  (when mark-active
-    (cl-destructuring-bind (beg . end)
-        (cons (region-beginning) (region-end))
-      (propertize
-       (let ((lines (count-lines beg (min end (point-max)))))
-         (concat (cond ((bound-and-true-p rectangle-mark-mode)
-                        (let ((cols (abs (- (modeline-column end)
-                                            (modeline-column beg)))))
-                          (format "(%dx%d)" lines cols)))
-                       ((> lines 0) (format "(%d,%d)" lines (- end beg)))
-                       ((format "(%d,%d)" 0 (- end beg))))))
-       'face 'font-lock-warning-face))))
+(advice-add 'base64-encode-region
+            :before (lambda (&rest _args)
+                      "Pass prefix arg as third arg to `base64-encode-region'."
+                      (interactive "r\nP")))
 
-(setq-default mode-line-format
-              '("%e"
-                mode-line-front-space
-                mode-line-mule-info
-                mode-line-client
-                mode-line-modified
-                mode-line-remote
-                ;; mode-line-frame-identification -- this is for text-mode emacs only
-                " "
-                mode-line-buffer-identification
-                " "
-                mode-line-position
-                (:eval (selection-info))
-                (vc-mode vc-mode)
-                " "
-                mode-line-modes
-                mode-line-misc-info
-                mode-line-end-spaces))
+(with-eval-after-load 'flycheck
+  (defun flycheck-display-error-at-point-soon () nil)
+  (setq flycheck-highlighting-mode (quote columns)))
+
+(unless (version< emacs-version "26.1")
+  (with-eval-after-load 'flymake
+    (setq byte-compile-warnings nil)
+    (advice-patch 'flymake--highlight-line  '(+ 1 (flymake--diag-beg diagnostic)) '(flymake--diag-end diagnostic))
+    (advice-patch 'flymake--mode-line-format '" FlyM" '" Flymake")
+    (setq byte-compile-warnings t)))
+
+(with-eval-after-load 'perspective
+  (defun ivy-switch-to-buffer ()
+    "Switch to another buffer in the CURRENT PERSP."
+    (interactive)
+    (if (not (bound-and-true-p persp-mode))
+        (ivy-switch-buffer)
+      (setq this-command #'ivy-switch-buffer)
+      (ivy-read "Switch to buffer: " (remove nil (mapcar 'buffer-name (persp-buffers (persp-curr))))
+                :keymap ivy-switch-buffer-map
+                :preselect (buffer-name (other-buffer (current-buffer)))
+                :action #'ivy--switch-buffer-action
+                :matcher #'ivy--switch-buffer-matcher
+                :caller 'ivy-switch-buffer)))
+  (with-eval-after-load 'ivy
+    (define-key ivy-mode-map (kbd "C-x b") 'ivy-switch-to-buffer))
+
+  (defun ivy-switch-buffer-with-persp (&optional _)
+    "Clone from persp-switch-to-buffer."
+    (interactive)
+    (let (buffer)
+      (setq buffer (window-normalize-buffer-to-switch-to (read-buffer-to-switch "Switch to buffer: ")))
+      (if (memq buffer (persp-buffers (persp-curr)))
+          (switch-to-buffer buffer)
+        (let ((other-persp (persp-buffer-in-other-p buffer)))
+          (when (eq (car-safe other-persp) (selected-frame))
+            (persp-switch (cdr other-persp)))
+          (switch-to-buffer buffer)))))
+  (with-eval-after-load 'ivy
+    (ivy-add-actions
+     'ivy-switch-buffer
+     '(("p" ivy-switch-buffer-with-persp "persp-switch-to-buffer"))))
+  (defun persp-update-modestring ()
+    "Override persp-update-modestring."
+    (when persp-show-modestring
+      (let ((open (list (nth 0 persp-modestring-dividers)))
+            (close (list (nth 1 persp-modestring-dividers)))
+            (sep (nth 2 persp-modestring-dividers)))
+        (set-frame-parameter
+         nil 'persp--modestring
+         (append open
+                 (cons (persp-format-name (persp-name (persp-curr)))())
+                 close)))))
+  ;; find file with perspective and projectile
+  (with-eval-after-load 'counsel
+    (defun counsel-find-file-action (x)
+      "Find file X."
+      (with-ivy-window
+        (if (and counsel-find-file-speedup-remote
+                 (file-remote-p ivy--directory))
+            (let ((find-file-hook nil))
+              (find-file (expand-file-name x ivy--directory)))
+          (if (and (bound-and-true-p persp-mode) (bound-and-true-p projectile-mode))
+              (let (project-name (project-name-root (projectile-project-root (expand-file-name x))))
+                (when project-name-root
+                  (setq project-name (funcall projectile-project-name-function project-name-root))
+                  (persp-switch project-name))))
+          (find-file (expand-file-name x ivy--directory)))))))
+
+(with-eval-after-load 'counsel-projectile
+  (advice-patch 'counsel-projectile-switch-project-by-name
+                '(run-hook-with-args 'projectile-before-switch-project-hook project)
+                '(run-hooks 'projectile-before-switch-project-hook))
+
+  (add-hook 'projectile-before-switch-project-hook
+            (lambda (project-to-switch)
+              (if (and project-to-switch (bound-and-true-p persp-mode))
+                  (persp-switch (funcall projectile-project-name-function project-to-switch)))))
+  (defun counsel-projectile-find-file-action-find-file-jump (file)
+    "Call `counsel-find-file' from FILE's directory."
+    (let* ((f (projectile-expand-root file))
+           (default-directory (file-name-directory f)))
+      (counsel-file-jump)))
+  (ivy-add-actions
+   'counsel-projectile
+   '(("f" counsel-projectile-find-file-action-find-file-jump
+      "counsel-file-jump")))
+  (ivy-add-actions
+   'counsel-projectile-find-file
+   '(("f" counsel-projectile-find-file-action-find-file-jump
+      "counsel-file-jump"))))
+
+(with-eval-after-load 'projectile
+  (defun projectile-run-term (program)
+    "Override project-run-term."
+    (interactive (list nil))
+    (let* ((project (projectile-ensure-project (projectile-project-root)))
+           (termname (concat "term " (projectile-project-name project)))
+           (buffer (concat "*" termname "*")))
+      (unless (get-buffer buffer)
+        (require 'term)
+        (projectile-with-default-dir project
+          (ansi-term (or explicit-shell-file-name
+                         (getenv "SHELL") "/bin/sh") termname)))
+      (switch-to-buffer buffer))))
 
 ;;; LANGUAGES
 ;; .emacs
@@ -639,18 +752,11 @@
     (other-window 1 nil)
     (message "Override %s by %s to update" user-init-file upstream)))
 
-;; summary-mode
-(eval-after-load 'gnus-summary-mode
-  (setq gnus-summary-line-format "%U%R%z %d %-23,23f (%4,4L) %{%B%}%s\n"
-        gnus-sum-thread-tree-root            ""
-        gnus-sum-thread-tree-false-root      "──> "
-        gnus-sum-thread-tree-leaf-with-other "├─> "
-        gnus-sum-thread-tree-vertical        "│ "
-        gnus-sum-thread-tree-single-leaf     "└─> "))
-
-;; term
-(with-eval-after-load 'term
-  (define-key term-raw-map (kbd "C-c C-y") 'term-paste))
+(defun develop-utils()
+  "Utility packages."
+  (interactive)
+  (package-install 'json-mode)
+  (package-install 'google-translate))
 
 ;; c-mode
 (defun my-c-mode-common-hook ()
@@ -828,121 +934,6 @@ npm i -g javascript-typescript-langserver"
 (use-package dockerfile-mode
   :defer t
   :hook (dockerfile-mode . whitespace-mode))
-
-;;; PATCHING
-(use-package advice-patch :ensure t)
-
-(advice-add 'base64-encode-region
-            :before (lambda (&rest _args)
-                      "Pass prefix arg as third arg to `base64-encode-region'."
-                      (interactive "r\nP")))
-
-(with-eval-after-load 'flycheck
-  (defun flycheck-display-error-at-point-soon () nil)
-  (setq flycheck-mode-line-prefix "FC"
-        flycheck-highlighting-mode (quote columns)))
-
-(unless (version< emacs-version "26.1")
-  (with-eval-after-load 'flymake
-    (setq byte-compile-warnings nil)
-    (advice-patch 'flymake--highlight-line  '(+ 1 (flymake--diag-beg diagnostic)) '(flymake--diag-end diagnostic))
-    (advice-patch 'flymake--mode-line-format '" FlyM" '" Flymake")
-    (setq byte-compile-warnings t)))
-
-(with-eval-after-load 'perspective
-  (defun ivy-switch-to-buffer ()
-    "Switch to another buffer in the CURRENT PERSP."
-    (interactive)
-    (if (not (bound-and-true-p persp-mode))
-        (ivy-switch-buffer)
-      (setq this-command #'ivy-switch-buffer)
-      (ivy-read "Switch to buffer: " (remove nil (mapcar 'buffer-name (persp-buffers (persp-curr))))
-                :keymap ivy-switch-buffer-map
-                :preselect (buffer-name (other-buffer (current-buffer)))
-                :action #'ivy--switch-buffer-action
-                :matcher #'ivy--switch-buffer-matcher
-                :caller 'ivy-switch-buffer)))
-  (with-eval-after-load 'ivy
-    (define-key ivy-mode-map (kbd "C-x b") 'ivy-switch-to-buffer))
-
-  (defun ivy-switch-buffer-with-persp (&optional _)
-    "Clone from persp-switch-to-buffer."
-    (interactive)
-    (let (buffer)
-      (setq buffer (window-normalize-buffer-to-switch-to (read-buffer-to-switch "Switch to buffer: ")))
-      (if (memq buffer (persp-buffers (persp-curr)))
-          (switch-to-buffer buffer)
-        (let ((other-persp (persp-buffer-in-other-p buffer)))
-          (when (eq (car-safe other-persp) (selected-frame))
-            (persp-switch (cdr other-persp)))
-          (switch-to-buffer buffer)))))
-  (with-eval-after-load 'ivy
-    (ivy-add-actions
-     'ivy-switch-buffer
-     '(("p" ivy-switch-buffer-with-persp "persp-switch-to-buffer"))))
-  (defun persp-update-modestring ()
-    "Override persp-update-modestring."
-    (when persp-show-modestring
-      (let ((open (list (nth 0 persp-modestring-dividers)))
-            (close (list (nth 1 persp-modestring-dividers)))
-            (sep (nth 2 persp-modestring-dividers)))
-        (set-frame-parameter
-         nil 'persp--modestring
-         (append open
-                 (cons (persp-format-name (persp-name (persp-curr)))())
-                 close)))))
-  ;; find file with perspective and projectile
-  (with-eval-after-load 'counsel
-    (defun counsel-find-file-action (x)
-      "Find file X."
-      (with-ivy-window
-        (if (and counsel-find-file-speedup-remote
-                 (file-remote-p ivy--directory))
-            (let ((find-file-hook nil))
-              (find-file (expand-file-name x ivy--directory)))
-          (if (and (bound-and-true-p persp-mode) (bound-and-true-p projectile-mode))
-              (let (project-name (project-name-root (projectile-project-root (expand-file-name x))))
-                (when project-name-root
-                  (setq project-name (funcall projectile-project-name-function project-name-root))
-                  (persp-switch project-name))))
-          (find-file (expand-file-name x ivy--directory)))))))
-
-(with-eval-after-load 'counsel-projectile
-  (advice-patch 'counsel-projectile-switch-project-by-name
-                '(run-hook-with-args 'projectile-before-switch-project-hook project)
-                '(run-hooks 'projectile-before-switch-project-hook))
-
-  (add-hook 'projectile-before-switch-project-hook
-            (lambda (project-to-switch)
-              (if (and project-to-switch (bound-and-true-p persp-mode))
-                  (persp-switch (funcall projectile-project-name-function project-to-switch)))))
-  (defun counsel-projectile-find-file-action-find-file-jump (file)
-    "Call `counsel-find-file' from FILE's directory."
-    (let* ((f (projectile-expand-root file))
-           (default-directory (file-name-directory f)))
-      (counsel-file-jump)))
-  (ivy-add-actions
-   'counsel-projectile
-   '(("f" counsel-projectile-find-file-action-find-file-jump
-      "counsel-file-jump")))
-  (ivy-add-actions
-   'counsel-projectile-find-file
-   '(("f" counsel-projectile-find-file-action-find-file-jump
-      "counsel-file-jump"))))
-
-(with-eval-after-load 'projectile
-  (defun projectile-run-term (program)
-    "Override project-run-term."
-    (interactive (list nil))
-    (let* ((project (projectile-ensure-project (projectile-project-root)))
-           (termname (concat "term " (projectile-project-name project)))
-           (buffer (concat "*" termname "*")))
-      (unless (get-buffer buffer)
-        (require 'term)
-        (projectile-with-default-dir project
-          (ansi-term (or explicit-shell-file-name
-                         (getenv "SHELL") "/bin/sh") termname)))
-      (switch-to-buffer buffer))))
 
 ;; keep personal settings not in the .emacs file
 (let ((personal-settings (expand-file-name "personal.el" user-emacs-directory)))
