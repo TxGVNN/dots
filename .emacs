@@ -62,10 +62,17 @@
     (interactive (list (thing-at-point 'symbol))) (swiper sym))
   :bind ("M-s w" . swiper-at-point))
 
+;; fuzzy
+(use-package fuzzy
+  :ensure t
+  :config (turn-on-fuzzy-isearch))
+
 ;; avy
 (use-package avy
   :ensure t
-  :config (setq avy-background t)
+  :config
+  (setq avy-all-windows nil)
+  (setq avy-background t)
   :bind
   ("M-g a" . avy-goto-char)
   ("M-g l" . avy-goto-line))
@@ -480,10 +487,6 @@
     (funcall linum-func 0)))
 (global-set-key [remap goto-line] #'goto-line-with-feedback)
 
-;; term
-(with-eval-after-load 'term
-  (define-key term-raw-map (kbd "C-c C-y") 'term-paste))
-
 ;;; MODELINE
 (setq mode-line-position
       '((line-number-mode ("(%l" (column-number-mode ",%c")))
@@ -528,6 +531,18 @@
                 mode-line-misc-info
                 mode-line-end-spaces))
 
+;; term
+(with-eval-after-load 'term
+  (define-key term-raw-map (kbd "C-c C-y") 'term-paste))
+;; summary-mode
+(eval-after-load 'gnus-summary-mode
+  (setq gnus-summary-line-format "%U%R%z %d %-23,23f (%4,4L) %{%B%}%s\n"
+        gnus-sum-thread-tree-root            ""
+        gnus-sum-thread-tree-false-root      "──> "
+        gnus-sum-thread-tree-leaf-with-other "├─> "
+        gnus-sum-thread-tree-vertical        "│ "
+        gnus-sum-thread-tree-single-leaf     "└─> "))
+
 (defalias 'yes-or-no-p 'y-or-n-p)
 (global-set-key (kbd "C-x C-@") 'pop-to-mark-command)
 (global-set-key (kbd "C-x C-SPC") 'pop-to-mark-command)
@@ -564,7 +579,10 @@
 (global-set-key (kbd "C-x 4 M->") 'end-of-buffer-other-window)
 (global-set-key (kbd "M-z") 'zap-up-to-char)
 
+(setq select-safe-coding-system-function t)
+(set-default-coding-systems 'utf-8)
 (prefer-coding-system 'utf-8)
+
 (setq auto-save-file-name-transforms `((".*" ,temporary-file-directory t))
       backup-directory-alist `(("." . ,(concat user-emacs-directory "backups")))
       tramp-auto-save-directory `,(concat user-emacs-directory "backups"))
@@ -607,8 +625,6 @@
     ((eval setq default-directory
            (locate-dominating-file buffer-file-name ".dir-locals.el")))))
  '(scroll-bar-mode nil)
- '(scroll-conservatively 100000)
- '(scroll-preserve-screen-position 1)
  '(show-paren-mode t)
  '(tab-stop-list (quote (4 8 12 16 20 24 28 32 36)))
  '(tab-width 4)
@@ -892,26 +908,17 @@ tar -vxf jdt-language-server-latest.tar.gz -C ~/.emacs.d/eclipse.jdt.ls/server/"
   :hook (html-mode . indent-guide-mode)
   :config (set-face-foreground 'indent-guide-face "dimgray"))
 
-;; js-mode
-(defun develop-js()
-  "JS development.
+;; web-mode
+(defun develop-web()
+  "WEB development.
 npm i -g javascript-typescript-langserver"
   (interactive)
-  (package-install 'eslint-fix)
-  (package-install 'prettier-js)
-  (package-install 'lsp-mode)
-  (package-install 'company-lsp))
-(use-package js-mode
+  (package-install 'web-mode)
+  (package-install 'eslint-fix))
+(use-package web-mode
   :defer t
   :init
-  (add-hook 'js-mode-hook
-            (lambda ()
-              (if (fboundp 'flymake-eslint)
-                  (flymake-eslint-enable))
-              (if (fboundp 'eslint-fix)
-                  (add-hook 'after-save-hook 'eslint-fix nil t))
-              (lsp-deferred)))
-  :config (define-key js-mode-map (kbd "M-.") 'xref-find-definitions))
+  (add-to-list 'auto-mode-alist '("\\.js\\'" . web-mode)))
 
 ;; gitlab-mode
 (defun develop-gitlab-ci()

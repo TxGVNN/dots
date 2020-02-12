@@ -29,15 +29,6 @@
 (defvar topic-topology nil)
 (defvar topic-alist nil)
 (defvar email-addresses nil)
-;; summary-mode
-(eval-after-load 'gnus-summary-mode
-  (setq gnus-summary-line-format "%U%R%z %d %-23,23f (%4,4L) %{%B%}%s\n"
-        gnus-sum-thread-tree-root            ""
-        gnus-sum-thread-tree-false-root      "──> "
-        gnus-sum-thread-tree-leaf-with-other "├─> "
-        gnus-sum-thread-tree-vertical        "│ "
-        gnus-sum-thread-tree-single-leaf     "└─> "))
-
 ;; (STATELESS END)
 
 ;;; Default setting
