@@ -268,8 +268,8 @@
 
 ;; themes
 (use-package doom-themes
-  :ensure t :pin me
-  :init (load-theme 'doom-one t)
+  :ensure t
+  :init (load-theme 'doom-gruvbox t)
   :config (doom-themes-org-config))
 
 ;;; OPTIONS
@@ -548,7 +548,7 @@
         gnus-sum-thread-tree-single-leaf     "└─> "))
 
 (defalias 'yes-or-no-p 'y-or-n-p)
-(global-set-key (kbd "C-D") 'kill-whole-line)
+(global-set-key (kbd "M-D") 'kill-whole-line)
 (global-set-key (kbd "C-x C-@") 'pop-to-mark-command)
 (global-set-key (kbd "C-x C-SPC") 'pop-to-mark-command)
 (global-set-key (kbd "C-x C-b") 'ibuffer)
