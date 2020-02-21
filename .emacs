@@ -531,6 +531,10 @@
                 mode-line-misc-info
                 mode-line-end-spaces))
 
+;; isearch
+(global-set-key (kbd "M-s s") 'isearch-forward-regexp)
+(global-set-key (kbd "M-s r") 'isearch-backward-regexp)
+(define-key isearch-mode-map (kbd "M-s %") 'isearch-query-replace-regexp)
 ;; term
 (with-eval-after-load 'term
   (define-key term-raw-map (kbd "C-c C-y") 'term-paste))
@@ -544,6 +548,7 @@
         gnus-sum-thread-tree-single-leaf     "└─> "))
 
 (defalias 'yes-or-no-p 'y-or-n-p)
+(global-set-key (kbd "C-D") 'kill-whole-line)
 (global-set-key (kbd "C-x C-@") 'pop-to-mark-command)
 (global-set-key (kbd "C-x C-SPC") 'pop-to-mark-command)
 (global-set-key (kbd "C-x C-b") 'ibuffer)
@@ -552,8 +557,6 @@
 (global-set-key (kbd "M-s e") 'eww)
 (global-set-key (kbd "M-s E") 'eww-search-local-help)
 (global-set-key (kbd "M-s g") 'rgrep)
-(global-set-key (kbd "M-s s") 'isearch-forward-regexp)
-(global-set-key (kbd "M-s r") 'isearch-backward-regexp)
 (global-set-key (kbd "M-#") 'mark-backword)
 (global-set-key (kbd "C-M-_") 'dabbrev-completion)
 (global-set-key (kbd "C-x x .") 'delete-trailing-whitespace)
@@ -608,10 +611,10 @@
  '(global-hl-line-mode t)
  '(indent-tabs-mode nil)
  '(inhibit-startup-screen t)
+ '(initial-major-mode (quote fundamental-mode))
  '(initial-scratch-message nil)
  '(kept-new-versions 6)
  '(menu-bar-mode nil)
- '(org-agenda-files (quote ("~/.gxt/org")))
  '(org-babel-load-languages (quote ((emacs-lisp . t) (shell . t))))
  '(org-enforce-todo-dependencies t)
  '(org-todo-keyword-faces (quote (("BLOCKED" . error) ("WIP" . warning))))
@@ -767,12 +770,6 @@
     (diff user-init-file upstream)
     (other-window 1 nil)
     (message "Override %s by %s to update" user-init-file upstream)))
-
-(defun develop-utils()
-  "Utility packages."
-  (interactive)
-  (package-install 'json-mode)
-  (package-install 'google-translate))
 
 ;; c-mode
 (defun my-c-mode-common-hook ()
