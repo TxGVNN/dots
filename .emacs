@@ -108,6 +108,13 @@
   :init (global-set-key (kbd "C-x o") 'ace-window)
   :config (setq aw-scope (quote frame)))
 
+;; xclip
+(use-package xclip
+  :ensure t :defer t
+  :init
+  (require 'xclip nil t)
+  (xclip-mode))
+
 ;; checker kbd("C-h .")
 (if (version< emacs-version "26.1")
     (use-package flycheck
@@ -216,7 +223,6 @@
   :config
   (define-key symbol-overlay-map (kbd "N") 'symbol-overlay-switch-forward)
   (define-key symbol-overlay-map (kbd "P") 'symbol-overlay-switch-backward)
-  (define-key symbol-overlay-map (kbd "c") 'symbol-overlay-remove-all)
   :bind ("M-s H" . symbol-overlay-put)
   :hook (prog-mode . symbol-overlay-mode))
 
@@ -268,8 +274,8 @@
 
 ;; themes
 (use-package doom-themes
-  :ensure t
-  :init (load-theme 'doom-gruvbox t)
+  :ensure t :pin me
+  :init (load-theme 'doom-one t)
   :config (doom-themes-org-config))
 
 ;;; OPTIONS
@@ -353,21 +359,6 @@
   (split-window-horizontally)
   (other-window 1 nil)
   (if (= prefix 1 ) (switch-to-next-buffer)))
-(defun copy-to-clipboard ()
-  "Copy to clipboard."
-  (interactive)
-  (if (display-graphic-p)
-      (progn (call-interactively 'clipboard-kill-ring-save))
-    (if (region-active-p)
-        (progn
-          (shell-command-on-region (region-beginning) (region-end) "xsel -i -b")
-          (deactivate-mark)))))
-(defun paste-from-clipboard ()
-  "Paste from clipboard."
-  (interactive)
-  (if (display-graphic-p)
-      (progn (clipboard-yank))
-    (insert (shell-command-to-string "xsel -o -b"))))
 (defun mark-backword (&optional arg allow-extend)
   "Reverse of mark-word(ARG ALLOW-EXTEND)."
   (interactive "P\np")
@@ -572,8 +563,6 @@
 (global-set-key (kbd "C-x x s") 'share-to-online)
 (global-set-key (kbd "C-x x t") 'untabify)
 (global-set-key (kbd "C-x x T") 'tabify)
-(global-set-key (kbd "C-x x M-w") 'copy-to-clipboard)
-(global-set-key (kbd "C-x x C-y") 'paste-from-clipboard)
 (global-set-key (kbd "C-x 2") 'split-window-vertically-last-buffer)
 (global-set-key (kbd "C-x 3") 'split-window-horizontally-last-buffer)
 (global-set-key (kbd "C-x 4 C-v") 'scroll-other-window)
@@ -581,6 +570,8 @@
 (global-set-key (kbd "C-x 4 M-<") 'beginning-of-buffer-other-window)
 (global-set-key (kbd "C-x 4 M->") 'end-of-buffer-other-window)
 (global-set-key (kbd "M-z") 'zap-up-to-char)
+(global-set-key (kbd "ESC <up>") '(lambda () (interactive "") (previous-line 3)))
+(global-set-key (kbd "ESC <down>") '(lambda () (interactive "") (next-line 3)))
 
 (setq select-safe-coding-system-function t)
 (set-default-coding-systems 'utf-8)
@@ -635,7 +626,8 @@
  '(version-control t)
  '(whitespace-style
    (quote
-    (face tabs trailing space-before-tab newline empty tab-mark))))
+    (face tabs trailing space-before-tab newline empty tab-mark)))
+ '(x-select-request-type (quote (COMPOUND_TEXT UTF8_STRING STRING TEXT))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
