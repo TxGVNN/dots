@@ -167,6 +167,16 @@
   (define-key projectile-mode-map [remap projectile-find-file] #'counsel-projectile-find-file)
   (define-key projectile-mode-map [remap projectile-ag] #'counsel-projectile-ag)
   (define-key projectile-mode-map [remap projectile-compile-project] #'counsel-compile))
+;; ibuffer-projectile
+(use-package ibuffer-projectile
+  :ensure t
+  :config
+  (setq ibuffer-projectile-prefix "")
+  (add-hook 'ibuffer-hook
+            (lambda ()
+              (ibuffer-projectile-set-filter-groups)
+              (unless (eq ibuffer-sorting-mode 'alphabetic)
+                (ibuffer-do-sort-by-alphabetic)))))
 
 ;; perspective
 (use-package perspective
@@ -807,6 +817,10 @@ Please install:
   (package-install 'lsp-mode)
   (package-install 'company-lsp))
 (with-eval-after-load 'python ;; built-in
+  (setq python-indent-guess-indent-offset-verbose nil)
+  (when (and (executable-find "python3")
+             (string= python-shell-interpreter "python"))
+    (setq python-shell-interpreter "python3"))
   (defun python-docs (w)
     "Launch PyDOC on the Word at Point"
     (interactive
