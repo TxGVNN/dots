@@ -112,8 +112,8 @@
 (use-package xclip
   :ensure t :defer t
   :init
-  (require 'xclip nil t)
-  (xclip-mode))
+  (add-hook 'tty-setup-hook
+            (lambda()(require 'xclip nil t)(xclip-mode))))
 
 ;; checker kbd("C-h .")
 (if (version< emacs-version "26.1")
@@ -423,7 +423,7 @@
 - DOWNLOADS: The max-downloads"
   (interactive "p")
   (let ((temp-file
-         (make-temp-file ".sharing." nil (file-name-extension (buffer-name) t)))
+         (make-temp-file nil nil (file-name-extension (buffer-name) t)))
         (url "https://transfersh.com")
         (msg "") file-hash)
     (if (region-active-p)
@@ -449,7 +449,7 @@
 - DOWNLOADS: The max-downloads"
   (interactive)
   (let ((temp-file
-         (make-temp-file ".sharing." nil (file-name-extension (buffer-name) t)))
+         (make-temp-file nil nil (file-name-extension (buffer-name) t)))
         (msg "") file-hash)
     (if (region-active-p)
         (write-region (point) (mark) temp-file)
