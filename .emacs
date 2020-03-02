@@ -287,7 +287,7 @@
   :ensure t :pin me
   :init (load-theme 'doom-one t)
   :config (doom-themes-org-config))
-
+
 ;;; OPTIONS
 ;; vlf - view large files
 (use-package vlf :ensure t :defer t)
@@ -313,7 +313,7 @@
 (use-package git-link
   :defer t
   :init (setq git-link-use-commit t))
-
+
 ;;; HOOKS
 (defun add-to-hooks (func &rest hooks)
   "Add FUNC to mutil HOOKS."
@@ -340,7 +340,7 @@
     (let ((trg (cdr (assoc x minor-mode-alist))))
       (when trg (setcar trg "")))))
 (add-hook 'after-change-major-mode-hook 'purge-minor-modes)
-
+
 ;;; CUSTOMIZE
 ;; defun
 (defun indent-and-delete-trailing-whitespace ()
@@ -456,7 +456,7 @@
       (write-region (point-min) (point-max) temp-file))
     (when (yes-or-no-p "Share to paste.debian.net?")
       (when (yes-or-no-p "Encrypt?")
-        (let (( file-hash (md5 (buffer-string))))
+        (let ((file-hash (md5 (buffer-string))))
           (shell-command (format "openssl aes-256-cbc -md md5 -k %s -in '%s' | base64 > '%s.enc'"
                                  file-hash temp-file temp-file))
           (dired-delete-file temp-file)
@@ -487,7 +487,7 @@
         (goto-line (read-number "Goto line: ")))
     (funcall linum-func 0)))
 (global-set-key [remap goto-line] #'goto-line-with-feedback)
-
+
 ;;; MODELINE
 (setq mode-line-position
       '((line-number-mode ("(%l" (column-number-mode ",%c")))
@@ -646,7 +646,7 @@
  '(ivy-virtual ((t (:inherit unspecified :foreground unspecified))))
  '(symbol-overlay-default-face ((t (:inherit bold :underline t))))
  '(vc-state-base ((t (:inherit font-lock-string-face :weight bold)))))
-
+
 ;;; PATCHING
 (use-package advice-patch :ensure t)
 
@@ -685,8 +685,7 @@
   (defun ivy-switch-buffer-with-persp (&optional _)
     "Clone from persp-switch-to-buffer."
     (interactive)
-    (let (buffer)
-      (setq buffer (window-normalize-buffer-to-switch-to (read-buffer-to-switch "Switch to buffer: ")))
+    (let ((buffer (window-normalize-buffer-to-switch-to (read-buffer-to-switch "Switch to buffer: "))))
       (if (memq buffer (persp-buffers (persp-curr)))
           (switch-to-buffer buffer)
         (let ((other-persp (persp-buffer-in-other-p buffer)))
@@ -760,14 +759,13 @@
           (ansi-term (or explicit-shell-file-name
                          (getenv "SHELL") "/bin/sh") termname)))
       (switch-to-buffer buffer))))
-
+
 ;;; LANGUAGES
 ;; .emacs
 (defun develop-dot()
   "Update 'user-init-file - .emacs."
   (interactive)
-  (let (upstream)
-    (setq upstream (make-temp-file ".emacs"))
+  (let ((upstream (make-temp-file ".emacs")))
     (url-copy-file "https://raw.githubusercontent.com/TxGVNN/dots/master/.emacs" upstream t)
     (diff user-init-file upstream)
     (other-window 1 nil)
@@ -801,12 +799,12 @@ Please install:
   (defun go-print-debug-at-point()
     "Print debug."
     (interactive)
-    (let (var)
-      (setq var (substring-no-properties (thing-at-point 'symbol)))
+    (let ((var (substring-no-properties (thing-at-point 'symbol))))
       (move-end-of-line nil)
       (newline-and-indent)
-      (insert (format "fmt.Printf(\"D: %s+%d %s, %%+v\\n\", %s)"
-                      (file-name-nondirectory (buffer-file-name)) (line-number-at-pos) var var)))))
+      (insert (format "fmt.Printf(\"D: %s@%s %s, %%+v\\n\", %s)"
+                      (file-name-nondirectory (buffer-file-name))
+                      (substring (md5 (format "%s%s" (emacs-pid) (current-time))) 0 4) var var)))))
 
 ;; python-mode
 (defun develop-python()
@@ -835,14 +833,13 @@ Please install:
   (defun python-print-debug-at-point()
     "Print debug."
     (interactive)
-    (let (var)
-      (setq var (substring-no-properties (thing-at-point 'symbol)))
+    (let ((var (substring-no-properties (thing-at-point 'symbol))))
       (move-end-of-line nil)
       (newline-and-indent)
-      (insert (format "print(\"D: %s+%d %s, {}\".format(%s))"
-                      (file-name-nondirectory (buffer-file-name)) (line-number-at-pos) var var)))))
+      (insert (format "print(\"D: %s@%s %s, {}\".format(%s))"
+                      (file-name-nondirectory (buffer-file-name))
+                      (substring (md5 (format "%s%s" (emacs-pid) (current-time))) 0 4) var var)))))
 (add-hook 'python-mode-hook #'lsp-deferred)
-
 
 ;; php-mode
 (defun develop-php()
