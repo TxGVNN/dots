@@ -43,6 +43,7 @@
   ("M-y" . counsel-yank-pop)
   ("M-Y" . yank-pop)
   ("M-s d" . counsel-ag)
+  ("M-s x" . counsel-rg)
   ("C-h b" . counsel-descbinds)
   (:map counsel-find-file-map ("C-k" . counsel-up-directory))
   :hook
@@ -166,6 +167,7 @@
   (define-key projectile-mode-map [remap projectile-switch-project] #'counsel-projectile-switch-project)
   (define-key projectile-mode-map [remap projectile-find-file] #'counsel-projectile-find-file)
   (define-key projectile-mode-map [remap projectile-ag] #'counsel-projectile-ag)
+  (define-key projectile-mode-map [remap projectile-rg] #'counsel-projectile-rg)
   (define-key projectile-mode-map [remap projectile-compile-project] #'counsel-compile))
 ;; ibuffer-projectile
 (use-package ibuffer-projectile
@@ -286,7 +288,9 @@
 (use-package doom-themes
   :ensure t :pin me
   :init (load-theme 'doom-one t)
-  :config (doom-themes-org-config))
+  :config
+  (doom-themes-visual-bell-config)
+  (doom-themes-org-config))
 
 ;;; OPTIONS
 ;; vlf - view large files
