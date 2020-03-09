@@ -167,7 +167,7 @@
   (define-key projectile-mode-map [remap projectile-switch-project] #'counsel-projectile-switch-project)
   (define-key projectile-mode-map [remap projectile-find-file] #'counsel-projectile-find-file)
   (define-key projectile-mode-map [remap projectile-ag] #'counsel-projectile-ag)
-  (define-key projectile-mode-map [remap projectile-rg] #'counsel-projectile-rg)
+  (define-key projectile-mode-map [remap projectile-ripgrep] #'counsel-projectile-rg)
   (define-key projectile-mode-map [remap projectile-compile-project] #'counsel-compile))
 ;; ibuffer-projectile
 (use-package ibuffer-projectile
