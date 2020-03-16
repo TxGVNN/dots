@@ -5,6 +5,12 @@
 (when (version< emacs-version "25.1")
   (error "Requires GNU Emacs 25.1 or newer, but you're running %s" emacs-version))
 (setq gc-cons-threshold (* 64 1024 1024))
+;; doom-emacs:docs/faq.org#unset-file-name-handler-alist-temporarily
+(defvar doom--file-name-handler-alist file-name-handler-alist)
+(setq file-name-handler-alist nil)
+(add-hook 'emacs-startup-hook
+  (lambda ()
+    (setq file-name-handler-alist doom--file-name-handler-alist)))
 
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
@@ -43,7 +49,8 @@
   ("M-y" . counsel-yank-pop)
   ("M-Y" . yank-pop)
   ("M-s d" . counsel-ag)
-  ("M-s x" . counsel-rg)
+  ("M-s r" . counsel-rg)
+  ("M-s j" . counsel-file-jump)
   ("C-h b" . counsel-descbinds)
   (:map counsel-find-file-map ("C-k" . counsel-up-directory))
   :hook
@@ -107,9 +114,11 @@
 (use-package ace-window
   :ensure t
   :init (global-set-key (kbd "C-x o") 'ace-window)
-  :config (setq aw-scope (quote frame)))
+  :config
+  (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l))
+  (setq aw-scope (quote frame)))
 
-;; xclip
+;; xclip -- don't use xsel
 (use-package xclip
   :ensure t :defer t
   :init
@@ -281,7 +290,6 @@
   (setq undo-tree-mode-lighter "")
   (setq undo-tree-history-directory-alist
         `((".*" . ,temporary-file-directory)))
-  (setq undo-tree-auto-save-history t)
   :config (global-undo-tree-mode))
 
 ;; themes
@@ -334,6 +342,15 @@
 ;; Apply .dir-locals to major-mode after load .dir-local
 ;; https://stackoverflow.com/questions/19280851/how-to-keep-dir-local-variables-when-switching-major-modes
 (add-hook 'after-change-major-mode-hook 'hack-local-variables)
+
+;; large-file
+(defun find-file-with-large-file-hook ()
+  "If a file is over a given size, make the buffer read only."
+  (when (> (buffer-size) 7340032) ;; (* 7 1024 1024)
+    (setq buffer-read-only t)
+    (buffer-disable-undo)
+    (fundamental-mode)))
+(add-hook 'find-file-hook 'find-file-with-large-file-hook)
 
 ;; hide the minor modes
 (defvar hidden-minor-modes
@@ -405,18 +422,31 @@
                     (buffer-file-name))))
     (when filename
       (shell-command (format "stat %s; file %s" filename filename)))))
+(defun copy-region-to-scratch (&optional file)
+  "Copy region to a new scratch."
+  (interactive)
+  (let* ((string
+          (cond
+           ((and (bound-and-true-p rectangle-mark-mode) (use-region-p))
+            (mapconcat 'concat (extract-rectangle (region-beginning) (region-end)) "\n"))
+           ((use-region-p) (buffer-substring (point) (mark)))
+           (t (buffer-substring (point-min) (point-max)))))
+         (buffer-name (format "%s_%s" (file-name-base (buffer-name)) (format-time-string "%y%m%d_%H%M%S")))
+         (buffer (get-buffer-create buffer-name)))
+    (with-current-buffer buffer
+      (insert string)
+      (if file (write-file file nil))
+      (switch-to-buffer (current-buffer)))))
 (defun save-region-to-temp ()
   "Save region to a new temp file."
   (interactive)
   (let ((filename
          (make-temp-file
           (format "%s_%s_" (file-name-base (buffer-name))
-                  (format-time-string "%Y%m%d_%H%M" (time-to-seconds)))
+                  (format-time-string "%y%m%d_%H%M" (time-to-seconds)))
           nil (file-name-extension (buffer-name) t))))
-    (if (region-active-p)
-        (write-region (point) (mark) filename)
-      (write-region (point-min) (point-max) filename))
-    (switch-to-buffer (find-file-noselect filename))))
+    (copy-region-to-scratch filename)))
+
 (defun eww-search-local-help ()
   "Search with keyword from local-help."
   (interactive)
@@ -538,7 +568,6 @@
 
 ;; isearch
 (global-set-key (kbd "M-s s") 'isearch-forward-regexp)
-(global-set-key (kbd "M-s r") 'isearch-backward-regexp)
 (define-key isearch-mode-map (kbd "M-s %") 'isearch-query-replace-regexp)
 ;; term
 (with-eval-after-load 'term
@@ -574,6 +603,7 @@
 (global-set-key (kbd "C-x x n") 'insert-temp-filename)
 (global-set-key (kbd "C-x x d") 'insert-datetime)
 (global-set-key (kbd "C-x x x") 'save-region-to-temp)
+(global-set-key (kbd "C-x x c") 'copy-region-to-scratch)
 (global-set-key (kbd "C-x x s") 'share-to-online)
 (global-set-key (kbd "C-x x t") 'untabify)
 (global-set-key (kbd "C-x x T") 'tabify)
