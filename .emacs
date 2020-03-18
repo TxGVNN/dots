@@ -9,8 +9,8 @@
 (defvar doom--file-name-handler-alist file-name-handler-alist)
 (setq file-name-handler-alist nil)
 (add-hook 'emacs-startup-hook
-  (lambda ()
-    (setq file-name-handler-alist doom--file-name-handler-alist)))
+          (lambda ()
+            (setq file-name-handler-alist doom--file-name-handler-alist)))
 
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
@@ -100,7 +100,7 @@
   ("C-c r" . crux-rename-buffer-and-file)
   ("C-c t" . crux-visit-term-buffer)
   ("C-h RET" . crux-find-user-init-file)
-  ("C-x x e" . crux-open-with)
+  ("C-x / e" . crux-open-with)
   ("C-x 7" . crux-swap-windows))
 
 ;; move-text
@@ -197,7 +197,7 @@
   (setq persp-initial-frame-name "0")
   (persp-mode)
   :config
-  (global-set-key (kbd "<f5>") 'persp-switch-last)
+  (global-set-key (kbd "C-x x") 'persp-switch-last)
   (define-key perspective-map (kbd "z") 'perspective-map))
 
 ;; multiple-cursors
@@ -364,6 +364,12 @@
 
 ;;; CUSTOMIZE
 ;; defun
+(defun my-kill-ring-save ()
+  "Better than kill-ring-save"
+  (interactive)
+  (if (equal mark-active nil)
+      (kill-ring-save (point) (line-end-position))
+    (kill-ring-save (point) (mark))))
 (defun indent-and-delete-trailing-whitespace ()
   "Indent and delete trailing whitespace in buffer."
   (interactive)
@@ -421,7 +427,7 @@
   (let ((filename (if (equal major-mode 'dired-mode) default-directory
                     (buffer-file-name))))
     (when filename
-      (shell-command (format "stat %s; file %s" filename filename)))))
+      (shell-command (format "stat '%s'; file '%s'" filename filename)))))
 (defun copy-region-to-scratch (&optional file)
   "Copy region to a new scratch."
   (interactive)
@@ -583,6 +589,7 @@
 
 (defalias 'yes-or-no-p 'y-or-n-p)
 (global-set-key (kbd "M-D") 'kill-whole-line)
+(global-set-key (kbd "M-w") 'my-kill-ring-save)
 (global-set-key (kbd "C-x C-@") 'pop-to-mark-command)
 (global-set-key (kbd "C-x C-SPC") 'pop-to-mark-command)
 (global-set-key (kbd "C-x C-b") 'ibuffer)
@@ -593,20 +600,20 @@
 (global-set-key (kbd "M-s g") 'rgrep)
 (global-set-key (kbd "M-#") 'mark-backword)
 (global-set-key (kbd "C-M-_") 'dabbrev-completion)
-(global-set-key (kbd "C-x x .") 'delete-trailing-whitespace)
-(global-set-key (kbd "C-x x ;") 'indent-and-delete-trailing-whitespace)
-(global-set-key (kbd "C-x x b") 'rename-buffer)
-(global-set-key (kbd "C-x x o") 'org-agenda)
-(global-set-key (kbd "C-x x p") 'yank-file-path)
-(global-set-key (kbd "C-x x r") 'revert-buffer)
-(global-set-key (kbd "C-x x a") 'linux-stat-file)
-(global-set-key (kbd "C-x x n") 'insert-temp-filename)
-(global-set-key (kbd "C-x x d") 'insert-datetime)
-(global-set-key (kbd "C-x x x") 'save-region-to-temp)
-(global-set-key (kbd "C-x x c") 'copy-region-to-scratch)
-(global-set-key (kbd "C-x x s") 'share-to-online)
-(global-set-key (kbd "C-x x t") 'untabify)
-(global-set-key (kbd "C-x x T") 'tabify)
+(global-set-key (kbd "C-x / .") 'delete-trailing-whitespace)
+(global-set-key (kbd "C-x / ;") 'indent-and-delete-trailing-whitespace)
+(global-set-key (kbd "C-x / b") 'rename-buffer)
+(global-set-key (kbd "C-x / o") 'org-agenda)
+(global-set-key (kbd "C-x / p") 'yank-file-path)
+(global-set-key (kbd "C-x / r") 'revert-buffer)
+(global-set-key (kbd "C-x / a") 'linux-stat-file)
+(global-set-key (kbd "C-x / n") 'insert-temp-filename)
+(global-set-key (kbd "C-x / d") 'insert-datetime)
+(global-set-key (kbd "C-x / x") 'save-region-to-temp)
+(global-set-key (kbd "C-x / c") 'copy-region-to-scratch)
+(global-set-key (kbd "C-x / s") 'share-to-online)
+(global-set-key (kbd "C-x / t") 'untabify)
+(global-set-key (kbd "C-x / T") 'tabify)
 (global-set-key (kbd "C-x 2") 'split-window-vertically-last-buffer)
 (global-set-key (kbd "C-x 3") 'split-window-horizontally-last-buffer)
 (global-set-key (kbd "C-x 4 C-v") 'scroll-other-window)
@@ -650,13 +657,6 @@
  '(initial-scratch-message nil)
  '(kept-new-versions 6)
  '(menu-bar-mode nil)
- '(org-babel-load-languages (quote ((emacs-lisp . t) (shell . t))))
- '(org-enforce-todo-dependencies t)
- '(org-todo-keyword-faces (quote (("BLOCKED" . error) ("WIP" . warning))))
- '(org-todo-keywords
-   (quote
-    ((sequence "TODO(t)" "|" "DONE(d)")
-     (sequence "WIP(w)" "BLOCKED(b)" "|" "REJECTED(r)"))))
  '(read-quoted-char-radix 16)
  '(safe-local-variable-values
    (quote
@@ -813,6 +813,15 @@
   (setq c-basic-offset 4)
   (setq c-indent-level 4))
 (add-hook 'c-mode-common-hook 'my-c-mode-common-hook)
+
+;; org-mode
+(setq org-babel-load-languages (quote ((emacs-lisp . t) (shell . t)))
+      org-enforce-todo-dependencies t
+      org-todo-keyword-faces (quote (("BLOCKED" . error) ("WIP" . warning)))
+      org-todo-keywords
+      (quote
+       ((sequence "TODO(t)" "|" "DONE(d)")
+        (sequence "WIP(w)" "BLOCKED(b)" "|" "REJECTED(r)"))))
 
 ;; go-mode
 (defun develop-go()
