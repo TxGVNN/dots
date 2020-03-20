@@ -4,13 +4,15 @@
 ;;; Code:
 (when (version< emacs-version "25.1")
   (error "Requires GNU Emacs 25.1 or newer, but you're running %s" emacs-version))
-(setq gc-cons-threshold (* 64 1024 1024))
+
+(setq gc-cons-threshold most-positive-fixnum) ;; enable gcmh
 ;; doom-emacs:docs/faq.org#unset-file-name-handler-alist-temporarily
 (defvar doom--file-name-handler-alist file-name-handler-alist)
 (setq file-name-handler-alist nil)
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
+(defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
@@ -24,15 +26,22 @@
   (package-install 'use-package))
 
 ;;; PACKAGES
+;; gcmh
+(use-package gcmh
+  :ensure t
+  :init (gcmh-mode)
+  :config (add-to-list 'hidden-minor-modes 'gcmh-mode))
+
 ;; ivy
 (use-package ivy
   :ensure t :pin me
   :bind ("C-x C-r" . ivy-resume)
   :init
-  (setq ivy-extra-directories '("./"))
-  (setq ivy-on-del-error-function #'ignore)
-  (setq ivy-magic-tilde nil)
-  (setq ivy-magic-slash-non-match-action 'ivy-magic-slash-non-match-action)
+  (setq ivy-magic-tilde nil
+        ivy-extra-directories '("./")
+        ivy-on-del-error-function #'ignore
+        ivy-magic-slash-non-match-action 'ivy-magic-slash-non-match-action)
+  (add-to-list 'hidden-minor-modes 'ivy-mode)
   (ivy-mode)
   :config (define-key ivy-minibuffer-map (kbd "TAB") 'ivy-partial))
 
@@ -56,8 +65,8 @@
   (org-mode . (lambda() (define-key org-mode-map (kbd "C-c m") 'counsel-org-goto)))
   :config
   (setq counsel-yank-pop-separator
-        (concat "\n" (apply 'concat (make-list 25 "---")) "\n"))
-  (setq counsel-find-file-at-point t)
+        (concat "\n" (apply 'concat (make-list 25 "---")) "\n")
+        counsel-find-file-at-point t)
   (use-package smex :ensure t))
 
 ;; swiper
@@ -78,8 +87,8 @@
 (use-package avy
   :ensure t
   :config
-  (setq avy-all-windows nil)
-  (setq avy-background t)
+  (setq avy-all-windows nil
+        avy-background t)
   :bind
   ("M-g a" . avy-goto-char)
   ("M-g l" . avy-goto-line))
@@ -114,8 +123,8 @@
   :ensure t :defer t
   :init (global-set-key (kbd "C-x o") 'ace-window)
   :config
-  (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l))
-  (setq aw-scope (quote frame)))
+  (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l)
+        aw-scope (quote frame)))
 
 ;; xclip -- don't use xsel
 (use-package xclip
@@ -192,8 +201,8 @@
 (use-package perspective
   :ensure t
   :init
-  (setq persp-mode-prefix-key (kbd "C-z"))
-  (setq persp-initial-frame-name "0")
+  (setq persp-mode-prefix-key (kbd "C-z")
+        persp-initial-frame-name "0")
   (persp-mode)
   :config
   (global-set-key (kbd "C-x x") 'persp-switch-last)
@@ -215,6 +224,7 @@
   :config (require 'smartparens-config)
   (add-hook 'multiple-cursors-mode-enabled-hook (lambda()(turn-off-smartparens-mode)))
   (add-hook 'multiple-cursors-mode-disabled-hook (lambda()(turn-on-smartparens-mode)))
+  (add-to-list 'hidden-minor-modes 'smartparens-mode)
   :bind (:map smartparens-mode-map
               ("C-M-f" . 'sp-forward-sexp)
               ("C-M-b" . 'sp-backward-sexp))
@@ -226,7 +236,8 @@
 ;; volatile-highlights
 (use-package volatile-highlights
   :ensure t
-  :init (volatile-highlights-mode))
+  :init (volatile-highlights-mode)
+  :config (add-to-list 'hidden-minor-modes 'volatile-highlights-mode))
 ;; anzu
 (use-package anzu
   :ensure t
@@ -243,6 +254,7 @@
   :config
   (define-key symbol-overlay-map (kbd "N") 'symbol-overlay-switch-forward)
   (define-key symbol-overlay-map (kbd "P") 'symbol-overlay-switch-backward)
+  (add-to-list 'hidden-minor-modes 'symbol-overlay-mode)
   :bind ("M-s H" . symbol-overlay-put)
   :hook (prog-mode . symbol-overlay-mode))
 
@@ -286,8 +298,8 @@
 (use-package undo-tree
   :ensure t
   :init
-  (setq undo-tree-mode-lighter "")
-  (setq undo-tree-history-directory-alist
+  (setq undo-tree-mode-lighter ""
+        undo-tree-history-directory-alist
         `((".*" . ,temporary-file-directory)))
   (global-undo-tree-mode))
 
@@ -332,8 +344,8 @@
 ;; flymake on g-n & g-p bindings
 (add-hook 'flymake-mode-hook
           (lambda()
-            (setq next-error-function #'flymake-goto-next-error)
-            (setq previous-error-function #'flymake-goto-prev-error)))
+            (setq next-error-function #'flymake-goto-next-error
+                  previous-error-function #'flymake-goto-prev-error)))
 ;; Apply .dir-locals to major-mode after load .dir-local
 ;; https://stackoverflow.com/questions/19280851/how-to-keep-dir-local-variables-when-switching-major-modes
 (add-hook 'after-change-major-mode-hook 'hack-local-variables)
@@ -348,8 +360,6 @@
 (add-hook 'find-file-hook 'find-file-with-large-file-hook)
 
 ;; hide the minor modes
-(defvar hidden-minor-modes
-  '(whitespace-mode ivy-mode smartparens-mode volatile-highlights-mode symbol-overlay-mode))
 (defun purge-minor-modes ()
   "Dont show on modeline."
   (dolist (x hidden-minor-modes nil)
@@ -470,8 +480,8 @@
           (shell-command (format "openssl aes-256-cbc -md md5 -k %s -in '%s' -out '%s.enc'"
                                  file-hash temp-file temp-file))
           (dired-delete-file temp-file)
-          (setq temp-file (format "%s.enc" temp-file))
-          (setq msg (format "| openssl aes-256-cbc -d -md md5 -k %s -in - 2>/dev/null"
+          (setq temp-file (format "%s.enc" temp-file)
+                msg (format "| openssl aes-256-cbc -d -md md5 -k %s -in - 2>/dev/null"
                             file-hash))))
       (message "curl -L %s 2>/dev/null %s"
                (shell-command-to-string
@@ -495,8 +505,8 @@
           (shell-command (format "openssl aes-256-cbc -md md5 -k %s -in '%s' | base64 > '%s.enc'"
                                  file-hash temp-file temp-file))
           (dired-delete-file temp-file)
-          (setq temp-file (format "%s.enc" temp-file))
-          (setq msg (format "| base64 -d | openssl aes-256-cbc -d -md md5 -k %s -in - 2>/dev/null"
+          (setq temp-file (format "%s.enc" temp-file)
+                msg (format "| base64 -d | openssl aes-256-cbc -d -md md5 -k %s -in - 2>/dev/null"
                             file-hash))))
       (find-file-read-only temp-file)
       (debpaste-paste-buffer (get-file-buffer temp-file))
@@ -804,9 +814,9 @@
 (defun my-c-mode-common-hook ()
   "C-mode hook."
   (c-set-offset 'substatement-open 0)
-  (setq c++-tab-always-indent t)
-  (setq c-basic-offset 4)
-  (setq c-indent-level 4))
+  (setq c++-tab-always-indent t
+        c-basic-offset 4
+        c-indent-level 4))
 (add-hook 'c-mode-common-hook 'my-c-mode-common-hook)
 
 ;; org-mode
