@@ -33,9 +33,8 @@
   (setq ivy-on-del-error-function #'ignore)
   (setq ivy-magic-tilde nil)
   (setq ivy-magic-slash-non-match-action 'ivy-magic-slash-non-match-action)
-  :config
-  (define-key ivy-minibuffer-map (kbd "TAB") 'ivy-partial)
-  (ivy-mode))
+  (ivy-mode)
+  :config (define-key ivy-minibuffer-map (kbd "TAB") 'ivy-partial))
 
 ;; counsel
 (use-package counsel
@@ -112,7 +111,7 @@
 
 ;; switch-window
 (use-package ace-window
-  :ensure t
+  :ensure t :defer t
   :init (global-set-key (kbd "C-x o") 'ace-window)
   :config
   (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l))
@@ -159,15 +158,15 @@
 
 ;; projectile
 (use-package projectile
-  :ensure t
+  :ensure t :defer t
   :init
   (setq projectile-dynamic-mode-line nil)
   (setq projectile-mode-line-prefix "")
   (setq projectile-project-compilation-cmd "make ")
   (setq projectile-completion-system 'ivy)
+  (projectile-mode)
   :config
-  (define-key projectile-mode-map (kbd "C-x p") 'projectile-command-map)
-  (projectile-mode))
+  (define-key projectile-mode-map (kbd "C-x p") 'projectile-command-map))
 ;; counsel-projectile
 (use-package counsel-projectile
   :ensure t :defer t
@@ -227,7 +226,7 @@
 ;; volatile-highlights
 (use-package volatile-highlights
   :ensure t
-  :config (volatile-highlights-mode))
+  :init (volatile-highlights-mode))
 ;; anzu
 (use-package anzu
   :ensure t
@@ -237,7 +236,7 @@
   (global-set-key [remap query-replace-regexp] 'anzu-query-replace-regexp)
   (define-key isearch-mode-map [remap isearch-query-replace]  #'anzu-isearch-query-replace)
   (define-key isearch-mode-map [remap isearch-query-replace-regexp] #'anzu-isearch-query-replace-regexp)
-  :config (global-anzu-mode))
+  (global-anzu-mode))
 ;; symbol-overlay
 (use-package symbol-overlay
   :ensure t
@@ -290,7 +289,7 @@
   (setq undo-tree-mode-lighter "")
   (setq undo-tree-history-directory-alist
         `((".*" . ,temporary-file-directory)))
-  :config (global-undo-tree-mode))
+  (global-undo-tree-mode))
 
 ;; themes
 (use-package doom-themes
@@ -303,10 +302,6 @@
 ;;; OPTIONS
 ;; vlf - view large files
 (use-package vlf :ensure t :defer t)
-;; which-key
-(cond ((package-installed-p 'which-key)
-       (setq which-key-lighter "")
-       (which-key-mode)))
 ;; google-translate
 (use-package google-translate
   :config
