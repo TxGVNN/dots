@@ -372,9 +372,9 @@
 (defun my-kill-ring-save ()
   "Better than kill-ring-save"
   (interactive)
-  (if (equal mark-active nil)
+  (if (not mark-active)
       (kill-ring-save (point) (line-end-position))
-    (kill-ring-save (point) (mark))))
+    (call-interactively 'kill-ring-save)))
 (defun indent-and-delete-trailing-whitespace ()
   "Indent and delete trailing whitespace in buffer."
   (interactive)
