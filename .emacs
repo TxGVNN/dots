@@ -48,22 +48,19 @@
 ;; counsel
 (use-package counsel
   :ensure t :pin me
+  :init (counsel-mode)
   :bind
-  ("M-x" . counsel-M-x)
   ("M-X" . execute-extended-command)
-  ("C-x C-f" . counsel-find-file)
-  ("C-x B" . counsel-switch-buffer)
-  ("C-c m" . counsel-imenu)
-  ("M-y" . counsel-yank-pop)
   ("M-Y" . yank-pop)
+  ("C-c m" . counsel-imenu)
   ("M-s d" . counsel-ag)
   ("M-s r" . counsel-rg)
   ("M-s j" . counsel-file-jump)
-  ("C-h b" . counsel-descbinds)
   (:map counsel-find-file-map ("C-k" . counsel-up-directory))
   :hook
   (org-mode . (lambda() (define-key org-mode-map (kbd "C-c m") 'counsel-org-goto)))
   :config
+  (add-to-list 'hidden-minor-modes 'counsel-mode)
   (setq counsel-yank-pop-separator
         (concat "\n" (apply 'concat (make-list 25 "---")) "\n")
         counsel-find-file-at-point t)
@@ -720,6 +717,15 @@
                 :caller 'ivy-switch-buffer)))
   (with-eval-after-load 'ivy
     (define-key ivy-mode-map (kbd "C-x b") 'ivy-switch-to-buffer))
+  (defun counsel-switch-to-buffer ()
+    "Switch to another buffer in the CURRENT PERSP."
+    (interactive)
+    (let ((ivy-update-fns-alist
+           '((ivy-switch-buffer . counsel--switch-buffer-update-fn)))
+          (ivy-unwind-fns-alist
+           '((ivy-switch-buffer . counsel--switch-buffer-unwind))))
+      (ivy-switch-to-buffer)))
+  (global-set-key (kbd "C-x B") 'counsel-switch-to-buffer)
 
   (defun ivy-switch-buffer-with-persp (&optional _)
     "Clone from persp-switch-to-buffer."
@@ -930,8 +936,7 @@ Please install:
               (yas-minor-mode-on))))
 (use-package ansible-doc
   :defer t
-  :config
-  (define-key ansible-doc-mode-map (kbd "M-?") #'ansible-doc))
+  :config (define-key ansible-doc-mode-map (kbd "M-?") #'ansible-doc))
 
 ;; java-mode
 (defun develop-java()
@@ -944,8 +949,7 @@ tar -vxf jdt-language-server-latest.tar.gz -C ~/.emacs.d/eclipse.jdt.ls/server/"
   (package-install 'company-lsp))
 (use-package lsp-java
   :defer t
-  :init
-  (add-hook 'java-mode-hook #'lsp-deferred))
+  :init (add-hook 'java-mode-hook #'lsp-deferred))
 ;; html-mode
 (defun develop-html()
   "HTML development."
@@ -965,8 +969,7 @@ npm i -g javascript-typescript-langserver"
   (package-install 'eslint-fix))
 (use-package web-mode
   :defer t
-  :init
-  (add-to-list 'auto-mode-alist '("\\.js\\'" . web-mode)))
+  :init (add-to-list 'auto-mode-alist '("\\.js\\'" . web-mode)))
 
 ;; gitlab-mode
 (defun develop-gitlab-ci()
@@ -976,8 +979,7 @@ npm i -g javascript-typescript-langserver"
   (package-install 'gitlab-ci-mode-flycheck))
 (defun gitlab-ci-mode-my-hook ()
   (gitlab-ci-mode-flycheck-enable)
-  (if (fboundp 'flycheck-mode)
-      (flycheck-mode)))
+  (if (fboundp 'flycheck-mode) (flycheck-mode)))
 (add-hook 'gitlab-ci-mode-hook 'gitlab-ci-mode-my-hook)
 
 ;; yaml-mode
