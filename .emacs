@@ -118,7 +118,7 @@
 ;; switch-window
 (use-package ace-window
   :ensure t :defer t
-  :init (global-set-key (kbd "C-x o") 'ace-window)
+  :bind ("C-x o" . ace-window)
   :config
   (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l)
         aw-scope (quote frame)))
@@ -155,12 +155,12 @@
 ;; magit
 (use-package magit
   :ensure t
-  :config (define-key magit-file-mode-map (kbd "C-x g") nil)
   :bind
   ("C-x g g" . magit-status)
   ("C-x g f" . magit-find-file)
   ("C-x M-g" . magit-dispatch)
-  ("C-c M-g" . magit-file-dispatch))
+  ("C-c M-g" . magit-file-dispatch)
+  (:map magit-file-mode-map ("C-x g") nil))
 
 ;; projectile
 (use-package projectile
@@ -171,8 +171,8 @@
   (setq projectile-project-compilation-cmd "make ")
   (setq projectile-completion-system 'ivy)
   (projectile-mode)
-  :config
-  (define-key projectile-mode-map (kbd "C-x p") 'projectile-command-map))
+  :bind
+  (:map projectile-mode-map ("C-x p" . projectile-command-map)))
 ;; counsel-projectile
 (use-package counsel-projectile
   :ensure t :defer t
@@ -201,9 +201,9 @@
   (setq persp-mode-prefix-key (kbd "C-z")
         persp-initial-frame-name "0")
   (persp-mode)
-  :config
-  (global-set-key (kbd "C-x x") 'persp-switch-last)
-  (define-key perspective-map (kbd "z") 'perspective-map))
+  :bind
+  ("C-x x" . persp-switch-last)
+  (:map perspective-map ("z" . perspective-map)))
 
 ;; multiple-cursors
 (use-package multiple-cursors
@@ -249,8 +249,6 @@
 (use-package symbol-overlay
   :ensure t
   :config
-  (define-key symbol-overlay-map (kbd "N") 'symbol-overlay-switch-forward)
-  (define-key symbol-overlay-map (kbd "P") 'symbol-overlay-switch-backward)
   (add-to-list 'hidden-minor-modes 'symbol-overlay-mode)
   :bind ("M-s H" . symbol-overlay-put)
   :hook (prog-mode . symbol-overlay-mode))
@@ -261,10 +259,12 @@
   :config
   (define-key yas-minor-mode-map [(tab)] nil)
   (define-key yas-minor-mode-map (kbd "TAB") nil)
-  (define-key yas-minor-mode-map (kbd "C-c y i") 'yas-insert-snippet)
-  (define-key yas-minor-mode-map (kbd "C-c y n") 'yas-new-snippet)
-  (define-key yas-minor-mode-map (kbd "C-c y v") 'yas-visit-snippet-file)
-  (define-key yas-minor-mode-map (kbd "C-c y TAB") yas-maybe-expand)
+  :bind
+  (:map yas-minor-mode-map
+        ("C-c y i" . yas-insert-snippet)
+        ("C-c y n" . yas-new-snippet)
+        ("C-c y v" . yas-visit-snippet-file)
+        ("C-c y TAB" . yas-maybe-expand))
   :hook
   ((prog-mode org-mode markdown-mode)
    . yas-minor-mode))
@@ -277,9 +277,10 @@
   :ensure t
   :init (setq company-lighter-base "@")
   :bind ("M-]" . company-complete-custom)
+  (:map company-active-map
+        ("C-n" . company-select-next)
+        ("C-p" . company-select-previous))
   :config
-  (define-key company-active-map (kbd "C-n") #'company-select-next)
-  (define-key company-active-map (kbd "C-p") #'company-select-previous)
   (defun company-complete-custom (&optional prefix)
     "Company and Yasnippet(PREFIX)."
     (interactive "P")
@@ -611,6 +612,7 @@
 (global-set-key (kbd "C-x / a") 'linux-stat-file)
 (global-set-key (kbd "C-x / n") 'insert-temp-filename)
 (global-set-key (kbd "C-x / d") 'insert-datetime)
+(global-set-key (kbd "C-x / D") 'org-time-stamp)
 (global-set-key (kbd "C-x / x") 'save-region-to-temp)
 (global-set-key (kbd "C-x / c") 'copy-region-to-scratch)
 (global-set-key (kbd "C-x / s") 'share-to-online)
