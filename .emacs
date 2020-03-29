@@ -275,12 +275,14 @@
 ;; company
 (use-package company
   :ensure t
-  :init (setq company-lighter-base "@")
+  :init (global-company-mode)
   :bind ("M-]" . company-complete-custom)
   (:map company-active-map
         ("C-n" . company-select-next)
         ("C-p" . company-select-previous))
   :config
+  (setq company-lighter-base "@"
+        company-idle-delay 0.1)
   (defun company-complete-custom (&optional prefix)
     "Company and Yasnippet(PREFIX)."
     (interactive "P")
@@ -289,8 +291,7 @@
     (if prefix
         (if (not company-mode) (yas-expand)
           (call-interactively 'company-yasnippet))
-      (call-interactively 'company-complete)))
-  (global-company-mode))
+      (call-interactively 'company-complete))))
 
 ;; undo-tree
 (use-package undo-tree
