@@ -182,7 +182,12 @@
   (define-key projectile-mode-map [remap projectile-find-file] #'counsel-projectile-find-file)
   (define-key projectile-mode-map [remap projectile-ag] #'counsel-projectile-ag)
   (define-key projectile-mode-map [remap projectile-ripgrep] #'counsel-projectile-rg)
-  (define-key projectile-mode-map [remap projectile-compile-project] #'counsel-compile))
+  (define-key projectile-mode-map [remap projectile-compile-project] #'counsel-compile)
+  (defun counsel-projectile-M-x()
+    "M-x ^project-name"
+    (interactive)
+    (counsel-M-x (concat "^ " (projectile-project-name))))
+  (define-key projectile-mode-map [remap projectile-project-buffers-other-buffer] #'counsel-projectile-M-x))
 ;; ibuffer-projectile
 (use-package ibuffer-projectile
   :ensure t
@@ -282,6 +287,7 @@
         ("C-p" . company-select-previous))
   :config
   (setq company-lighter-base "@"
+        company-require-match 'never
         company-idle-delay 0.1)
   (defun company-complete-custom (&optional prefix)
     "Company and Yasnippet(PREFIX)."
@@ -633,9 +639,9 @@
 (set-default-coding-systems 'utf-8)
 (prefer-coding-system 'utf-8)
 
-(setq auto-save-file-name-transforms `((".*" ,temporary-file-directory t))
-      backup-directory-alist `(("." . ,(concat user-emacs-directory "backups")))
-      tramp-auto-save-directory `,(concat user-emacs-directory "backups"))
+(setq create-lockfiles nil
+      auto-save-file-name-transforms `((".*" ,temporary-file-directory t))
+      backup-directory-alist `((".*" . ,temporary-file-directory)))
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
