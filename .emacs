@@ -182,12 +182,7 @@
   (define-key projectile-mode-map [remap projectile-find-file] #'counsel-projectile-find-file)
   (define-key projectile-mode-map [remap projectile-ag] #'counsel-projectile-ag)
   (define-key projectile-mode-map [remap projectile-ripgrep] #'counsel-projectile-rg)
-  (define-key projectile-mode-map [remap projectile-compile-project] #'counsel-compile)
-  (defun counsel-projectile-M-x()
-    "M-x ^project-name"
-    (interactive)
-    (counsel-M-x (concat "^ " (projectile-project-name))))
-  (define-key projectile-mode-map [remap projectile-project-buffers-other-buffer] #'counsel-projectile-M-x))
+  (define-key projectile-mode-map [remap projectile-compile-project] #'counsel-compile))
 ;; ibuffer-projectile
 (use-package ibuffer-projectile
   :ensure t
@@ -445,7 +440,7 @@
           (cond
            ((and (bound-and-true-p rectangle-mark-mode) (use-region-p))
             (mapconcat 'concat (extract-rectangle (region-beginning) (region-end)) "\n"))
-           ((use-region-p) (buffer-substring (point) (mark)))
+           ((use-region-p) (buffer-substring-no-properties (point) (mark)))
            (t (buffer-substring (point-min) (point-max)))))
          (buffer-name (format "%s_%s" (file-name-base (buffer-name)) (format-time-string "%y%m%d_%H%M%S")))
          (buffer (get-buffer-create buffer-name)))
@@ -726,6 +721,11 @@
                 :caller 'ivy-switch-buffer)))
   (with-eval-after-load 'ivy
     (define-key ivy-mode-map (kbd "C-x b") 'ivy-switch-to-buffer))
+  (defun counsel-projectile-M-x()
+    "M-x ^project-name"
+    (interactive)
+    (counsel-M-x (format "^%s " (persp-name (persp-curr)))))
+  (define-key projectile-mode-map [remap projectile-project-buffers-other-buffer] #'counsel-projectile-M-x)
   (defun counsel-switch-to-buffer ()
     "Switch to another buffer in the CURRENT PERSP."
     (interactive)
@@ -771,9 +771,9 @@
             (let ((find-file-hook nil))
               (find-file (expand-file-name x ivy--directory)))
           (if (and (bound-and-true-p persp-mode) (bound-and-true-p projectile-mode))
-              (let (project-name (project-name-root (projectile-project-root (expand-file-name x))))
-                (when project-name-root
-                  (setq project-name (funcall projectile-project-name-function project-name-root))
+              (let (project-name (project-root (projectile-project-root (expand-file-name x))))
+                (when project-root
+                  (setq project-name (funcall projectile-project-name-function project-root))
                   (persp-switch project-name))))
           (find-file (expand-file-name x ivy--directory)))))))
 
@@ -786,19 +786,23 @@
             (lambda (project-to-switch)
               (if (and project-to-switch (bound-and-true-p persp-mode))
                   (persp-switch (funcall projectile-project-name-function project-to-switch)))))
-  (defun counsel-projectile-find-file-action-find-file-jump (file)
+  (defun counsel-projectile-find-file-action-file-jump (file)
     "Call `counsel-find-file' from FILE's directory."
     (let* ((f (projectile-expand-root file))
            (default-directory (file-name-directory f)))
       (counsel-file-jump)))
   (ivy-add-actions
-   'counsel-projectile
-   '(("f" counsel-projectile-find-file-action-find-file-jump
-      "counsel-file-jump")))
+   'counsel-projectile-switch-project
+   '(("f" counsel-projectile-find-file-action-file-jump "file jump")))
+  (defun counsel-projectile-M-x-action(file)
+    "Call `counsel-projectile-M-x'."
+    (let* ((project-root (projectile-project-root (expand-file-name file)))
+           (project-name (funcall projectile-project-name-function project-root)))
+      (persp-switch project-name)
+      (counsel-projectile-M-x)))
   (ivy-add-actions
-   'counsel-projectile-find-file
-   '(("f" counsel-projectile-find-file-action-find-file-jump
-      "counsel-file-jump"))))
+   'counsel-projectile-switch-project
+   '(("ESC" counsel-projectile-M-x-action "M-x"))))
 
 (with-eval-after-load 'projectile
   (defun projectile-run-term (program)
