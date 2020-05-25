@@ -63,6 +63,7 @@
   (add-to-list 'hidden-minor-modes 'counsel-mode)
   (setq counsel-yank-pop-separator
         (concat "\n" (apply 'concat (make-list 25 "---")) "\n")
+        enable-recursive-minibuffers t
         counsel-find-file-at-point t)
   (use-package smex :ensure t))
 
@@ -828,6 +829,20 @@
     (diff user-init-file upstream)
     (other-window 1 nil)
     (message "Override %s by %s to update" user-init-file upstream)))
+
+(defun develop-erc ()
+  "ERC configuration"
+  (interactive)
+  (package-install 'ercn))
+(with-eval-after-load 'ercn
+  (setq ercn-notify-rules
+        '((current-nick . all)
+          (keyword . all)
+          (pal . ("#emacs"))
+          (query-buffer . all)))
+  (defun do-notify (nick msg)
+    (call-process "notify-send" nil nil nil "ERC" nick))
+  (add-hook 'ercn-notify-hook 'do-notify))
 
 ;; c-mode
 (defun my-c-mode-common-hook ()
