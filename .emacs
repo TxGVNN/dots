@@ -313,8 +313,6 @@
   (doom-themes-org-config))
 
 ;;; OPTIONS
-;; vlf - view large files
-(use-package vlf :ensure t :defer t)
 ;; google-translate
 (use-package google-translate
   :config
@@ -684,6 +682,7 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(ivy-remote ((t (:foreground "magenta"))))
  '(ivy-virtual ((t (:inherit unspecified :foreground unspecified))))
  '(symbol-overlay-default-face ((t (:inherit bold :underline t))))
  '(vc-state-base ((t (:inherit font-lock-string-face :weight bold)))))
@@ -1010,15 +1009,9 @@ npm i -g javascript-typescript-langserver"
   (if (fboundp 'flycheck-mode) (flycheck-mode)))
 (add-hook 'gitlab-ci-mode-hook 'gitlab-ci-mode-my-hook)
 
-;; yaml-mode
-(use-package yaml-mode
-  :defer t
-  :hook (yaml-mode . whitespace-mode))
-
-;; dockerfile-mode
-(use-package dockerfile-mode
-  :defer t
-  :hook (dockerfile-mode . whitespace-mode))
+;; other modes
+(add-to-hooks 'whitespace-mode
+              'yaml-mode-hook 'dockerfile-mode-hook)
 
 ;; keep personal settings not in the .emacs file
 (let ((personal-settings (expand-file-name "personal.el" user-emacs-directory)))
