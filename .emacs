@@ -1,5 +1,9 @@
 ;;; .emacs --- initialization file
-;;; Commentary: by TxGVNN
+;;; _____  _     __    _      _      _
+;;;  | |  \ \_/ / /`_ \ \  / | |\ | | |\ |
+;;;  |_|  /_/ \ \_\_/  \_\/  |_| \| |_| \|
+;;;
+;;; [ @author TxGVNN ]
 
 ;;; Code:
 (when (version< emacs-version "25.1")
@@ -482,10 +486,12 @@
           (setq temp-file (format "%s.enc" temp-file)
                 msg (format "| openssl aes-256-cbc -d -md md5 -k %s -in - 2>/dev/null"
                             file-hash))))
-      (message "curl -L %s 2>/dev/null %s"
-               (shell-command-to-string
-                (format "curl -q -H 'Max-Downloads: %d' --upload-file '%s' %s 2>/dev/null"
-                        downloads temp-file url)) msg)
+      (let ((output (format
+                     "curl -L %s 2>/dev/null %s"
+                     (shell-command-to-string
+                      (format "curl -q -H 'Max-Downloads: %d' --upload-file '%s' %s 2>/dev/null"
+                              downloads temp-file url)) msg)))
+        (kill-new output) (message output))
       (dired-delete-file temp-file))))
 
 (defun share-to-paste.debian.net ()
