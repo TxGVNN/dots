@@ -139,6 +139,9 @@
 (if (version< emacs-version "26.1")
     (use-package flycheck
       :ensure t
+      :config
+      (defun flycheck-display-error-at-point-soon () nil)
+      (setq flycheck-highlighting-mode (quote columns))
       :hook (prog-mode . flycheck-mode))
   (use-package flymake
     :config
@@ -310,7 +313,7 @@
 
 ;; themes
 (use-package doom-themes
-  :ensure t :pin me
+  :ensure t
   :init (load-theme 'doom-one t)
   :config
   (doom-themes-visual-bell-config)
@@ -495,8 +498,7 @@
       (dired-delete-file temp-file))))
 
 (defun share-to-paste.debian.net ()
-  "Share buffer to transfer.sh.
-- DOWNLOADS: The max-downloads"
+  "Share buffer to paste.debian.net"
   (interactive)
   (let ((temp-file
          (make-temp-file nil nil (file-name-extension (buffer-name) t)))
@@ -701,18 +703,23 @@
                       "Pass prefix arg as third arg to `base64-encode-region'."
                       (interactive "r\nP")))
 
-(with-eval-after-load 'flycheck
-  (defun flycheck-display-error-at-point-soon () nil)
-  (setq flycheck-highlighting-mode (quote columns)))
-
 (unless (version< emacs-version "26.1")
   (with-eval-after-load 'flymake
-    (setq byte-compile-warnings nil)
-    (advice-patch 'flymake--highlight-line  '(+ 1 (flymake--diag-beg diagnostic)) '(flymake--diag-end diagnostic))
-    (advice-patch 'flymake--mode-line-format '" FlyM" '" Flymake")
-    (setq byte-compile-warnings t)))
+    (ignore-errors
+      (setq-local byte-compile-warnings nil)
+      (advice-patch 'flymake--highlight-line  '(+ 1 (flymake--diag-beg diagnostic)) '(flymake--diag-end diagnostic))
+      (advice-patch 'flymake--mode-line-format '" FlyM" '" Flymake")
+      (setq-local byte-compile-warnings t))))
 
 (with-eval-after-load 'perspective
+  (with-eval-after-load 'compile
+    (ignore-errors
+      (advice-patch 'compilation-start
+                    '(format "compliation(%s)" (persp-name (persp-curr)))
+                    '(if (eq mode t)
+                         "compilation"
+                       (replace-regexp-in-string "-mode\\'" "" (symbol-name mode))))))
+
   (defun ivy-switch-to-buffer ()
     "Switch to another buffer in the CURRENT PERSP."
     (interactive)
@@ -727,11 +734,13 @@
                 :caller 'ivy-switch-buffer)))
   (with-eval-after-load 'ivy
     (define-key ivy-mode-map (kbd "C-x b") 'ivy-switch-to-buffer))
+
   (defun counsel-projectile-M-x()
     "M-x ^project-name"
     (interactive)
     (counsel-M-x (format "^%s " (persp-name (persp-curr)))))
   (define-key projectile-mode-map [remap projectile-project-buffers-other-buffer] #'counsel-projectile-M-x)
+
   (defun counsel-switch-to-buffer ()
     "Switch to another buffer in the CURRENT PERSP."
     (interactive)
@@ -756,6 +765,7 @@
     (ivy-add-actions
      'ivy-switch-buffer
      '(("p" ivy-switch-buffer-with-persp "persp-switch-to-buffer"))))
+
   (defun persp-update-modestring ()
     "Override persp-update-modestring."
     (when persp-show-modestring
@@ -767,6 +777,7 @@
          (append open
                  (cons (persp-format-name (persp-name (persp-curr)))())
                  close)))))
+
   ;; find file with perspective and projectile
   (with-eval-after-load 'counsel
     (defun counsel-find-file-action (x)
@@ -787,7 +798,6 @@
   (advice-patch 'counsel-projectile-switch-project-by-name
                 '(run-hook-with-args 'projectile-before-switch-project-hook project)
                 '(run-hooks 'projectile-before-switch-project-hook))
-
   (add-hook 'projectile-before-switch-project-hook
             (lambda (project-to-switch)
               (if (and project-to-switch (bound-and-true-p persp-mode))
@@ -800,6 +810,7 @@
   (ivy-add-actions
    'counsel-projectile-switch-project
    '(("f" counsel-projectile-find-file-action-file-jump "file jump")))
+
   (defun counsel-projectile-M-x-action(file)
     "Call `counsel-projectile-M-x'."
     (let* ((project-root (projectile-project-root (expand-file-name file)))
