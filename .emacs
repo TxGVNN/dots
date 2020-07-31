@@ -40,22 +40,20 @@
 (use-package ivy
   :ensure t :pin me
   :bind ("C-x C-r" . ivy-resume)
-  :init
+  :init (ivy-mode)
+  :config
+  (add-to-list 'hidden-minor-modes 'ivy-mode)
   (setq ivy-magic-tilde nil
         ivy-extra-directories '("./")
         ivy-on-del-error-function #'ignore
         ivy-magic-slash-non-match-action 'ivy-magic-slash-non-match-action)
-  (add-to-list 'hidden-minor-modes 'ivy-mode)
-  (ivy-mode)
-  :config (define-key ivy-minibuffer-map (kbd "TAB") 'ivy-partial))
+  (define-key ivy-minibuffer-map (kbd "TAB") 'ivy-partial))
 
 ;; counsel
 (use-package counsel
   :ensure t :pin me
   :init (counsel-mode)
   :bind
-  ("M-X" . execute-extended-command)
-  ("M-Y" . yank-pop)
   ("C-c m" . counsel-imenu)
   ("M-s d" . counsel-ag)
   ("M-s r" . counsel-rg)
@@ -75,10 +73,7 @@
 (use-package swiper
   :ensure t :pin me
   :config
-  (defun swiper-at-point (sym)
-    "Use `swiper' to search for the symbol at point."
-    (interactive (list (thing-at-point 'symbol))) (swiper sym))
-  :bind ("M-s w" . swiper-at-point))
+  :bind ("M-s w" . swiper-thing-at-point))
 
 ;; fuzzy
 (use-package fuzzy
@@ -250,16 +245,15 @@
   (setq anzu-mode-lighter "")
   (global-set-key [remap query-replace] 'anzu-query-replace)
   (global-set-key [remap query-replace-regexp] 'anzu-query-replace-regexp)
-  (define-key isearch-mode-map [remap isearch-query-replace]  #'anzu-isearch-query-replace)
+  (define-key isearch-mode-map [remap isearch-query-replace] #'anzu-isearch-query-replace)
   (define-key isearch-mode-map [remap isearch-query-replace-regexp] #'anzu-isearch-query-replace-regexp)
   (global-anzu-mode))
 ;; symbol-overlay
 (use-package symbol-overlay
   :ensure t
-  :config
-  (add-to-list 'hidden-minor-modes 'symbol-overlay-mode)
   :bind ("M-s H" . symbol-overlay-put)
-  :hook (prog-mode . symbol-overlay-mode))
+  :hook (prog-mode . symbol-overlay-mode)
+  :config (add-to-list 'hidden-minor-modes 'symbol-overlay-mode))
 
 ;; yasnippet
 (use-package yasnippet
@@ -314,7 +308,7 @@
 ;; themes
 (use-package doom-themes
   :ensure t
-  :init (load-theme 'doom-one t)
+  :init (load-theme 'doom-gruvbox t)
   :config
   (doom-themes-visual-bell-config)
   (doom-themes-org-config))
@@ -459,8 +453,9 @@
   (interactive)
   (let ((filename
          (make-temp-file
-          (format "%s_%s_" (file-name-base (buffer-name))
-                  (format-time-string "%y%m%d_%H%M" (time-to-seconds)))
+          (concat (file-name-base (buffer-name)) "_"
+                  (unless (string-prefix-p "*scratch-" (buffer-name))
+                    (format-time-string "%y%m%d-%H%M_" (time-to-seconds))))
           nil (file-name-extension (buffer-name) t))))
     (copy-region-to-scratch filename)))
 
@@ -498,7 +493,7 @@
       (dired-delete-file temp-file))))
 
 (defun share-to-paste.debian.net ()
-  "Share buffer to paste.debian.net"
+  "Share buffer to paste.debian.net."
   (interactive)
   (let ((temp-file
          (make-temp-file nil nil (file-name-extension (buffer-name) t)))
@@ -707,7 +702,7 @@
   (with-eval-after-load 'flymake
     (ignore-errors
       (setq-local byte-compile-warnings nil)
-      (advice-patch 'flymake--highlight-line  '(+ 1 (flymake--diag-beg diagnostic)) '(flymake--diag-end diagnostic))
+      (advice-patch 'flymake--highlight-line '(+ 1 (flymake--diag-beg diagnostic)) '(flymake--diag-end diagnostic))
       (advice-patch 'flymake--mode-line-format '" FlyM" '" Flymake")
       (setq-local byte-compile-warnings t))))
 
@@ -847,7 +842,7 @@
     (message "Override %s by %s to update" user-init-file upstream)))
 
 (defun develop-erc ()
-  "ERC configuration"
+  "ERC configuration."
   (interactive)
   (package-install 'ercn))
 (with-eval-after-load 'ercn
@@ -1022,6 +1017,7 @@ npm i -g javascript-typescript-langserver"
   (package-install 'gitlab-ci-mode)
   (package-install 'gitlab-ci-mode-flycheck))
 (defun gitlab-ci-mode-my-hook ()
+  "Gitlab ci my hook."
   (gitlab-ci-mode-flycheck-enable)
   (if (fboundp 'flycheck-mode) (flycheck-mode)))
 (add-hook 'gitlab-ci-mode-hook 'gitlab-ci-mode-my-hook)
