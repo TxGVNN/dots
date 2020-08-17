@@ -49,7 +49,7 @@
         ivy-magic-slash-non-match-action 'ivy-magic-slash-non-match-action)
   (define-key ivy-minibuffer-map (kbd "TAB") 'ivy-partial))
 
-;; counsel
+;; counsel - modified
 (use-package counsel
   :ensure t :pin me
   :init (counsel-mode)
@@ -75,11 +75,6 @@
   :config
   :bind ("M-s w" . swiper-thing-at-point))
 
-;; fuzzy
-(use-package fuzzy
-  :ensure t
-  :config (turn-on-fuzzy-isearch))
-
 ;; avy
 (use-package avy
   :ensure t
@@ -90,7 +85,7 @@
   ("M-g a" . avy-goto-char)
   ("M-g l" . avy-goto-line))
 
-;; crux
+;; crux - modified
 (use-package crux
   :ensure t :pin me
   :bind
@@ -512,7 +507,7 @@
                             file-hash))))
       (find-file-read-only temp-file)
       (debpaste-paste-buffer (get-file-buffer temp-file))
-      (message "curl %s 2>/dev/null %s" (debpaste-get-param-val 'download-url (debpaste-get-posted-info)) msg)
+      (message "curl -L %s 2>/dev/null %s" (debpaste-get-param-val 'download-url (debpaste-get-posted-info)) msg)
       (dired-delete-file temp-file))))
 
 (defvar share-to-online-func
@@ -804,7 +799,7 @@
       (counsel-file-jump)))
   (ivy-add-actions
    'counsel-projectile-switch-project
-   '(("f" counsel-projectile-find-file-action-file-jump "file jump")))
+   '(("sf" counsel-projectile-find-file-action-file-jump "file jump")))
 
   (defun counsel-projectile-M-x-action(file)
     "Call `counsel-projectile-M-x'."
