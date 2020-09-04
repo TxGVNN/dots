@@ -164,10 +164,10 @@
 (use-package projectile
   :ensure t :defer t
   :init
-  (setq projectile-dynamic-mode-line nil)
-  (setq projectile-mode-line-prefix "")
-  (setq projectile-project-compilation-cmd "make ")
-  (setq projectile-completion-system 'ivy)
+  (setq projectile-dynamic-mode-line nil
+        projectile-mode-line-prefix ""
+        projectile-project-compilation-cmd "make "
+        projectile-completion-system 'ivy)
   (projectile-mode)
   :bind
   (:map projectile-mode-map ("C-x p" . projectile-command-map)))
@@ -365,7 +365,7 @@
 ;;; CUSTOMIZE
 ;; defun
 (defun my-kill-ring-save ()
-  "Better than kill-ring-save"
+  "Better than 'kill-ring-save."
   (interactive)
   (if (not mark-active)
       (kill-ring-save (point) (line-end-position))
@@ -429,7 +429,7 @@
     (when filename
       (shell-command (format "stat '%s'; file '%s'" filename filename)))))
 (defun copy-region-to-scratch (&optional file)
-  "Copy region to a new scratch."
+  "Copy region to a new scratch or FILE."
   (interactive)
   (let* ((string
           (cond
@@ -458,15 +458,14 @@
   "Search with keyword from local-help."
   (interactive)
   (let ((help (help-at-pt-kbd-string)))
-    (if help (eww help) (message "Nothing!"))))
+    (if help (eww (read-string "Search: " help)) (message "Nothing!"))))
 (defun share-to-transfer_sh (downloads)
-  "Share buffer to transfer.sh.
+  "Share buffer to transfersh.com.
 - DOWNLOADS: The max-downloads"
   (interactive "p")
   (let ((temp-file
          (make-temp-file nil nil (file-name-extension (buffer-name) t)))
-        (url "https://transfersh.com")
-        (msg "") file-hash)
+        (url "https://transfersh.com") (msg ""))
     (if (region-active-p)
         (write-region (point) (mark) temp-file)
       (write-region (point-min) (point-max) temp-file))
@@ -485,29 +484,6 @@
                       (format "curl -q -H 'Max-Downloads: %d' --upload-file '%s' %s 2>/dev/null"
                               downloads temp-file url)) msg)))
         (kill-new output) (message output))
-      (dired-delete-file temp-file))))
-
-(defun share-to-paste.debian.net ()
-  "Share buffer to paste.debian.net."
-  (interactive)
-  (let ((temp-file
-         (make-temp-file nil nil (file-name-extension (buffer-name) t)))
-        (msg "") file-hash)
-    (if (region-active-p)
-        (write-region (point) (mark) temp-file)
-      (write-region (point-min) (point-max) temp-file))
-    (when (yes-or-no-p "Share to paste.debian.net?")
-      (when (yes-or-no-p "Encrypt?")
-        (let ((file-hash (md5 (buffer-string))))
-          (shell-command (format "openssl aes-256-cbc -md md5 -k %s -in '%s' | base64 > '%s.enc'"
-                                 file-hash temp-file temp-file))
-          (dired-delete-file temp-file)
-          (setq temp-file (format "%s.enc" temp-file)
-                msg (format "| base64 -d | openssl aes-256-cbc -d -md md5 -k %s -in - 2>/dev/null"
-                            file-hash))))
-      (find-file-read-only temp-file)
-      (debpaste-paste-buffer (get-file-buffer temp-file))
-      (message "curl -L %s 2>/dev/null %s" (debpaste-get-param-val 'download-url (debpaste-get-posted-info)) msg)
       (dired-delete-file temp-file))))
 
 (defvar share-to-online-func
@@ -624,8 +600,10 @@
 (global-set-key (kbd "C-x 4 M-<") 'beginning-of-buffer-other-window)
 (global-set-key (kbd "C-x 4 M->") 'end-of-buffer-other-window)
 (global-set-key (kbd "M-z") 'zap-up-to-char)
-(global-set-key (kbd "ESC <up>") '(lambda () (interactive "") (previous-line 3)))
-(global-set-key (kbd "ESC <down>") '(lambda () (interactive "") (next-line 3)))
+(global-set-key (kbd "ESC <up>") '(lambda () (interactive) (previous-line 3)))
+(global-set-key (kbd "ESC <down>") '(lambda () (interactive) (next-line 3)))
+(global-set-key (kbd "M-<up>") '(lambda () (interactive) (previous-line 3)))
+(global-set-key (kbd "M-<down>") '(lambda () (interactive) (next-line 3)))
 
 (setq select-safe-coding-system-function t)
 (set-default-coding-systems 'utf-8)
@@ -800,7 +778,6 @@
   (ivy-add-actions
    'counsel-projectile-switch-project
    '(("sf" counsel-projectile-find-file-action-file-jump "file jump")))
-
   (defun counsel-projectile-M-x-action(file)
     "Call `counsel-projectile-M-x'."
     (let* ((project-root (projectile-project-root (expand-file-name file)))
@@ -868,22 +845,28 @@
        ((sequence "TODO(t)" "|" "DONE(d)")
         (sequence "WIP(w)" "BLOCKED(b)" "|" "REJECTED(r)"))))
 
+;; lsp-mode
+(use-package lsp-mode
+  :defer t
+  :init (setq lsp-keymap-prefix "C-x l"))
+
 ;; go-mode
 (defun develop-go()
   "Go develoment.
 Please install:
-   GO111MODULE=on go get golang.org/x/tools/gopls@latest
-   go get -u github.com/sourcegraph/go-langserver"
+   GO111MODULE=on go get golang.org/x/tools/gopls@latest"
   (interactive)
   (package-install 'go-mode)
   (package-install 'lsp-mode))
-(with-eval-after-load 'go-mode
-  (add-hook 'go-mode-hook
-            (lambda ()
-              (lsp-deferred)
-              ;; gofmt before every save
-              (add-hook 'before-save-hook 'gofmt-before-save)))
-  (setq gofmt-command "goimports")
+
+(use-package go-mode
+  :defer t
+  :config
+  (defun lsp-go-install-save-hooks ()
+    (if (fboundp 'lsp-deferred)(lsp-deferred))
+    (add-hook 'before-save-hook #'lsp-format-buffer t t)
+    (add-hook 'before-save-hook #'lsp-organize-imports t t))
+  (add-hook 'go-mode-hook #'lsp-go-install-save-hooks)
   (defun go-print-debug-at-point()
     "Print debug."
     (interactive)
@@ -901,7 +884,19 @@ Please install:
    pip install python-language-server"
   (interactive)
   (package-install 'lsp-mode)
-  (package-install 'company-lsp))
+  (package-install 'pyvenv))
+(defun python-pyvenv-activate (&rest args)
+  "Python-pyvenv-activate(ARGS)."
+  (if (and (equal major-mode 'python-mode)
+           (fboundp 'pyvenv-activate))
+      (dolist (e '("env" ".env" "venv" ".venv"))
+        (let ((env (format "%s%s" (projectile-project-root) e)))
+          (if (file-exists-p env) (pyvenv-activate env))))))
+(defun python-install-hooks ()
+  (lsp-deferred)
+  (advice-add 'switch-to-buffer :after 'python-pyvenv-activate '((name . "python-pyvenv")))
+  (add-hook 'find-file-hook 'python-pyvenv-activate t t))
+(add-hook 'python-mode-hook #'python-install-hooks)
 (with-eval-after-load 'python ;; built-in
   (setq python-indent-guess-indent-offset-verbose nil)
   (when (and (executable-find "python3")
@@ -927,7 +922,6 @@ Please install:
       (insert (format "print(\"D: %s@%s %s, {}\".format(%s))"
                       (file-name-nondirectory (buffer-file-name))
                       (substring (md5 (format "%s%s" (emacs-pid) (current-time))) 0 4) var var)))))
-(add-hook 'python-mode-hook #'lsp-deferred)
 
 ;; php-mode
 (defun develop-php()
@@ -975,12 +969,9 @@ Please install:
 ;; java-mode
 (defun develop-java()
   "Java development.
-Please install:
-https://download.eclipse.org/jdtls/snapshots/jdt-language-server-latest.tar.gz
-tar -vxf jdt-language-server-latest.tar.gz -C ~/.emacs.d/eclipse.jdt.ls/server/"
+https://download.eclipse.org/jdtls/snapshots/jdt-language-server-latest.tar.gz"
   (interactive)
-  (package-install 'lsp-java)
-  (package-install 'company-lsp))
+  (package-install 'lsp-java))
 (use-package lsp-java
   :defer t
   :init (add-hook 'java-mode-hook #'lsp-deferred))
