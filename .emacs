@@ -65,8 +65,7 @@
   (add-to-list 'hidden-minor-modes 'counsel-mode)
   (setq counsel-yank-pop-separator
         (concat "\n" (apply 'concat (make-list 25 "---")) "\n")
-        enable-recursive-minibuffers t
-        counsel-find-file-at-point t)
+        enable-recursive-minibuffers t)
   (use-package smex :ensure t))
 
 ;; swiper
@@ -249,6 +248,10 @@
   :bind ("M-s H" . symbol-overlay-put)
   :hook (prog-mode . symbol-overlay-mode)
   :config (add-to-list 'hidden-minor-modes 'symbol-overlay-mode))
+;; hl-todo
+(use-package hl-todo
+  :ensure t
+  :hook (prog-mode . hl-todo-mode))
 
 ;; yasnippet
 (use-package yasnippet
@@ -680,14 +683,6 @@
       (setq-local byte-compile-warnings t))))
 
 (with-eval-after-load 'perspective
-  (with-eval-after-load 'compile
-    (ignore-errors
-      (advice-patch 'compilation-start
-                    '(format "compliation(%s)" (persp-name (persp-curr)))
-                    '(if (eq mode t)
-                         "compilation"
-                       (replace-regexp-in-string "-mode\\'" "" (symbol-name mode))))))
-
   (defun ivy-switch-to-buffer ()
     "Switch to another buffer in the CURRENT PERSP."
     (interactive)
