@@ -168,8 +168,19 @@
         projectile-project-compilation-cmd "make "
         projectile-completion-system 'ivy)
   (projectile-mode)
-  :bind
-  (:map projectile-mode-map ("C-x p" . projectile-command-map)))
+  :bind (:map projectile-mode-map ("C-x p" . projectile-command-map))
+  :config
+  (defun projectile-run-term (arg)
+    "Override projectile-run-term."
+    (interactive (list nil))
+    (let* ((project (projectile-ensure-project (projectile-project-root)))
+           (termname (concat "term " (projectile-project-name project)))
+           (buffer (concat "*" termname "*")))
+      (unless (get-buffer buffer)
+        (require 'term)
+        (projectile-with-default-dir project
+          (ansi-term (or explicit-shell-file-name (getenv "SHELL") "/bin/sh") termname)))
+      (switch-to-buffer buffer))))
 ;; counsel-projectile
 (use-package counsel-projectile
   :ensure t :defer t
@@ -198,9 +209,30 @@
   (setq persp-mode-prefix-key (kbd "C-z")
         persp-initial-frame-name "0")
   (persp-mode)
-  :bind
-  ("C-x x" . persp-switch-last)
-  (:map perspective-map ("z" . perspective-map)))
+  :bind ("C-x x" . persp-switch-last)
+  (:map perspective-map ("z" . perspective-map))
+  :config
+  (defvar persp-xref--marker-ring (make-hash-table :test 'equal))
+  (defun persp-set-xref--marker-ring ()
+    "Sets xref--marker-ring per persp"
+    (let ((persp-curr-name (persp-name (persp-curr))))
+      (unless (gethash persp-curr-name persp-xref--marker-ring)
+        (puthash persp-curr-name (make-ring xref-marker-ring-length)
+                 persp-xref--marker-ring))
+      (setq xref--marker-ring (gethash persp-curr-name persp-xref--marker-ring))))
+  (add-hook 'persp-switch-hook #'persp-set-xref--marker-ring)
+  ;; Just name of current persp
+  (defun persp-update-modestring ()
+    "Override persp-update-modestring."
+    (when persp-show-modestring
+      (let ((open (list (nth 0 persp-modestring-dividers)))
+            (close (list (nth 1 persp-modestring-dividers)))
+            (sep (nth 2 persp-modestring-dividers)))
+        (set-frame-parameter
+         nil 'persp--modestring
+         (append open
+                 (cons (persp-format-name (persp-name (persp-curr)))())
+                 close))))))
 
 ;; multiple-cursors
 (use-package multiple-cursors
@@ -259,15 +291,7 @@
   :config
   (define-key yas-minor-mode-map [(tab)] nil)
   (define-key yas-minor-mode-map (kbd "TAB") nil)
-  :bind
-  (:map yas-minor-mode-map
-        ("C-c y i" . yas-insert-snippet)
-        ("C-c y n" . yas-new-snippet)
-        ("C-c y v" . yas-visit-snippet-file)
-        ("C-c y TAB" . yas-maybe-expand))
-  :hook
-  ((prog-mode org-mode markdown-mode)
-   . yas-minor-mode))
+  :hook ((prog-mode org-mode markdown-mode) . yas-minor-mode))
 ;; My yasnippet-snippets
 (use-package yasnippet-snippets
   :ensure t :defer t :pin me)
@@ -346,16 +370,16 @@
                   previous-error-function #'flymake-goto-prev-error)))
 ;; Apply .dir-locals to major-mode after load .dir-local
 ;; https://stackoverflow.com/questions/19280851/how-to-keep-dir-local-variables-when-switching-major-modes
-(add-hook 'after-change-major-mode-hook 'hack-local-variables)
+(add-hook 'after-change-major-mode-hook #'hack-local-variables)
 
 ;; large-file
-(defun find-file-with-large-file-hook ()
+(defun find-file-with-large-file ()
   "If a file is over a given size, make the buffer read only."
   (when (> (buffer-size) 7340032) ;; (* 7 1024 1024)
     (setq buffer-read-only t)
     (buffer-disable-undo)
     (fundamental-mode)))
-(add-hook 'find-file-hook 'find-file-with-large-file-hook)
+(add-hook 'find-file-hook #'find-file-with-large-file)
 
 ;; hide the minor modes
 (defun purge-minor-modes ()
@@ -363,7 +387,7 @@
   (dolist (x hidden-minor-modes nil)
     (let ((trg (cdr (assoc x minor-mode-alist))))
       (when trg (setcar trg "")))))
-(add-hook 'after-change-major-mode-hook 'purge-minor-modes)
+(add-hook 'after-change-major-mode-hook #'purge-minor-modes)
 
 ;;; CUSTOMIZE
 ;; defun
@@ -729,18 +753,6 @@
      'ivy-switch-buffer
      '(("p" ivy-switch-buffer-with-persp "persp-switch-to-buffer"))))
 
-  (defun persp-update-modestring ()
-    "Override persp-update-modestring."
-    (when persp-show-modestring
-      (let ((open (list (nth 0 persp-modestring-dividers)))
-            (close (list (nth 1 persp-modestring-dividers)))
-            (sep (nth 2 persp-modestring-dividers)))
-        (set-frame-parameter
-         nil 'persp--modestring
-         (append open
-                 (cons (persp-format-name (persp-name (persp-curr)))())
-                 close)))))
-
   ;; find file with perspective and projectile
   (with-eval-after-load 'counsel
     (defun counsel-find-file-action (x)
@@ -783,19 +795,6 @@
    'counsel-projectile-switch-project
    '(("ESC" counsel-projectile-M-x-action "M-x"))))
 
-(with-eval-after-load 'projectile
-  (defun projectile-run-term (program)
-    "Override project-run-term."
-    (interactive (list nil))
-    (let* ((project (projectile-ensure-project (projectile-project-root)))
-           (termname (concat "term " (projectile-project-name project)))
-           (buffer (concat "*" termname "*")))
-      (unless (get-buffer buffer)
-        (require 'term)
-        (projectile-with-default-dir project
-          (ansi-term (or explicit-shell-file-name
-                         (getenv "SHELL") "/bin/sh") termname)))
-      (switch-to-buffer buffer))))
 
 ;;; LANGUAGES
 ;; .emacs
@@ -820,7 +819,7 @@
           (query-buffer . all)))
   (defun do-notify (nick msg)
     (call-process "notify-send" nil nil nil "ERC" nick))
-  (add-hook 'ercn-notify-hook 'do-notify))
+  (add-hook 'ercn-notify-hook #'do-notify))
 
 ;; c-mode
 (defun my-c-mode-common-hook ()
@@ -829,7 +828,7 @@
   (setq c++-tab-always-indent t
         c-basic-offset 4
         c-indent-level 4))
-(add-hook 'c-mode-common-hook 'my-c-mode-common-hook)
+(add-hook 'c-mode-common-hook #'my-c-mode-common-hook)
 
 ;; org-mode
 (setq org-babel-load-languages (quote ((emacs-lisp . t) (shell . t)))
@@ -890,7 +889,7 @@ Please install:
 (defun python-install-hooks ()
   (lsp-deferred)
   (advice-add 'switch-to-buffer :after 'python-pyvenv-activate '((name . "python-pyvenv")))
-  (add-hook 'find-file-hook 'python-pyvenv-activate t t))
+  (add-hook 'find-file-hook #'python-pyvenv-activate t t))
 (add-hook 'python-mode-hook #'python-install-hooks)
 (with-eval-after-load 'python ;; built-in
   (setq python-indent-guess-indent-offset-verbose nil)
@@ -1001,7 +1000,7 @@ npm i -g javascript-typescript-langserver"
   "Gitlab ci my hook."
   (gitlab-ci-mode-flycheck-enable)
   (if (fboundp 'flycheck-mode) (flycheck-mode)))
-(add-hook 'gitlab-ci-mode-hook 'gitlab-ci-mode-my-hook)
+(add-hook 'gitlab-ci-mode-hook #'gitlab-ci-mode-my-hook)
 
 ;; other modes
 (add-to-hooks 'whitespace-mode
@@ -1011,6 +1010,12 @@ npm i -g javascript-typescript-langserver"
 (let ((personal-settings (expand-file-name "personal.el" user-emacs-directory)))
   (when (file-exists-p personal-settings)
     (load-file personal-settings)))
+
+(run-with-idle-timer
+ 0.1 nil
+ (lambda()
+   (message (format "Emacs-init-time %.03fs"
+                    (float-time (time-subtract after-init-time before-init-time))))))
 
 (provide '.emacs)
 ;;; .emacs ends here
