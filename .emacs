@@ -660,6 +660,7 @@
  '(ffap-machine-p-known (quote reject))
  '(global-hl-line-mode t)
  '(indent-tabs-mode nil)
+ '(inhibit-default-init nil)
  '(inhibit-startup-screen t)
  '(initial-major-mode (quote fundamental-mode))
  '(initial-scratch-message nil)
@@ -691,6 +692,9 @@
  '(vc-state-base ((t (:inherit font-lock-string-face :weight bold)))))
 
 ;;; PATCHING
+(unless (daemonp)
+  (advice-add #'display-startup-echo-area-message :override #'ignore))
+
 (use-package advice-patch :ensure t)
 
 (advice-add 'base64-encode-region
@@ -794,7 +798,6 @@
   (ivy-add-actions
    'counsel-projectile-switch-project
    '(("ESC" counsel-projectile-M-x-action "M-x"))))
-
 
 ;;; LANGUAGES
 ;; .emacs
@@ -1007,7 +1010,7 @@ npm i -g javascript-typescript-langserver"
               'yaml-mode-hook 'dockerfile-mode-hook)
 
 ;; keep personal settings not in the .emacs file
-(let ((personal-settings (expand-file-name "personal.el" user-emacs-directory)))
+(let ((personal-settings (locate-user-emacs-file "personal.el")))
   (when (file-exists-p personal-settings)
     (load-file personal-settings)))
 
