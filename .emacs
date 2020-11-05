@@ -386,7 +386,8 @@
 ;; enable whitespace-mode
 (add-to-hooks 'whitespace-mode
               'prog-mode-hook 'org-mode-hook
-              'markdown-mode-hook)
+              'markdown-mode-hook 'yaml-mode-hook
+              'dockerfile-mode-hook)
 ;; flymake on g-n & g-p bindings
 (add-hook 'flymake-mode-hook
           (lambda()
@@ -606,7 +607,11 @@
 (define-key isearch-mode-map (kbd "M-s %") 'isearch-query-replace-regexp)
 ;; term
 (with-eval-after-load 'term
+  (define-key term-raw-map (kbd "M-x") 'execute-extended-command)
   (define-key term-raw-map (kbd "C-c C-y") 'term-paste))
+(add-hook 'term-mode-hook
+          (lambda()
+            (let (term-escape-char) (term-set-escape-char ?\C-x))))
 ;; summary-mode
 (eval-after-load 'gnus-summary-mode
   (setq gnus-summary-line-format "%U%R%z %d %-23,23f (%4,4L) %{%B%}%s\n"
@@ -825,7 +830,7 @@
 ;;; LANGUAGES
 ;; .emacs
 (defun develop-dot()
-  "Update 'user-init-file - .emacs."
+  "Diff 'user-init-file - .emacs."
   (interactive)
   (let ((upstream (make-temp-file ".emacs")))
     (url-copy-file "https://raw.githubusercontent.com/TxGVNN/dots/master/.emacs" upstream t)
@@ -878,7 +883,6 @@ Please install:
   (interactive)
   (package-install 'go-mode)
   (package-install 'lsp-mode))
-
 (use-package go-mode
   :defer t
   :config
@@ -909,10 +913,12 @@ Please install:
   "Python-pyvenv-activate(ARGS)."
   (if (and (equal major-mode 'python-mode)
            (fboundp 'pyvenv-activate))
-      (dolist (e '("env" ".env" "venv" ".venv"))
-        (let ((env (format "%s%s" (projectile-project-root) e)))
-          (if (file-exists-p env) (pyvenv-activate env))))))
+      (dolist (env '(".venv" ".env" "venv" "env"))
+        (if-let ((dir (locate-dominating-file (or (projectile-project-root) default-directory) env)))
+            (if (file-directory-p (concat dir env))
+                (pyvenv-activate (concat dir env)))))))
 (defun python-install-hooks ()
+  (python-pyvenv-activate)
   (lsp-deferred)
   (advice-add 'switch-to-buffer :after 'python-pyvenv-activate '((name . "python-pyvenv")))
   (add-hook 'find-file-hook #'python-pyvenv-activate t t))
@@ -1016,11 +1022,15 @@ npm i -g javascript-typescript-langserver"
   :defer t
   :init (add-to-list 'auto-mode-alist '("\\.js\\'" . web-mode)))
 
+;; erlang
+(add-hook 'erlang-mode-hook #'lsp-deferred)
+
 ;; gitlab-mode
 (defun develop-gitlab-ci()
   "Gitlab-CI development."
   (interactive)
   (package-install 'gitlab-ci-mode)
+  (package-install 'gitlab-pipeline)
   (package-install 'gitlab-ci-mode-flycheck))
 (defun gitlab-ci-mode-my-hook ()
   "Gitlab ci my hook."
@@ -1028,9 +1038,34 @@ npm i -g javascript-typescript-langserver"
   (if (fboundp 'flycheck-mode) (flycheck-mode)))
 (add-hook 'gitlab-ci-mode-hook #'gitlab-ci-mode-my-hook)
 
-;; other modes
-(add-to-hooks 'whitespace-mode
-              'yaml-mode-hook 'dockerfile-mode-hook)
+(defun develop-vagrant()
+  "Vagrant tools."
+  (interactive)
+  (package-install 'vagrant)
+  (package-install 'vagrant-tramp))
+
+(defun develop-docker()
+  "Docker tools."
+  (interactive)
+  (package-install 'dockerfile-mode)
+  (package-install 'docker))
+
+;;; OTHERS
+;; google-translate
+(use-package google-translate
+  :config
+  (defun google-translate-query(&optional prefix)
+    (interactive "P")
+    (setq google-translate-translation-directions-alist '(("en" . "vi")))
+    (if prefix
+        (setq google-translate-translation-directions-alist '(("vi" . "en"))))
+    (call-interactively 'google-translate-smooth-translate))
+  :bind ("M-s t" . google-translate-query))
+(use-package debpaste
+  :defer t
+  :init
+  (setq debpaste-base-url "https://paste.debian.net/"
+        debpaste-paste-is-hidden t))
 
 ;; keep personal settings not in the .emacs file
 (let ((personal-settings (locate-user-emacs-file "personal.el")))
