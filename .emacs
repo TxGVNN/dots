@@ -154,10 +154,13 @@
   :ensure t
   :bind
   ("C-x g g" . magit-status)
-  ("C-x g f" . magit-find-file)
   ("C-x M-g" . magit-dispatch)
   ("C-c M-g" . magit-file-dispatch)
   (:map magit-file-mode-map ("C-x g") nil))
+;; git-link
+(use-package git-link
+  :ensure t
+  :config (setq git-link-use-commit t))
 
 ;; projectile
 (use-package projectile
@@ -183,17 +186,18 @@
       (switch-to-buffer buffer))))
 ;; counsel-projectile
 (use-package counsel-projectile
-  :ensure t :defer t
+  :ensure t :defer t :pin me
   :after (projectile)
   :init
   (define-key projectile-mode-map [remap projectile-switch-project] #'counsel-projectile-switch-project)
   (define-key projectile-mode-map [remap projectile-find-file] #'counsel-projectile-find-file)
+  (define-key projectile-mode-map [remap projectile-find-dir] #'counsel-projectile-find-dir)
   (define-key projectile-mode-map [remap projectile-ag] #'counsel-projectile-ag)
   (define-key projectile-mode-map [remap projectile-ripgrep] #'counsel-projectile-rg)
   (define-key projectile-mode-map [remap projectile-compile-project] #'counsel-compile))
 ;; ibuffer-projectile
 (use-package ibuffer-projectile
-  :ensure t
+  :ensure t :defer 2
   :config
   (setq ibuffer-projectile-prefix "")
   (add-hook 'ibuffer-hook
@@ -221,6 +225,16 @@
                  persp-xref--marker-ring))
       (setq xref--marker-ring (gethash persp-curr-name persp-xref--marker-ring))))
   (add-hook 'persp-switch-hook #'persp-set-xref--marker-ring)
+  ;; persp-ibuffer
+  (with-eval-after-load 'ibuffer
+    (defun ibuffer-visit-buffer (&optional single)
+      "Ibuffer-visit-buffer with perspective."
+      (interactive "P")
+      (let ((buf (ibuffer-current-buffer t)))
+        (switch-to-buffer buf)
+        (if-let (persp-name (cdr (persp-buffer-in-other-p buf)))
+            (persp-switch persp-name))
+        (when single (delete-other-windows)))))
   ;; Just name of current persp
   (defun persp-update-modestring ()
     "Override persp-update-modestring."
@@ -359,26 +373,6 @@
   (doom-themes-visual-bell-config)
   (doom-themes-org-config))
 
-;;; OPTIONS
-;; google-translate
-(use-package google-translate
-  :config
-  (defun google-translate-query(&optional prefix)
-    (interactive "P")
-    (setq google-translate-translation-directions-alist '(("en" . "vi")))
-    (if prefix
-        (setq google-translate-translation-directions-alist '(("vi" . "en"))))
-    (call-interactively 'google-translate-smooth-translate))
-  :bind ("M-s t" . google-translate-query))
-(use-package debpaste
-  :defer t
-  :init
-  (setq debpaste-base-url "https://paste.debian.net/"
-        debpaste-paste-is-hidden t))
-(use-package git-link
-  :defer t
-  :init (setq git-link-use-commit t))
-
 ;;; HOOKS
 (defun add-to-hooks (func &rest hooks)
   "Add FUNC to mutil HOOKS."
@@ -438,15 +432,13 @@
   "Split window vertically.
 - PREFIX: default(1) is switch to last buffer"
   (interactive "p")
-  (split-window-vertically)
-  (other-window 1 nil)
+  (split-window-vertically) (other-window 1 nil)
   (if (= prefix 1 ) (switch-to-next-buffer)))
 (defun split-window-horizontally-last-buffer (prefix)
   "Split window horizontally.
 - PREFIX: default(1) is switch to last buffer"
   (interactive "p")
-  (split-window-horizontally)
-  (other-window 1 nil)
+  (split-window-horizontally) (other-window 1 nil)
   (if (= prefix 1 ) (switch-to-next-buffer)))
 (defun mark-backword (&optional arg allow-extend)
   "Reverse of mark-word(ARG ALLOW-EXTEND)."
@@ -461,16 +453,17 @@
                      (backward-word arg) (point))))
         (t (push-mark
             (save-excursion
-              (backward-word (prefix-numeric-value arg))
-              (point)) nil t))))
+              (backward-word (prefix-numeric-value arg)) (point)) nil t))))
 (defun insert-temp-filename()
   "Insert new temp filename."
   (interactive)
   (insert
    (concat (file-name-as-directory temporary-file-directory)
-           (make-temp-name "tmp"))))
+           (make-temp-name
+            (format "%s_%s_" user-login-name
+                    (format-time-string "%y%m%d-%H%M" (time-to-seconds)))))))
 (defun insert-datetime()
-  "Insert YYYmmdd-HHMM."
+  "Insert YYYYmmdd-HHMM."
   (interactive)
   (insert (format-time-string "%Y%m%d-%H%M" (current-time) t)))
 (defun linux-stat-file()
@@ -584,22 +577,13 @@
        'face 'font-lock-warning-face))))
 
 (setq-default mode-line-format
-              '("%e"
-                mode-line-front-space
-                mode-line-mule-info
-                mode-line-client
-                mode-line-modified
-                mode-line-remote
-                mode-line-frame-identification
-                " "
-                mode-line-buffer-identification
-                " "
-                mode-line-position
-                (:eval (selection-info))
-                (vc-mode vc-mode)
-                " "
-                mode-line-modes
-                mode-line-misc-info
+              '("%e" mode-line-front-space mode-line-mule-info
+                mode-line-client mode-line-modified mode-line-remote
+                mode-line-frame-identification " "
+                mode-line-buffer-identification " "
+                mode-line-position (:eval (selection-info))
+                (vc-mode vc-mode) " "
+                mode-line-modes mode-line-misc-info
                 mode-line-end-spaces))
 
 ;; isearch
@@ -621,7 +605,6 @@
         gnus-sum-thread-tree-vertical        "│ "
         gnus-sum-thread-tree-single-leaf     "└─> "))
 
-(defalias 'yes-or-no-p 'y-or-n-p)
 (global-set-key (kbd "M-D") 'kill-whole-line)
 (global-set-key (kbd "M-w") 'my-kill-ring-save)
 (global-set-key (kbd "C-x C-@") 'pop-to-mark-command)
@@ -694,6 +677,7 @@
  '(initial-scratch-message nil)
  '(kept-new-versions 6)
  '(menu-bar-mode nil)
+ '(proced-tree-flag t)
  '(read-quoted-char-radix 16)
  '(safe-local-variable-values
    (quote
@@ -720,6 +704,7 @@
  '(vc-state-base ((t (:inherit font-lock-string-face :weight bold)))))
 
 ;;; PATCHING
+(advice-add #'yes-or-no-p :override #'y-or-n-p)
 (unless (daemonp)
   (advice-add #'display-startup-echo-area-message :override #'ignore))
 
@@ -739,13 +724,15 @@
       (setq-local byte-compile-warnings t))))
 
 (with-eval-after-load 'perspective
-  (defun ivy-switch-to-buffer ()
+  (defun ivy-switch-to-buffer (&optional prefix)
     "Switch to another buffer in the CURRENT PERSP."
-    (interactive)
+    (interactive "P")
     (if (not (bound-and-true-p persp-mode))
         (ivy-switch-buffer)
       (setq this-command #'ivy-switch-buffer)
-      (ivy-read "Switch to buffer: " (remove nil (mapcar 'buffer-name (persp-buffers (persp-curr))))
+      (ivy-read "Switch to buffer: "
+                (if prefix #'internal-complete-buffer
+                  (remove nil (mapcar 'buffer-name (persp-buffers (persp-curr)))))
                 :keymap ivy-switch-buffer-map
                 :preselect (buffer-name (other-buffer (current-buffer)))
                 :action #'ivy--switch-buffer-action
@@ -760,14 +747,15 @@
     (counsel-M-x (format "^%s " (persp-name (persp-curr)))))
   (define-key projectile-mode-map [remap projectile-project-buffers-other-buffer] #'counsel-projectile-M-x)
 
-  (defun counsel-switch-to-buffer ()
+  (defun counsel-switch-to-buffer (&optional prefix)
     "Switch to another buffer in the CURRENT PERSP."
-    (interactive)
+    (interactive "P")
     (let ((ivy-update-fns-alist
            '((ivy-switch-buffer . counsel--switch-buffer-update-fn)))
           (ivy-unwind-fns-alist
            '((ivy-switch-buffer . counsel--switch-buffer-unwind))))
-      (ivy-switch-to-buffer)))
+      (if prefix (ivy-switch-buffer)
+        (ivy-switch-to-buffer))))
   (global-set-key (kbd "C-x B") 'counsel-switch-to-buffer)
 
   (defun ivy-switch-buffer-with-persp (&optional _)
@@ -777,8 +765,7 @@
       (if (memq buffer (persp-buffers (persp-curr)))
           (switch-to-buffer buffer)
         (let ((other-persp (persp-buffer-in-other-p buffer)))
-          (when (eq (car-safe other-persp) (selected-frame))
-            (persp-switch (cdr other-persp)))
+          (persp-switch (cdr other-persp)) ;; Don't care frame
           (switch-to-buffer buffer)))))
   (with-eval-after-load 'ivy
     (ivy-add-actions
