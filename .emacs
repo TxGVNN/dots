@@ -327,7 +327,31 @@
         `((".*" . ,temporary-file-directory)))
   (global-undo-tree-mode))
 
-;; themes
+(use-package autorevert
+  ;; revert buffers when their files/state have changed
+  :hook (focus-in . doom-auto-revert-buffers-h)
+  :hook (after-save . doom-auto-revert-buffers-h)
+  :hook (doom-switch-buffer . doom-auto-revert-buffer-h)
+  :hook (doom-switch-window . doom-auto-revert-buffer-h)
+  :config
+  (setq auto-revert-verbose t ; let us know when it happens
+        auto-revert-use-notify nil
+        auto-revert-stop-on-user-input nil)
+  (defun doom-visible-buffers (&optional buffer-list)
+    "Return a list of visible buffers (i.e. not buried)."
+    (let ((buffers (delete-dups (mapcar #'window-buffer (window-list)))))
+      (if buffer-list (cl-delete-if (lambda (b) (memq b buffer-list)) buffers)
+        (delete-dups buffers))))
+  (defun doom-auto-revert-buffer-h ()
+    "Auto revert current buffer, if necessary."
+    (unless (or auto-revert-mode (active-minibuffer-window))
+      (let ((auto-revert-mode t)) (auto-revert-handler))))
+  (defun doom-auto-revert-buffers-h ()
+    "Auto revert stale buffers in visible windows, if necessary."
+    (dolist (buf (doom-visible-buffers))
+      (with-current-buffer buf (doom-auto-revert-buffer-h)))))
+
+;; theme
 (use-package doom-themes
   :ensure t
   :init (load-theme 'doom-gruvbox t)
@@ -645,7 +669,6 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(Buffer-menu-use-header-line nil)
- '(auto-revert-check-vc-info t)
  '(auto-revert-mode-text " ~")
  '(backup-by-copying t)
  '(browse-url-browser-function (quote eww-browse-url))
