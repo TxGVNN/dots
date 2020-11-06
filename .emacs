@@ -777,15 +777,14 @@
     (defun counsel-find-file-action (x)
       "Find file X."
       (with-ivy-window
+        (if (and (bound-and-true-p persp-mode) (bound-and-true-p projectile-mode))
+            (if-let* ((project-root (projectile-project-root (expand-file-name x)))
+                      (project-name (projectile-project-name project-root)))
+                (persp-switch (concat (file-remote-p ivy--directory) project-name))))
         (if (and counsel-find-file-speedup-remote
                  (file-remote-p ivy--directory))
             (let ((find-file-hook nil))
               (find-file (expand-file-name x ivy--directory)))
-          (if (and (bound-and-true-p persp-mode) (bound-and-true-p projectile-mode))
-              (let (project-name (project-root (projectile-project-root (expand-file-name x))))
-                (when project-root
-                  (setq project-name (funcall projectile-project-name-function project-root))
-                  (persp-switch project-name))))
           (find-file (expand-file-name x ivy--directory)))))))
 
 (with-eval-after-load 'counsel-projectile
