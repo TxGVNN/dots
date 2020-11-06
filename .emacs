@@ -715,14 +715,6 @@
                       "Pass prefix arg as third arg to `base64-encode-region'."
                       (interactive "r\nP")))
 
-(unless (version< emacs-version "26.1")
-  (with-eval-after-load 'flymake
-    (ignore-errors
-      (setq-local byte-compile-warnings nil)
-      (advice-patch 'flymake--highlight-line '(+ 1 (flymake--diag-beg diagnostic)) '(flymake--diag-end diagnostic))
-      (advice-patch 'flymake--mode-line-format '" FlyM" '" Flymake")
-      (setq-local byte-compile-warnings t))))
-
 (with-eval-after-load 'perspective
   (defun ivy-switch-to-buffer (&optional prefix)
     "Switch to another buffer in the CURRENT PERSP."
