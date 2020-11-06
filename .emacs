@@ -188,13 +188,7 @@
 (use-package counsel-projectile
   :ensure t :defer t :pin me
   :after (projectile)
-  :init
-  (define-key projectile-mode-map [remap projectile-switch-project] #'counsel-projectile-switch-project)
-  (define-key projectile-mode-map [remap projectile-find-file] #'counsel-projectile-find-file)
-  (define-key projectile-mode-map [remap projectile-find-dir] #'counsel-projectile-find-dir)
-  (define-key projectile-mode-map [remap projectile-ag] #'counsel-projectile-ag)
-  (define-key projectile-mode-map [remap projectile-ripgrep] #'counsel-projectile-rg)
-  (define-key projectile-mode-map [remap projectile-compile-project] #'counsel-compile))
+  :init (run-with-idle-timer 0.1 nil (lambda()(counsel-projectile-mode))))
 ;; ibuffer-projectile
 (use-package ibuffer-projectile
   :ensure t :defer 2
@@ -679,10 +673,6 @@
  '(menu-bar-mode nil)
  '(proced-tree-flag t)
  '(read-quoted-char-radix 16)
- '(safe-local-variable-values
-   (quote
-    ((eval setq default-directory
-           (locate-dominating-file buffer-file-name ".dir-locals.el")))))
  '(scroll-bar-mode nil)
  '(show-paren-mode t)
  '(tab-stop-list (quote (4 8 12 16 20 24 28 32 36)))
