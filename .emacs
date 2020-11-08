@@ -152,11 +152,11 @@
 ;; magit
 (use-package magit
   :ensure t
+  :init (setq magit-define-global-key-bindings nil)
   :bind
   ("C-x g g" . magit-status)
   ("C-x M-g" . magit-dispatch)
-  ("C-c M-g" . magit-file-dispatch)
-  (:map magit-file-mode-map ("C-x g") nil))
+  ("C-c M-g" . magit-file-dispatch))
 ;; git-link
 (use-package git-link
   :ensure t
