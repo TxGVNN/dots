@@ -170,7 +170,7 @@
         projectile-mode-line-prefix ""
         projectile-project-compilation-cmd "make "
         projectile-completion-system 'ivy)
-  (projectile-mode)
+  (run-with-idle-timer 0.1 nil (lambda()(projectile-mode)))
   :bind (:map projectile-mode-map ("C-x p" . projectile-command-map))
   :config
   (defun projectile-run-term (arg)
@@ -188,7 +188,7 @@
 (use-package counsel-projectile
   :ensure t :defer t :pin me
   :after (projectile)
-  :init (run-with-idle-timer 0.1 nil (lambda()(counsel-projectile-mode))))
+  :init (run-with-idle-timer 0.15 nil (lambda()(counsel-projectile-mode))))
 ;; ibuffer-projectile
 (use-package ibuffer-projectile
   :ensure t :defer 2
@@ -498,35 +498,9 @@
   (interactive)
   (let ((help (help-at-pt-kbd-string)))
     (if help (eww (read-string "Search: " help)) (message "Nothing!"))))
-(defun share-to-transfer_sh (downloads)
-  "Share buffer to transfersh.com.
-- DOWNLOADS: The max-downloads"
-  (interactive "p")
-  (let ((temp-file
-         (make-temp-file nil nil (file-name-extension (buffer-name) t)))
-        (url "https://transfersh.com") (msg ""))
-    (if (region-active-p)
-        (write-region (point) (mark) temp-file)
-      (write-region (point-min) (point-max) temp-file))
-    (when (yes-or-no-p (format "Share to %s (%d)?" url downloads))
-      (when (yes-or-no-p "Encrypt?")
-        (let ((file-hash (md5 (buffer-string))))
-          (shell-command (format "openssl aes-256-cbc -md md5 -k %s -in '%s' -out '%s.enc'"
-                                 file-hash temp-file temp-file))
-          (dired-delete-file temp-file)
-          (setq temp-file (format "%s.enc" temp-file)
-                msg (format "| openssl aes-256-cbc -d -md md5 -k %s -in - 2>/dev/null"
-                            file-hash))))
-      (let ((output (format
-                     "curl -L %s 2>/dev/null %s"
-                     (shell-command-to-string
-                      (format "curl -q -H 'Max-Downloads: %d' --upload-file '%s' %s 2>/dev/null"
-                              downloads temp-file url)) msg)))
-        (kill-new output) (message output))
-      (dired-delete-file temp-file))))
 
 (defvar share-to-online-func
-  'share-to-transfer_sh)
+  'crux-share-to-transfer_sh)
 (defun share-to-online ()
   "Share buffer to online."
   (interactive)
@@ -539,9 +513,8 @@
   "Show line numbers temporarily when 'goto-line."
   (interactive)
   (unwind-protect
-      (progn
-        (funcall linum-func)
-        (goto-line (read-number "Goto line: ")))
+      (progn (funcall linum-func)
+             (goto-line (read-number "Goto line: ")))
     (funcall linum-func 0)))
 (global-set-key [remap goto-line] #'goto-line-with-feedback)
 
@@ -723,12 +696,6 @@
   (with-eval-after-load 'ivy
     (define-key ivy-mode-map (kbd "C-x b") 'ivy-switch-to-buffer))
 
-  (defun counsel-projectile-M-x()
-    "M-x ^project-name"
-    (interactive)
-    (counsel-M-x (format "^%s " (persp-name (persp-curr)))))
-  (define-key projectile-mode-map [remap projectile-project-buffers-other-buffer] #'counsel-projectile-M-x)
-
   (defun counsel-switch-to-buffer (&optional prefix)
     "Switch to another buffer in the CURRENT PERSP."
     (interactive "P")
@@ -793,7 +760,12 @@
       (counsel-projectile-M-x)))
   (ivy-add-actions
    'counsel-projectile-switch-project
-   '(("ESC" counsel-projectile-M-x-action "M-x"))))
+   '(("ESC" counsel-projectile-M-x-action "M-x")))
+  (defun counsel-projectile-M-x()
+    "M-x ^project-name"
+    (interactive)
+    (counsel-M-x (format "^%s " (persp-name (persp-curr)))))
+  (define-key projectile-mode-map [remap projectile-project-buffers-other-buffer] #'counsel-projectile-M-x))
 
 ;;; LANGUAGES
 ;; .emacs
