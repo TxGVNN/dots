@@ -173,6 +173,15 @@
   (run-with-idle-timer 0.1 nil (lambda()(projectile-mode)))
   :bind (:map projectile-mode-map ("C-x p" . projectile-command-map))
   :config
+  (defun projectile-run-compilation (cmd)
+    "Override projectile-run-compilation. Run external or Elisp CMD."
+    (if (functionp cmd)
+        (funcall cmd)
+      (let ((project (projectile-project-name
+                      (projectile-ensure-project (projectile-project-root)))))
+        (cl-letf ((compilation-buffer-name-function
+                   #'(lambda (&rest _)(format "*compilation(%s)*" (persp-name (persp-curr))))))
+          (compile cmd)))))
   (defun projectile-run-term (arg)
     "Override projectile-run-term."
     (interactive (list nil))
@@ -785,7 +794,7 @@
   (setq ercn-notify-rules
         '((current-nick . all)
           (keyword . all)
-          (pal . ("#emacs"))
+          (pal . ("#emacs" "#guix"))
           (query-buffer . all)))
   (defun do-notify (nick msg)
     (call-process "notify-send" nil nil nil "ERC" nick))
