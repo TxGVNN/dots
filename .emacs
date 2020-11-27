@@ -159,7 +159,7 @@
   ("C-c M-g" . magit-file-dispatch))
 ;; git-link
 (use-package git-link
-  :ensure t
+  :ensure t :defer t
   :config (setq git-link-use-commit t))
 
 ;; projectile
@@ -210,6 +210,8 @@
   :bind ("C-x x" . persp-switch-last)
   (:map perspective-map ("z" . perspective-map))
   :config
+  (add-hook 'persp-switch-hook #'hack-dir-local-variables-non-file-buffer)
+  ;; xref ring
   (defvar persp-xref--marker-ring (make-hash-table :test 'equal))
   (defun persp-set-xref--marker-ring ()
     "Sets xref--marker-ring per persp"
@@ -381,9 +383,6 @@
           (lambda()
             (setq next-error-function #'flymake-goto-next-error
                   previous-error-function #'flymake-goto-prev-error)))
-;; Apply .dir-locals to major-mode after load .dir-local
-;; https://stackoverflow.com/questions/19280851/how-to-keep-dir-local-variables-when-switching-major-modes
-(add-hook 'after-change-major-mode-hook #'hack-local-variables)
 
 ;; large-file
 (defun find-file-with-large-file ()
@@ -500,7 +499,7 @@
     (if help (eww (read-string "Search: " help)) (message "Nothing!"))))
 
 (defvar share-to-online-func
-  'crux-share-to-transfer_sh)
+  'crux-share-to-transfersh)
 (defun share-to-online ()
   "Share buffer to online."
   (interactive)
