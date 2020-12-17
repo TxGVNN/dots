@@ -11,9 +11,12 @@ Just start and enjoy Emacs
  * <kbd>M-x</kbd> <kbd>develop-go</kbd> Golang development
  * <kbd>M-x</kbd> <kbd>develop-python</kbd> Python development
  * <kbd>M-x</kbd> <kbd>develop-php</kbd> PHP development
- * <kbd>M-x</kbd> <kbd>develop-utils</kbd> Some utility packages
  * <kbd>M-x</kbd> <kbd>develop-terraform</kbd> Terraform development
  * <kbd>M-x</kbd> <kbd>develop-ansible</kbd> Ansible development
+ * <kbd>M-x</kbd> <kbd>develop-docker</kbd> Docker development
+ * <kbd>M-x</kbd> <kbd>develop-vagrant</kbd> Vagrant development
+ * <kbd>M-x</kbd> <kbd>develop-kubernetes</kbd> Kubernertes development
+ * <kbd>M-x</kbd> <kbd>develop-...</kbd> ... development
 
 ### Email with Gnus & smtpmail-multi
 
