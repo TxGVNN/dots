@@ -1,4 +1,5 @@
-;;; .emacs --- initialization file
+;;; .emacs --- initialization file.
+;;; Commentary:
 ;;; _____  _     __    _      _      _
 ;;;  | |  \ \_/ / /`_ \ \  / | |\ | | |\ |
 ;;;  |_|  /_/ \ \_\_/  \_\/  |_| \| |_| \|
@@ -124,19 +125,16 @@
   (add-hook 'tty-setup-hook
             (lambda()(require 'xclip nil t)(xclip-mode))))
 
-;; checker kbd("C-h .")
-(if (version< emacs-version "26.1")
-    (use-package flycheck
-      :ensure t
-      :config
-      (defun flycheck-display-error-at-point-soon () nil)
-      (setq flycheck-highlighting-mode (quote columns))
-      :hook (prog-mode . flycheck-mode))
-  (use-package flymake
-    :config
-    (define-key flymake-mode-map (kbd "C-c ! l") 'flymake-show-diagnostics-buffer)
-    (remove-hook 'flymake-diagnostic-functions 'flymake-proc-legacy-flymake)
-    :hook (prog-mode . flymake-mode)))
+;; error-checker kbd("C-h .")
+(use-package flycheck
+  :ensure t
+  :config
+  (defun flycheck-maybe-display-error-at-point-soon() nil)
+  (setq flycheck-highlighting-mode (quote columns))
+  ;; g-n & g-p bindings
+  (define-key flycheck-mode-map (kbd "M-g n") #'flycheck-next-error)
+  (define-key flycheck-mode-map (kbd "M-g p") #'flycheck-previous-error)
+  :hook (prog-mode . flycheck-mode))
 
 ;; git-gutter
 (use-package git-gutter
@@ -387,11 +385,6 @@
               'prog-mode-hook 'org-mode-hook
               'markdown-mode-hook 'yaml-mode-hook
               'dockerfile-mode-hook)
-;; flymake on g-n & g-p bindings
-(add-hook 'flymake-mode-hook
-          (lambda()
-            (setq next-error-function #'flymake-goto-next-error
-                  previous-error-function #'flymake-goto-prev-error)))
 
 ;; large-file
 (defun find-file-with-large-file ()
