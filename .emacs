@@ -152,6 +152,7 @@
   :ensure t
   :init (setq magit-define-global-key-bindings nil)
   :bind
+  ("C-x g f" . magit-find-file)
   ("C-x g g" . magit-status)
   ("C-x M-g" . magit-dispatch)
   ("C-c M-g" . magit-file-dispatch))
@@ -518,6 +519,9 @@
              (goto-line (read-number "Goto line: ")))
     (funcall linum-func 0)))
 (global-set-key [remap goto-line] #'goto-line-with-feedback)
+(defun package-installs (&rest packages)
+  "Install PACKAGES."
+  (dolist (package packages) (package-install package)))
 
 ;;; MODELINE
 (setq mode-line-position
@@ -821,8 +825,7 @@
 Please install:
    GO111MODULE=on go get golang.org/x/tools/gopls@latest"
   (interactive)
-  (package-install 'go-mode)
-  (package-install 'lsp-mode))
+  (package-installs 'go-mode 'lsp-mode))
 (use-package go-mode
   :defer t
   :config
@@ -847,8 +850,7 @@ Please install:
 Please install:
    pip install python-language-server"
   (interactive)
-  (package-install 'lsp-mode)
-  (package-install 'pyvenv))
+  (package-installs 'pyvenv 'lsp-mode))
 (defun python-pyvenv-activate (&rest args)
   "Python-pyvenv-activate(ARGS)."
   (if (and (equal major-mode 'python-mode)
@@ -858,6 +860,7 @@ Please install:
             (if (file-directory-p (concat dir env))
                 (pyvenv-activate (concat dir env)))))))
 (defun python-install-hooks ()
+  "Hooks for python."
   (python-pyvenv-activate)
   (lsp-deferred)
   (advice-add 'switch-to-buffer :after 'python-pyvenv-activate '((name . "python-pyvenv")))
@@ -895,11 +898,8 @@ Please install:
   (interactive)
   (package-install 'php-mode)
   (package-install 'company-php))
-(use-package php-mode
-  :defer t
-  :hook
-  (php-mode . (lambda ()
-                (add-to-list 'company-backends 'company-ac-php-backend))))
+(add-hook 'php-mode-hook
+          (lambda() (add-to-list 'company-backends 'company-ac-php-backend)))
 
 ;; terraform-mode
 (defun develop-terraform()
@@ -907,27 +907,18 @@ Please install:
   (interactive)
   (package-install 'company-terraform)
   (package-install 'terraform-doc))
-(use-package company-terraform
-  :defer t
-  :hook
-  (terraform-mode . (lambda ()
-                      (add-to-list 'company-backends 'company-terraform))))
+(add-hook 'terraform-mode-hook
+          (lambda() (add-to-list 'company-backends 'company-terraform)))
 
 ;; ansible-mode
 (defun develop-ansible ()
   "Ansible development."
   (interactive)
-  (package-install 'ansible)
-  (package-install 'ansible-doc)
-  (package-install 'company-ansible))
-(use-package ansible
-  :defer t
-  :init
-  (add-hook 'ansible-hook
-            (lambda ()
-              (ansible-doc-mode)
-              (add-to-list 'company-backends 'company-ansible)
-              (yas-minor-mode-on))))
+  (package-installs 'ansible 'ansible-doc 'company-ansible))
+(add-hook 'ansible-hook
+          (lambda()
+            (ansible-doc-mode) (yas-minor-mode-on)
+            (add-to-list 'company-backends 'company-ansible)))
 (use-package ansible-doc
   :defer t
   :config (define-key ansible-doc-mode-map (kbd "M-?") #'ansible-doc))
@@ -956,8 +947,7 @@ https://download.eclipse.org/jdtls/snapshots/jdt-language-server-latest.tar.gz"
   "WEB development.
 npm i -g javascript-typescript-langserver"
   (interactive)
-  (package-install 'web-mode)
-  (package-install 'eslint-fix))
+  (package-installs 'web-mode 'eslint-fix))
 (use-package web-mode
   :defer t
   :init (add-to-list 'auto-mode-alist '("\\.js\\'" . web-mode)))
@@ -969,9 +959,8 @@ npm i -g javascript-typescript-langserver"
 (defun develop-gitlab-ci()
   "Gitlab-CI development."
   (interactive)
-  (package-install 'gitlab-ci-mode)
-  (package-install 'gitlab-pipeline)
-  (package-install 'gitlab-ci-mode-flycheck))
+  (package-installs 'gitlab-ci-mode 'gitlab-pipeline
+                    'gitlab-ci-mode-flycheck))
 (defun gitlab-ci-mode-my-hook ()
   "Gitlab ci my hook."
   (gitlab-ci-mode-flycheck-enable)
@@ -981,14 +970,18 @@ npm i -g javascript-typescript-langserver"
 (defun develop-vagrant()
   "Vagrant tools."
   (interactive)
-  (package-install 'vagrant)
-  (package-install 'vagrant-tramp))
+  (package-installs 'vagrant 'vagrant-tramp))
 
 (defun develop-docker()
   "Docker tools."
   (interactive)
-  (package-install 'dockerfile-mode)
-  (package-install 'docker))
+  (package-installs 'dockerfile-mode 'docker))
+
+(defun develop-kubernetes()
+  "Kubernetes tools."
+  (interactive)
+  (package-installs 'kubel 'k8s-mode))
+(add-hook 'k8s-mode-hook (lambda () (yas-minor-mode-on)))
 
 ;;; OTHERS
 ;; google-translate
