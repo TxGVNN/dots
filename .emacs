@@ -627,7 +627,7 @@
  '(Buffer-menu-use-header-line nil)
  '(auto-revert-mode-text " ~")
  '(backup-by-copying t)
- '(browse-url-browser-function (quote eww-browse-url))
+ '(browse-url-browser-function 'eww-browse-url)
  '(column-number-mode t)
  '(compilation-scroll-output t)
  '(default-input-method "vietnamese-telex")
@@ -636,12 +636,12 @@
  '(eldoc-minor-mode-string " ED")
  '(electric-indent-mode nil)
  '(enable-local-variables :all)
- '(ffap-machine-p-known (quote reject))
+ '(ffap-machine-p-known 'reject)
  '(global-hl-line-mode t)
  '(indent-tabs-mode nil)
  '(inhibit-default-init nil)
  '(inhibit-startup-screen t)
- '(initial-major-mode (quote fundamental-mode))
+ '(initial-major-mode 'fundamental-mode)
  '(initial-scratch-message nil)
  '(kept-new-versions 6)
  '(menu-bar-mode nil)
@@ -649,14 +649,13 @@
  '(read-quoted-char-radix 16)
  '(scroll-bar-mode nil)
  '(show-paren-mode t)
- '(tab-stop-list (quote (4 8 12 16 20 24 28 32 36)))
+ '(tab-stop-list '(4 8 12 16 20 24 28 32 36))
  '(tab-width 4)
  '(tool-bar-mode nil)
  '(version-control t)
  '(whitespace-style
-   (quote
-    (face tabs trailing space-before-tab newline empty tab-mark)))
- '(x-select-request-type (quote (COMPOUND_TEXT UTF8_STRING STRING TEXT))))
+   '(face tabs trailing space-before-tab newline empty tab-mark))
+ '(x-select-request-type '(COMPOUND_TEXT UTF8_STRING STRING TEXT)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
