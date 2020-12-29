@@ -569,7 +569,7 @@
           (lambda()
             (let (term-escape-char) (term-set-escape-char ?\C-x))))
 ;; summary-mode
-(eval-after-load 'gnus-summary-mode
+(with-eval-after-load 'gnus-summary-mode
   (setq gnus-summary-line-format "%U%R%z %d %-23,23f (%4,4L) %{%B%}%s\n"
         gnus-sum-thread-tree-root            ""
         gnus-sum-thread-tree-false-root      "──> "
@@ -675,8 +675,6 @@
 (unless (daemonp)
   (advice-add #'display-startup-echo-area-message :override #'ignore))
 
-(use-package advice-patch :ensure t)
-
 (advice-add 'base64-encode-region
             :before (lambda (&rest _args)
                       "Pass prefix arg as third arg to `base64-encode-region'."
@@ -741,11 +739,8 @@
           (find-file (expand-file-name x ivy--directory)))))))
 
 (with-eval-after-load 'counsel-projectile
-  (advice-patch 'counsel-projectile-switch-project-by-name
-                '(run-hook-with-args 'projectile-before-switch-project-hook project)
-                '(run-hooks 'projectile-before-switch-project-hook))
   (add-hook 'projectile-before-switch-project-hook
-            (lambda (project-to-switch)
+            (lambda (&optional project-to-switch)
               (if (and project-to-switch (bound-and-true-p persp-mode))
                   (persp-switch (funcall projectile-project-name-function project-to-switch)))))
   (defun counsel-projectile-find-file-action-file-jump (file)
@@ -817,7 +812,8 @@
 ;; lsp-mode
 (use-package lsp-mode
   :defer t
-  :init (setq lsp-keymap-prefix "C-x l"))
+  :init (setq lsp-keymap-prefix "C-x l")
+  :config (setq lsp-headerline-breadcrumb-enable nil))
 
 ;; go-mode
 (defun develop-go()
@@ -888,9 +884,10 @@ Please install:
     (let ((var (substring-no-properties (thing-at-point 'symbol))))
       (move-end-of-line nil)
       (newline-and-indent)
-      (insert (format "print(\"D: %s@%s %s, {}\".format(%s))"
+      (insert (format "print(\"D: %s@%s %s: {} {}\".format(type(%s),%s))"
                       (file-name-nondirectory (buffer-file-name))
-                      (substring (md5 (format "%s%s" (emacs-pid) (current-time))) 0 4) var var)))))
+                      (substring (md5 (format "%s%s" (emacs-pid) (current-time))) 0 4)
+                      var var var)))))
 
 ;; php-mode
 (defun develop-php()
@@ -1008,7 +1005,7 @@ npm i -g javascript-typescript-langserver"
 (run-with-idle-timer
  0.1 nil
  (lambda()
-   (message (format "Emacs-init-time %.03fs"
+   (message (format "init-time %.03fs"
                     (float-time (time-subtract after-init-time before-init-time))))))
 
 (provide '.emacs)
