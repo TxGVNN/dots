@@ -9,8 +9,6 @@
 ;;; Code:
 (when (version< emacs-version "25.1")
   (error "Requires GNU Emacs 25.1 or newer, but you're running %s" emacs-version))
-(when (version< emacs-version "26.3")
-  (setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3"))
 
 (setq gc-cons-threshold most-positive-fixnum) ;; enable gcmh
 ;; doom-emacs:docs/faq.org#unset-file-name-handler-alist-temporarily
@@ -23,7 +21,7 @@
 
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
-(add-to-list 'package-archives '("me" . "https://txgvnn.github.io/giaelpa/"))
+(add-to-list 'package-archives '("me" . "https://txgvnn.github.io/packages/"))
 (when (< emacs-major-version 27)
   (package-initialize))
 
@@ -39,151 +37,43 @@
   :init (gcmh-mode)
   :config (add-to-list 'hidden-minor-modes 'gcmh-mode))
 
-;; selectrum
-(use-package selectrum
-  :ensure t
-  :init (selectrum-mode)
+;; ivy
+(use-package ivy
+  :ensure t :pin me
+  :bind ("C-x C-r" . ivy-resume)
+  :init (ivy-mode)
+  :config
+  (add-to-list 'hidden-minor-modes 'ivy-mode)
+  (setq ivy-magic-tilde nil
+        ivy-extra-directories '("./")
+        ivy-on-del-error-function #'ignore
+        ivy-magic-slash-non-match-action 'ivy-magic-slash-non-match-action)
+  (define-key ivy-minibuffer-map (kbd "TAB") 'ivy-partial))
+
+;; counsel - modified
+(use-package counsel
+  :ensure t :pin me
+  :init (counsel-mode)
   :bind
-  ("C-x C-r" . selectrum-repeat)
-  (:map selectrum-minibuffer-map
-        ("<prior>" . selectrum-previous-page)
-        ("<next>" . selectrum-next-page))
+  ("C-c m" . counsel-imenu)
+  ("M-s d" . counsel-ag)
+  ("M-s r" . counsel-rg)
+  ("M-s j" . counsel-file-jump)
+  (:map counsel-find-file-map ("C-k" . counsel-up-directory))
+  :hook
+  (org-mode . (lambda() (define-key org-mode-map (kbd "C-c m") 'counsel-org-goto)))
   :config
-  (advice-add #'completion--category-override :filter-return
-              (defun completion-in-region-style-setup+ (res)
-                "Fallback to default styles for region completions with orderless."
-                (or res ;; Don't use orderless for initial candidate gathering.
-                    (and completion-in-region-mode-predicate
-                         (not (minibufferp))
-                         (equal '(orderless) completion-styles)
-                         '(basic partial-completion emacs22))))))
+  (add-to-list 'hidden-minor-modes 'counsel-mode)
+  (setq counsel-yank-pop-separator
+        (concat "\n" (apply 'concat (make-list 25 "---")) "\n")
+        enable-recursive-minibuffers t)
+  (use-package smex :ensure t))
 
-;; prescient - sorting
-(use-package selectrum-prescient
-  :ensure t
-  :after (selectrum)
-  :init
-  (selectrum-prescient-mode)
-  (prescient-persist-mode))
-
-;; orderless - filtering
-(use-package orderless
-  :ensure t
-  :after (selectrum-prescient)
+;; swiper
+(use-package swiper
+  :ensure t :pin me
   :config
-  (run-with-idle-timer
-   0.1 nil
-   (lambda() ;; make sure override 'prescient function
-     (setq selectrum-refine-candidates-function #'orderless-filter
-           selectrum-highlight-candidates-function #'orderless-highlight-matches))))
-
-(use-package marginalia
-  :ensure t
-  :init (marginalia-mode))
-
-(use-package consult
-  :ensure t
-  :defer t
-  :bind
-  ("M-y" . consult-yank-pop)
-  ("M-g i" . consult-imenu)
-  ("M-g o" . consult-outline)
-  ("M-g m" . consult-mark)
-  ("M-g k" . consult-global-mark)
-  ("M-g e" . consult-error)
-  ("M-s w" . consult-line-at-point)
-  ("M-s g" . consult-grep)
-  ("M-s r" . consult-ripgrep)
-  ("M-s f" . consult-find)
-  ("M-s m" . consult-multi-occur)
-  ("M-X" . consult-mode-command)
-  ("C-x B" . consult-buffer)
-  (:map minibuffer-local-map ("M-r" . consult-history))
-  :config
-  (setq register-preview-delay 0
-        register-preview-function #'consult-register-format)
-  (setq consult-preview-key (kbd "C-l"))
-  (setf (alist-get 'slime-repl-mode consult-mode-histories)
-        'slime-repl-input-history)
-  (setq consult-ripgrep-command
-        "rg --null --line-buffered --color=always --max-columns=500\
-   --no-heading --line-number --hidden . -e ARG OPTS")
-  (defun consult-thing-at-point ()
-    "Return a string that corresponds to the current thing at point."
-    (substring-no-properties
-     (cond
-      ((use-region-p)
-       (let* ((beg (region-beginning))
-              (end (region-end))
-              (eol (save-excursion (goto-char beg) (line-end-position))))
-         (buffer-substring-no-properties beg (min end eol))))
-      ((thing-at-point 'url))
-      ((let ((s (thing-at-point 'symbol)))
-         (and (stringp s)
-              (if (string-match "\\`[`']?\\(.*?\\)'?\\'" s)
-                  (match-string 1 s)
-                s))))
-      ((looking-at "(+\\(\\(?:\\sw\\|\\s_\\)+\\)\\_>")
-       (match-string-no-properties 1))
-      (t ""))))
-  (defun consult-line-at-point()
-    (interactive)
-    (let ((thing (consult-thing-at-point))
-          (consult-preview-key 'any))
-      (when (use-region-p)
-        (deactivate-mark))
-      (consult-line (regexp-quote thing))))
-  (require 'consult))
-
-(use-package embark
-  :ensure t
-  :bind ("M-o" . embark-act)
-  (:map minibuffer-local-map
-        ("M-o" . embark-act))
-  (:map embark-file-map
-        ("x" . consult-file-externally))
-  :config
-  (defun embark-run-term(dir)
-    "Create or visit a terminal buffer."
-    (interactive "D")
-    (let ((default-directory (file-name-directory dir)))
-      (crux-visit-term-buffer t)))
-  (define-key embark-file-map (kbd "t") #'embark-run-term)
-  (defun embark-in-directory (dir &optional prefix)
-    "Run CMD in directory DIR."
-    (interactive "DIn directory:\nP")
-    (let ((default-directory (file-name-directory dir)))
-      (execute-extended-command prefix)))
-  (define-key embark-file-map (kbd "/") #'embark-in-directory)
-  (defun embark-make-directory(dir)
-    (interactive "D")
-    (make-directory dir)
-    (find-file dir))
-  (define-key embark-file-map (kbd "+") #'embark-make-directory)
-  ;; hooks
-  (defun current-candidate+category ()
-    (when selectrum-active-p
-      (cons (selectrum--get-meta 'category)
-            (selectrum-get-current-candidate))))
-  (add-hook 'embark-target-finders #'current-candidate+category)
-  (defun current-candidates+category ()
-    (when selectrum-active-p
-      (cons (selectrum--get-meta 'category)
-            (selectrum-get-current-candidates
-             ;; Pass relative file names for dired.
-             minibuffer-completing-file-name))))
-  (add-hook 'embark-candidate-collectors #'current-candidates+category)
-  ;; No unnecessary computation delay after injection.
-  (add-hook 'embark-setup-hook 'selectrum-set-selected-candidate))
-
-(use-package which-key
-  :ensure t
-  :config
-  (setq embark-action-indicator
-        (lambda (map)
-          (which-key--show-keymap "Embark" map nil nil 'no-paging)
-          #'which-key--hide-popup-ignore-command)
-        embark-become-indicator embark-action-indicator))
+  :bind ("M-s w" . swiper-thing-at-point))
 
 ;; avy
 (use-package avy
@@ -271,16 +161,14 @@
   :ensure t :defer t
   :config (setq git-link-use-commit t))
 
-;; ripgrep
-(use-package rg :ensure t :defer t)
-
 ;; projectile
 (use-package projectile
   :ensure t :defer t
   :init
   (setq projectile-dynamic-mode-line nil
         projectile-mode-line-prefix ""
-        projectile-project-compilation-cmd "make ")
+        projectile-project-compilation-cmd "make "
+        projectile-completion-system 'ivy)
   (run-with-idle-timer 0.1 nil (lambda()(projectile-mode)))
   :bind (:map projectile-mode-map ("C-x p" . projectile-command-map))
   :config
@@ -303,56 +191,12 @@
         (require 'term)
         (projectile-with-default-dir project
           (ansi-term (or explicit-shell-file-name (getenv "SHELL") "/bin/sh") termname)))
-      (switch-to-buffer buffer)))
-  ;; integrate with consult
-  (defun consult-projectile-grep (&optional initial)
-    "Using consult-grep(INITIAL) in projectile."
-    (interactive)
-    (consult-grep (projectile-project-root) initial))
-  (define-key projectile-command-map (kbd "s g") #'consult-projectile-grep)
-  (define-key projectile-command-map (kbd "s G") #'projectile-grep)
-
-  (defun consult-projectile-ripgrep (&optional initial)
-    "Using consult-ripgrep(INITIAL) in projectile."
-    (interactive)
-    (consult-ripgrep (projectile-project-root) initial))
-  (define-key projectile-command-map (kbd "s r") #'consult-projectile-ripgrep)
-  (define-key projectile-command-map (kbd "s R") #'projectile-ripgrep)
-  ;; integrate with embark
-  (with-eval-after-load 'embark
-    (define-key embark-become-file+buffer-map (kbd "p") #'projectile-switch-project)
-    (defun embark-switch-project-with-persp (dir)
-      (if-let* ((fboundp 'persp-switch)
-                (project-root (projectile-project-root (expand-file-name dir)))
-                (project-name (projectile-project-name project-root)))
-          (persp-switch project-name)))
-    (add-to-list 'marginalia-prompt-categories '("project" . project))
-    (add-to-list 'embark-keymap-alist '(project . embark-project-map))
-    (defun embark-project-rg(dir &optional initial)
-      (interactive "D")
-      (embark-switch-project-with-persp dir)
-      (consult-ripgrep dir initial))
-    (defun embark-project-grep(dir &optional initial)
-      (interactive "D")
-      (embark-switch-project-with-persp dir)
-      (consult-grep dir initial))
-    (defun embark-project-term(dir &optional initial)
-      (interactive "D")
-      (embark-switch-project-with-persp dir)
-      (let ((default-directory (file-name-directory dir)))
-        (call-interactively 'projectile-run-term)))
-    (defun magit-in-project (dir)
-      "Run CMD in directory DIR."
-      (interactive "D")
-      (embark-switch-project-with-persp dir)
-      (magit-status dir nil))
-    (embark-define-keymap embark-project-map
-      "Keymap for Embark project actions."
-      ("sr" embark-project-rg)
-      ("sg" embark-project-grep)
-      ("xt" embark-project-term)
-      ("v" magit-in-project))))
-
+      (switch-to-buffer buffer))))
+;; counsel-projectile
+(use-package counsel-projectile
+  :ensure t :defer t :pin me
+  :after (projectile)
+  :init (run-with-idle-timer 0.15 nil (lambda()(counsel-projectile-mode))))
 ;; ibuffer-projectile
 (use-package ibuffer-projectile
   :ensure t :defer 2
@@ -363,26 +207,6 @@
               (ibuffer-projectile-set-filter-groups)
               (unless (eq ibuffer-sorting-mode 'alphabetic)
                 (ibuffer-do-sort-by-alphabetic)))))
-
-;; org-projectile
-(use-package org-projectile
-  :ensure t
-  :after (projectile)
-  :bind
-  ("C-x p O c" . org-projectile-capture-for-current-project)
-  ("C-x p O f" . org-projectile-open-file-current-project)
-  :config
-  (defun org-projectile-open-file-current-project()
-    (interactive)
-    (let* ((project-root (projectile-acquire-root))
-           (file (org-projectile-current-file project-root)))
-      (find-file (expand-file-name file project-root))
-      (run-hooks 'projectile-find-file-hook)))
-  (defun org-projectile-current-file (&optional project)
-    "org file in each project."
-    (concat (projectile-project-name project) ".org"))
-  (setq org-projectile-per-project-filepath #'org-projectile-current-file)
-  (org-projectile-per-project))
 
 ;; perspective
 (use-package perspective
@@ -395,17 +219,6 @@
   (:map perspective-map ("z" . perspective-map))
   :config
   (add-hook 'persp-switch-hook #'hack-dir-local-variables-non-file-buffer)
-  ;; Just name of current persp
-  (defun persp-update-modestring ()
-    "Override persp-update-modestring."
-    (when persp-show-modestring
-      (let ((open (list (nth 0 persp-modestring-dividers)))
-            (close (list (nth 1 persp-modestring-dividers)))
-            (sep (nth 2 persp-modestring-dividers)))
-        (set-frame-parameter
-         nil 'persp--modestring
-         (append open
-                 (cons (persp-format-name (persp-name (persp-curr)))()) close)))))
   ;; xref ring
   (defvar persp-xref--marker-ring (make-hash-table :test 'equal))
   (defun persp-set-xref--marker-ring ()
@@ -419,31 +232,25 @@
   ;; persp-ibuffer
   (with-eval-after-load 'ibuffer
     (defun ibuffer-visit-buffer (&optional single)
-      "Override 'ibuffer-visit-buffer with support perspective."
+      "Ibuffer-visit-buffer with perspective."
       (interactive "P")
       (let ((buf (ibuffer-current-buffer t)))
-        (persp-switch-to-buffer buf)
+        (switch-to-buffer buf)
+        (if-let (persp-name (cdr (persp-buffer-in-other-p buf)))
+            (persp-switch persp-name))
         (when single (delete-other-windows)))))
-  ;; find-file
-  (defun find-file (filename &optional wildcards)
-    "Override 'find-file(FILENAME WILDCARDS)."
-    (interactive
-     (find-file-read-args "Find file: "
-                          (confirm-nonexistent-file-or-buffer)))
-    (if (and (bound-and-true-p persp-mode) (bound-and-true-p projectile-mode))
-        (if-let* ((project-root (projectile-project-root (expand-file-name filename)))
-                  (project-name (projectile-project-name project-root)))
-            (persp-switch project-name)))
-    (let ((value (find-file-noselect filename nil nil wildcards)))
-      (if (listp value)
-          (mapcar 'pop-to-buffer-same-window (nreverse value))
-        (pop-to-buffer-same-window value))))
-  ;; projectile
-  (add-hook 'projectile-before-switch-project-hook
-            (lambda (&optional project-to-switch)
-              (if (and project-to-switch (bound-and-true-p persp-mode))
-                  (persp-switch (funcall projectile-project-name-function project-to-switch))))))
-
+  ;; Just name of current persp
+  (defun persp-update-modestring ()
+    "Override persp-update-modestring."
+    (when persp-show-modestring
+      (let ((open (list (nth 0 persp-modestring-dividers)))
+            (close (list (nth 1 persp-modestring-dividers)))
+            (sep (nth 2 persp-modestring-dividers)))
+        (set-frame-parameter
+         nil 'persp--modestring
+         (append open
+                 (cons (persp-format-name (persp-name (persp-curr)))())
+                 close))))))
 
 ;; multiple-cursors
 (use-package multiple-cursors
@@ -495,11 +302,6 @@
 (use-package hl-todo
   :ensure t
   :hook (prog-mode . hl-todo-mode))
-;; themes
-(use-package doom-themes
-  :ensure t
-  :init (load-theme 'doom-gruvbox t)
-  :config (doom-themes-org-config))
 
 ;; yasnippet
 (use-package yasnippet
@@ -567,34 +369,13 @@
     (dolist (buf (doom-visible-buffers))
       (with-current-buffer buf (doom-auto-revert-buffer-h)))))
 
-(use-package dired
-  :config (setq dired-listing-switches "-alh"))
-
-;; term/shell
-(defun interactive-cd (dir)
-  "Prompt for a DIR and cd to it."
-  (interactive "Dcd ")
-  (let ((inhibit-read-only t))
-    (insert (concat "cd " dir)))
-  (pcase major-mode
-    ('shell-mode (comint-send-input))
-    ('eshell-mode (eshell-send-input))
-    ('term-mode (term-send-input))))
-(use-package esh-mode
-  :bind (:map eshell-mode-map ("C-c d" . interactive-cd)))
-(use-package shell
-  :bind (:map shell-mode-map ("C-c d" . interactive-cd)))
-(use-package term
-  :hook
-  (term-mode . (lambda()
-                 (let (term-escape-char) (term-set-escape-char ?\C-x))))
-  :bind
-  (:map term-mode-map
-        ("C-c d" . interactive-cd))
-  (:map term-raw-map
-        ("M-x"  . execute-extended-command)
-        ("C-c C-y" . term-paste)
-        ("C-c d" . interactive-cd)))
+;; theme
+(use-package doom-themes
+  :ensure t
+  :init (load-theme 'doom-gruvbox t)
+  :config
+  (doom-themes-visual-bell-config)
+  (doom-themes-org-config))
 
 ;;; HOOKS
 (defun add-to-hooks (func &rest hooks)
@@ -780,8 +561,15 @@
 ;; isearch
 (global-set-key (kbd "M-s s") 'isearch-forward-regexp)
 (define-key isearch-mode-map (kbd "M-s %") 'isearch-query-replace-regexp)
+;; term
+(with-eval-after-load 'term
+  (define-key term-raw-map (kbd "M-x") 'execute-extended-command)
+  (define-key term-raw-map (kbd "C-c C-y") 'term-paste))
+(add-hook 'term-mode-hook
+          (lambda()
+            (let (term-escape-char) (term-set-escape-char ?\C-x))))
 ;; summary-mode
-(with-eval-after-load 'gnus
+(with-eval-after-load 'gnus-summary-mode
   (setq gnus-summary-line-format "%U%R%z %d %-23,23f (%4,4L) %{%B%}%s\n"
         gnus-sum-thread-tree-root            ""
         gnus-sum-thread-tree-false-root      "──> "
@@ -798,6 +586,7 @@
 (global-set-key (kbd "C-x m") 'compile)
 (global-set-key (kbd "M-s e") 'eww)
 (global-set-key (kbd "M-s E") 'eww-search-local-help)
+(global-set-key (kbd "M-s g") 'rgrep)
 (global-set-key (kbd "M-#") 'mark-backword)
 (global-set-key (kbd "C-M-_") 'dabbrev-completion)
 (global-set-key (kbd "C-x / .") 'delete-trailing-whitespace)
@@ -851,7 +640,6 @@
  '(eldoc-minor-mode-string " ED")
  '(electric-indent-mode nil)
  '(enable-local-variables :all)
- '(enable-recursive-minibuffers t)
  '(ffap-machine-p-known 'reject)
  '(global-hl-line-mode t)
  '(indent-tabs-mode nil)
@@ -860,17 +648,14 @@
  '(initial-major-mode 'fundamental-mode)
  '(initial-scratch-message nil)
  '(kept-new-versions 6)
- '(kill-do-not-save-duplicates t)
  '(menu-bar-mode nil)
  '(proced-tree-flag t)
  '(read-quoted-char-radix 16)
- '(ring-bell-function #'ignore)
  '(scroll-bar-mode nil)
  '(show-paren-mode t)
  '(tab-stop-list '(4 8 12 16 20 24 28 32 36))
  '(tab-width 4)
  '(tool-bar-mode nil)
- '(use-dialog-box nil)
  '(version-control t)
  '(whitespace-style
    '(face tabs trailing space-before-tab newline empty tab-mark))
@@ -880,6 +665,8 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(ivy-remote ((t (:foreground "magenta"))))
+ '(ivy-virtual ((t (:inherit unspecified :foreground unspecified))))
  '(symbol-overlay-default-face ((t (:inherit bold :underline t))))
  '(vc-state-base ((t (:inherit font-lock-string-face :weight bold)))))
 
@@ -887,11 +674,97 @@
 (advice-add #'yes-or-no-p :override #'y-or-n-p)
 (unless (daemonp)
   (advice-add #'display-startup-echo-area-message :override #'ignore))
+
 (advice-add 'base64-encode-region
             :before (lambda (&rest _args)
                       "Pass prefix arg as third arg to `base64-encode-region'."
                       (interactive "r\nP")))
 
+(with-eval-after-load 'perspective
+  (defun ivy-switch-to-buffer (&optional prefix)
+    "Switch to another buffer in the CURRENT PERSP."
+    (interactive "P")
+    (if (not (bound-and-true-p persp-mode))
+        (ivy-switch-buffer)
+      (setq this-command #'ivy-switch-buffer)
+      (ivy-read "Switch to buffer: "
+                (if prefix #'internal-complete-buffer
+                  (remove nil (mapcar 'buffer-name (persp-buffers (persp-curr)))))
+                :keymap ivy-switch-buffer-map
+                :preselect (buffer-name (other-buffer (current-buffer)))
+                :action #'ivy--switch-buffer-action
+                :matcher #'ivy--switch-buffer-matcher
+                :caller 'ivy-switch-buffer)))
+  (with-eval-after-load 'ivy
+    (define-key ivy-mode-map (kbd "C-x b") 'ivy-switch-to-buffer))
+
+  (defun counsel-switch-to-buffer (&optional prefix)
+    "Switch to another buffer in the CURRENT PERSP."
+    (interactive "P")
+    (let ((ivy-update-fns-alist
+           '((ivy-switch-buffer . counsel--switch-buffer-update-fn)))
+          (ivy-unwind-fns-alist
+           '((ivy-switch-buffer . counsel--switch-buffer-unwind))))
+      (if prefix (ivy-switch-buffer)
+        (ivy-switch-to-buffer))))
+  (global-set-key (kbd "C-x B") 'counsel-switch-to-buffer)
+
+  (defun ivy-switch-buffer-with-persp (&optional _)
+    "Clone from persp-switch-to-buffer."
+    (interactive)
+    (let ((buffer (window-normalize-buffer-to-switch-to (read-buffer-to-switch "Switch to buffer: "))))
+      (if (memq buffer (persp-buffers (persp-curr)))
+          (switch-to-buffer buffer)
+        (let ((other-persp (persp-buffer-in-other-p buffer)))
+          (persp-switch (cdr other-persp)) ;; Don't care frame
+          (switch-to-buffer buffer)))))
+  (with-eval-after-load 'ivy
+    (ivy-add-actions
+     'ivy-switch-buffer
+     '(("p" ivy-switch-buffer-with-persp "persp-switch-to-buffer"))))
+
+  ;; find file with perspective and projectile
+  (with-eval-after-load 'counsel
+    (defun counsel-find-file-action (x)
+      "Find file X."
+      (with-ivy-window
+        (if (and (bound-and-true-p persp-mode) (bound-and-true-p projectile-mode))
+            (if-let* ((project-root (projectile-project-root (expand-file-name x)))
+                      (project-name (projectile-project-name project-root)))
+                (persp-switch (concat (file-remote-p ivy--directory) project-name))))
+        (if (and counsel-find-file-speedup-remote
+                 (file-remote-p ivy--directory))
+            (let ((find-file-hook nil))
+              (find-file (expand-file-name x ivy--directory)))
+          (find-file (expand-file-name x ivy--directory)))))))
+
+(with-eval-after-load 'counsel-projectile
+  (add-hook 'projectile-before-switch-project-hook
+            (lambda (&optional project-to-switch)
+              (if (and project-to-switch (bound-and-true-p persp-mode))
+                  (persp-switch (funcall projectile-project-name-function project-to-switch)))))
+  (defun counsel-projectile-find-file-action-file-jump (file)
+    "Call `counsel-find-file' from FILE's directory."
+    (let* ((f (projectile-expand-root file))
+           (default-directory (file-name-directory f)))
+      (counsel-file-jump)))
+  (ivy-add-actions
+   'counsel-projectile-switch-project
+   '(("sf" counsel-projectile-find-file-action-file-jump "file jump")))
+  (defun counsel-projectile-M-x-action(file)
+    "Call `counsel-projectile-M-x'."
+    (let* ((project-root (projectile-project-root (expand-file-name file)))
+           (project-name (funcall projectile-project-name-function project-root)))
+      (persp-switch project-name)
+      (counsel-projectile-M-x)))
+  (ivy-add-actions
+   'counsel-projectile-switch-project
+   '(("ESC" counsel-projectile-M-x-action "M-x")))
+  (defun counsel-projectile-M-x()
+    "M-x ^project-name"
+    (interactive)
+    (counsel-M-x (format "^%s " (persp-name (persp-curr)))))
+  (define-key projectile-mode-map [remap projectile-project-buffers-other-buffer] #'counsel-projectile-M-x))
 
 ;;; LANGUAGES
 ;; .emacs
@@ -1011,7 +884,7 @@ Please install:
     (let ((var (substring-no-properties (thing-at-point 'symbol))))
       (move-end-of-line nil)
       (newline-and-indent)
-      (insert (format "print(\"D: %s@%s %s: {} {}\".format(type(%s), %s))"
+      (insert (format "print(\"D: %s@%s %s: {} {}\".format(type(%s),%s))"
                       (file-name-nondirectory (buffer-file-name))
                       (substring (md5 (format "%s%s" (emacs-pid) (current-time))) 0 4)
                       var var var)))))
@@ -1107,6 +980,23 @@ npm i -g javascript-typescript-langserver"
   (package-installs 'kubel 'k8s-mode))
 (add-hook 'k8s-mode-hook (lambda () (yas-minor-mode-on)))
 
+;;; OTHERS
+;; google-translate
+(use-package google-translate
+  :config
+  (defun google-translate-query(&optional prefix)
+    (interactive "P")
+    (setq google-translate-translation-directions-alist '(("en" . "vi")))
+    (if prefix
+        (setq google-translate-translation-directions-alist '(("vi" . "en"))))
+    (call-interactively 'google-translate-smooth-translate))
+  :bind ("M-s t" . google-translate-query))
+(use-package debpaste
+  :defer t
+  :init
+  (setq debpaste-base-url "https://paste.debian.net/"
+        debpaste-paste-is-hidden t))
+
 ;; keep personal settings not in the .emacs file
 (let ((personal-settings (locate-user-emacs-file "personal.el")))
   (when (file-exists-p personal-settings)
