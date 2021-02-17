@@ -33,3 +33,9 @@ Setup `.authinfo.gpg`(by gnupg) instead of `.authinfo` if you wanna to protect y
 ```
 wget -O ~/.screenrc https://raw.githubusercontent.com/txgvnn/dots/master/.screenrc
 ```
+
+## Bash
+
+```
+wget -O- https://raw.githubusercontent.com/txgvnn/dots/master/.bashrc >> ~/.bashrc
+```
