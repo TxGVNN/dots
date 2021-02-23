@@ -47,7 +47,11 @@
   ("C-x C-r" . selectrum-repeat)
   (:map selectrum-minibuffer-map
         ("<prior>" . selectrum-previous-page)
-        ("<next>" . selectrum-next-page))
+        ("<next>" . selectrum-next-page)))
+
+;; orderless - filtering
+(use-package orderless
+  :ensure t
   :config
   (advice-add #'completion--category-override :filter-return
               (defun completion-in-region-style-setup+ (res)
@@ -62,20 +66,13 @@
 (use-package selectrum-prescient
   :ensure t
   :after (selectrum)
+  :config
+  (with-eval-after-load 'orderless
+    (setq selectrum-refine-candidates-function #'orderless-filter
+          selectrum-highlight-candidates-function #'orderless-highlight-matches))
   :init
   (selectrum-prescient-mode)
   (prescient-persist-mode))
-
-;; orderless - filtering
-(use-package orderless
-  :ensure t
-  :after (selectrum-prescient)
-  :config
-  (run-with-idle-timer
-   0.1 nil
-   (lambda() ;; make sure override 'prescient function
-     (setq selectrum-refine-candidates-function #'orderless-filter
-           selectrum-highlight-candidates-function #'orderless-highlight-matches))))
 
 (use-package marginalia
   :ensure t
@@ -106,7 +103,7 @@
   (setf (alist-get 'slime-repl-mode consult-mode-histories)
         'slime-repl-input-history)
   (setq consult-ripgrep-command
-        "rg --null --line-buffered --color=always --max-columns=500\
+        "rg -i --null --line-buffered --color=always --max-columns=500\
    --no-heading --line-number --hidden . -e ARG OPTS")
   (defun consult-thing-at-point ()
     "Return a string that corresponds to the current thing at point."
@@ -187,7 +184,7 @@
 
 ;; avy
 (use-package avy
-  :ensure t
+  :ensure t :defer t
   :config
   (setq avy-all-windows nil
         avy-background t)
@@ -197,7 +194,7 @@
 
 ;; crux - modified
 (use-package crux
-  :ensure t :pin me
+  :ensure t :defer t :pin me
   :bind
   ("C-^" . crux-top-join-line)
   ("C-a" . crux-move-beginning-of-line)
@@ -215,7 +212,7 @@
 
 ;; move-text
 (use-package move-text
-  :ensure t
+  :ensure t :defer t
   :bind
   ("M-g <up>" . move-text-up)
   ("M-g <down>" . move-text-down))
@@ -237,7 +234,7 @@
 
 ;; error-checker kbd("C-h .")
 (use-package flycheck
-  :ensure t
+  :ensure t :defer t
   :config
   (defun flycheck-maybe-display-error-at-point-soon() nil)
   (setq flycheck-highlighting-mode (quote columns))
@@ -259,7 +256,7 @@
   ("C-x g r" . git-gutter:revert-hunk))
 ;; magit
 (use-package magit
-  :ensure t
+  :ensure t :defer t
   :init (setq magit-define-global-key-bindings nil)
   :bind
   ("C-x g f" . magit-find-file)
@@ -347,11 +344,11 @@
       (embark-switch-project-with-persp dir)
       (magit-status dir nil))
     (embark-define-keymap embark-project-map
-      "Keymap for Embark project actions."
-      ("sr" embark-project-rg)
-      ("sg" embark-project-grep)
-      ("xt" embark-project-term)
-      ("v" magit-in-project))))
+                          "Keymap for Embark project actions."
+                          ("sr" embark-project-rg)
+                          ("sg" embark-project-grep)
+                          ("xt" embark-project-term)
+                          ("v" magit-in-project))))
 
 ;; ibuffer-projectile
 (use-package ibuffer-projectile
@@ -366,7 +363,7 @@
 
 ;; org-projectile
 (use-package org-projectile
-  :ensure t
+  :ensure t :defer t
   :after (projectile)
   :bind
   ("C-x p O c" . org-projectile-capture-for-current-project)
@@ -447,7 +444,7 @@
 
 ;; multiple-cursors
 (use-package multiple-cursors
-  :ensure t
+  :ensure t :defer t
   :bind
   ("C-c e a" . mc/mark-all-like-this)
   ("C-c e n" . mc/mark-next-like-this)
@@ -457,7 +454,7 @@
 
 ;; smartparens
 (use-package smartparens
-  :ensure t
+  :ensure t :defer t
   :config (require 'smartparens-config)
   (add-hook 'multiple-cursors-mode-enabled-hook (lambda()(turn-off-smartparens-mode)))
   (add-hook 'multiple-cursors-mode-disabled-hook (lambda()(turn-on-smartparens-mode)))
@@ -468,7 +465,7 @@
   :hook (prog-mode . smartparens-mode))
 ;; rainbow-delimiters
 (use-package rainbow-delimiters
-  :ensure t
+  :ensure t :defer t
   :hook (prog-mode . rainbow-delimiters-mode))
 ;; volatile-highlights
 (use-package volatile-highlights
@@ -487,13 +484,13 @@
   (global-anzu-mode))
 ;; symbol-overlay
 (use-package symbol-overlay
-  :ensure t
+  :ensure t :defer t
   :bind ("M-s H" . symbol-overlay-put)
   :hook (prog-mode . symbol-overlay-mode)
   :config (add-to-list 'hidden-minor-modes 'symbol-overlay-mode))
 ;; hl-todo
 (use-package hl-todo
-  :ensure t
+  :ensure t :defer t
   :hook (prog-mode . hl-todo-mode))
 ;; themes
 (use-package doom-themes
@@ -503,7 +500,7 @@
 
 ;; yasnippet
 (use-package yasnippet
-  :ensure t
+  :ensure t :defer t
   :config
   (define-key yas-minor-mode-map [(tab)] nil)
   (define-key yas-minor-mode-map (kbd "TAB") nil)
@@ -567,8 +564,21 @@
     (dolist (buf (doom-visible-buffers))
       (with-current-buffer buf (doom-auto-revert-buffer-h)))))
 
-(use-package dired
+;;; BUILTIN
+(use-package isearch :defer t
+  :init
+  (global-set-key (kbd "M-s s") 'isearch-forward-regexp)
+  (define-key isearch-mode-map (kbd "M-s %") 'isearch-query-replace-regexp))
+(use-package dired :defer t
   :config (setq dired-listing-switches "-alh"))
+(use-package gnus :defer t
+  :config
+  (setq gnus-summary-line-format "%U%R%z %d %-23,23f (%4,4L) %{%B%}%s\n"
+        gnus-sum-thread-tree-root            ""
+        gnus-sum-thread-tree-false-root      "──> "
+        gnus-sum-thread-tree-leaf-with-other "├─> "
+        gnus-sum-thread-tree-vertical        "│ "
+        gnus-sum-thread-tree-single-leaf     "└─> "))
 
 ;; term/shell
 (defun interactive-cd (dir)
@@ -596,7 +606,42 @@
         ("C-c C-y" . term-paste)
         ("C-c d" . interactive-cd)))
 
-;;; HOOKS
+;;; MODELINE
+(setq mode-line-position
+      '((line-number-mode ("(%l" (column-number-mode ",%c")))
+        (-4 ":%p" ) (")")))
+(setq-default mode-line-buffer-identification
+              (propertized-buffer-identification "%b"))
+
+(defsubst modeline-column (pos)
+  "Get the column of the position `POS'."
+  (save-excursion (goto-char pos) (current-column)))
+(defun selection-info()
+  "Information about the current selection."
+  (when mark-active
+    (cl-destructuring-bind (beg . end)
+        (cons (region-beginning) (region-end))
+      (propertize
+       (let ((lines (count-lines beg (min end (point-max)))))
+         (concat (cond ((bound-and-true-p rectangle-mark-mode)
+                        (let ((cols (abs (- (modeline-column end)
+                                            (modeline-column beg)))))
+                          (format "(%dx%d)" lines cols)))
+                       ((> lines 0) (format "(%d,%d)" lines (- end beg)))
+                       ((format "(%d,%d)" 0 (- end beg))))))
+       'face 'font-lock-warning-face))))
+
+(setq-default mode-line-format
+              '("%e" mode-line-front-space mode-line-mule-info
+                mode-line-client mode-line-modified mode-line-remote
+                mode-line-frame-identification " "
+                mode-line-buffer-identification " "
+                mode-line-position (:eval (selection-info))
+                (vc-mode vc-mode) " "
+                mode-line-modes mode-line-misc-info
+                mode-line-end-spaces))
+
+;;; CUSTOMIZE
 (defun add-to-hooks (func &rest hooks)
   "Add FUNC to mutil HOOKS."
   (dolist (hook hooks) (add-hook hook func)))
@@ -622,9 +667,7 @@
     (let ((trg (cdr (assoc x minor-mode-alist))))
       (when trg (setcar trg "")))))
 (add-hook 'after-change-major-mode-hook #'purge-minor-modes)
-
-;;; CUSTOMIZE
-;; defun
+
 (defun my-kill-ring-save ()
   "Better than 'kill-ring-save."
   (interactive)
@@ -710,7 +753,7 @@
          (make-temp-file
           (concat (file-name-base (buffer-name)) "_"
                   (unless (string-prefix-p "*scratch-" (buffer-name))
-                    (format-time-string "%y%m%d-%H%M_" (time-to-seconds))))
+                    (format-time-string "%y%m%d-%H%M%S_" (time-to-seconds))))
           nil (file-name-extension (buffer-name) t))))
     (copy-region-to-scratch filename)))
 
@@ -742,53 +785,6 @@
   "Install PACKAGES."
   (dolist (package packages) (package-install package)))
 
-;;; MODELINE
-(setq mode-line-position
-      '((line-number-mode ("(%l" (column-number-mode ",%c")))
-        (-4 ":%p" ) (")")))
-(setq-default mode-line-buffer-identification
-              (propertized-buffer-identification "%b"))
-
-(defsubst modeline-column (pos)
-  "Get the column of the position `POS'."
-  (save-excursion (goto-char pos) (current-column)))
-(defun selection-info()
-  "Information about the current selection."
-  (when mark-active
-    (cl-destructuring-bind (beg . end)
-        (cons (region-beginning) (region-end))
-      (propertize
-       (let ((lines (count-lines beg (min end (point-max)))))
-         (concat (cond ((bound-and-true-p rectangle-mark-mode)
-                        (let ((cols (abs (- (modeline-column end)
-                                            (modeline-column beg)))))
-                          (format "(%dx%d)" lines cols)))
-                       ((> lines 0) (format "(%d,%d)" lines (- end beg)))
-                       ((format "(%d,%d)" 0 (- end beg))))))
-       'face 'font-lock-warning-face))))
-
-(setq-default mode-line-format
-              '("%e" mode-line-front-space mode-line-mule-info
-                mode-line-client mode-line-modified mode-line-remote
-                mode-line-frame-identification " "
-                mode-line-buffer-identification " "
-                mode-line-position (:eval (selection-info))
-                (vc-mode vc-mode) " "
-                mode-line-modes mode-line-misc-info
-                mode-line-end-spaces))
-
-;; isearch
-(global-set-key (kbd "M-s s") 'isearch-forward-regexp)
-(define-key isearch-mode-map (kbd "M-s %") 'isearch-query-replace-regexp)
-;; summary-mode
-(with-eval-after-load 'gnus
-  (setq gnus-summary-line-format "%U%R%z %d %-23,23f (%4,4L) %{%B%}%s\n"
-        gnus-sum-thread-tree-root            ""
-        gnus-sum-thread-tree-false-root      "──> "
-        gnus-sum-thread-tree-leaf-with-other "├─> "
-        gnus-sum-thread-tree-vertical        "│ "
-        gnus-sum-thread-tree-single-leaf     "└─> "))
-
 (global-set-key (kbd "M-D") 'kill-whole-line)
 (global-set-key (kbd "M-w") 'my-kill-ring-save)
 (global-set-key (kbd "C-x C-@") 'pop-to-mark-command)
