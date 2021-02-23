@@ -344,11 +344,11 @@
       (embark-switch-project-with-persp dir)
       (magit-status dir nil))
     (embark-define-keymap embark-project-map
-                          "Keymap for Embark project actions."
-                          ("sr" embark-project-rg)
-                          ("sg" embark-project-grep)
-                          ("xt" embark-project-term)
-                          ("v" magit-in-project))))
+      "Keymap for Embark project actions."
+      ("sr" embark-project-rg)
+      ("sg" embark-project-grep)
+      ("xt" embark-project-term)
+      ("v" magit-in-project))))
 
 ;; ibuffer-projectile
 (use-package ibuffer-projectile
@@ -571,6 +571,19 @@
   (define-key isearch-mode-map (kbd "M-s %") 'isearch-query-replace-regexp))
 (use-package dired :defer t
   :config (setq dired-listing-switches "-alh"))
+(use-package compile :defer t
+  :init (global-set-key (kbd "C-x m") 'compile)
+  :config
+  (defun doom-apply-ansi-color-to-compilation-buffer-h ()
+    "Applies ansi codes to the compilation buffers."
+    (with-silent-modifications
+      (ansi-color-apply-on-region compilation-filter-start (point))))
+  (setq compilation-always-kill t       ; kill compilation process before starting another
+        compilation-ask-about-save nil  ; save all buffers on `compile'
+        compilation-scroll-output 'first-error)
+  ;; Handle ansi codes in compilation buffer
+  (add-hook 'compilation-filter-hook #'doom-apply-ansi-color-to-compilation-buffer-h))
+
 (use-package gnus :defer t
   :config
   (setq gnus-summary-line-format "%U%R%z %d %-23,23f (%4,4L) %{%B%}%s\n"
@@ -791,7 +804,6 @@
 (global-set-key (kbd "C-x C-SPC") 'pop-to-mark-command)
 (global-set-key (kbd "C-x C-b") 'ibuffer)
 (global-set-key (kbd "C-x j") 'mode-line-other-buffer)
-(global-set-key (kbd "C-x m") 'compile)
 (global-set-key (kbd "M-s e") 'eww)
 (global-set-key (kbd "M-s E") 'eww-search-local-help)
 (global-set-key (kbd "M-#") 'mark-backword)
@@ -840,7 +852,6 @@
  '(backup-by-copying t)
  '(browse-url-browser-function 'eww-browse-url)
  '(column-number-mode t)
- '(compilation-scroll-output t)
  '(default-input-method "vietnamese-telex")
  '(delete-old-versions t)
  '(delete-selection-mode t)
