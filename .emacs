@@ -140,13 +140,6 @@
   (:map embark-file-map
         ("x" . consult-file-externally))
   :config
-  (defun embark-run-term(dir)
-    "Create or visit a terminal buffer."
-    (interactive "D")
-    (let ((default-directory (file-name-directory dir)))
-      (crux-visit-term-buffer t)))
-  (define-key embark-file-map (kbd "t") #'embark-run-term)
-
   (defun embark-in-directory (dir &optional prefix)
     "Run CMD in directory DIR."
     (interactive "DIn directory:\nP")
@@ -157,28 +150,19 @@
                    embark-prompter
                    (embark--action-keymap 'file))))
       (command-execute action)))
-  (define-key embark-file-map (kbd "/") #'embark-in-directory)
-
+  (define-key embark-general-map (kbd "/") #'embark-in-directory)
+  ;; term
+  (defun embark-run-term(dir)
+    "Create or visit a terminal buffer."
+    (interactive "D")
+    (let ((default-directory (file-name-directory dir)))
+      (crux-visit-term-buffer t)))
+  (define-key embark-file-map (kbd "t") #'embark-run-term)
   (defun embark-make-directory(dir)
     (interactive "D")
     (make-directory dir)
     (find-file dir))
-  (define-key embark-file-map (kbd "+") #'embark-make-directory)
-  ;; hooks
-  (defun current-candidate+category ()
-    (when selectrum-active-p
-      (cons (selectrum--get-meta 'category)
-            (selectrum-get-current-candidate))))
-  (add-hook 'embark-target-finders #'current-candidate+category)
-  (defun current-candidates+category ()
-    (when selectrum-active-p
-      (cons (selectrum--get-meta 'category)
-            (selectrum-get-current-candidates
-             ;; Pass relative file names for dired.
-             minibuffer-completing-file-name))))
-  (add-hook 'embark-candidate-collectors #'current-candidates+category)
-  ;; No unnecessary computation delay after injection.
-  (add-hook 'embark-setup-hook 'selectrum-set-selected-candidate))
+  (define-key embark-file-map (kbd "+") #'embark-make-directory))
 
 (use-package which-key
   :ensure t
