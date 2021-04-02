@@ -637,6 +637,15 @@
         ("M-x"  . execute-extended-command)
         ("C-c C-y" . term-paste)
         ("C-c d" . interactive-cd)))
+;; project-temp-root
+(defvar project-temp-root "~/projects/")
+(defun project-temp-M-x (&optional prefix)
+  "With PREFIX we will set project-temp-root."
+  (interactive "P")
+  (if prefix (setq project-temp-root (read-directory-name "Select dir: ")))
+  (unless (fboundp 'embark-in-directory) (require 'embark))
+  (embark-in-directory project-temp-root))
+(global-set-key (kbd "C-x P") #'project-temp-M-x)
 
 ;;; MODELINE
 (setq mode-line-position
@@ -842,6 +851,9 @@
 (global-set-key (kbd "C-x / s") 'share-to-online)
 (global-set-key (kbd "C-x / t") 'untabify)
 (global-set-key (kbd "C-x / T") 'tabify)
+(global-set-key (kbd "C-x / l") 'toggle-truncate-lines)
+(global-set-key (kbd "C-x / f") 'flush-lines)
+(global-set-key (kbd "C-x / k") 'keep-lines)
 (global-set-key (kbd "C-x 2") 'split-window-vertically-last-buffer)
 (global-set-key (kbd "C-x 3") 'split-window-horizontally-last-buffer)
 (global-set-key (kbd "C-x 4 C-v") 'scroll-other-window)
