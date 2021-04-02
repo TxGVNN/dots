@@ -272,6 +272,10 @@
   (run-with-idle-timer 0.1 nil (lambda()(projectile-mode)))
   :bind (:map projectile-mode-map ("C-x p" . projectile-command-map))
   :config
+  (defvar savehist-additional-variables)
+  (add-hook 'savehist-mode-hook
+            (lambda nil
+              (add-to-list 'savehist-additional-variables 'projectile-project-command-history)))
   (defun projectile-run-compilation (cmd)
     "Override projectile-run-compilation. Run external or Elisp CMD."
     (if (functionp cmd)
@@ -560,6 +564,10 @@
         `((".*" . ,temporary-file-directory)))
   (global-undo-tree-mode))
 
+;;; BUILTIN
+(use-package savehist
+  :ensure t
+  :init (savehist-mode))
 (use-package autorevert
   ;; revert buffers when their files/state have changed
   :hook (focus-in . doom-auto-revert-buffers-h)
@@ -583,8 +591,6 @@
     "Auto revert stale buffers in visible windows, if necessary."
     (dolist (buf (doom-visible-buffers))
       (with-current-buffer buf (doom-auto-revert-buffer-h)))))
-
-;;; BUILTIN
 (use-package isearch :defer t
   :init
   (global-set-key (kbd "M-s s") 'isearch-forward-regexp)
