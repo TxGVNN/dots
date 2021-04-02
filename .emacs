@@ -134,7 +134,7 @@
 
 (use-package embark
   :ensure t
-  :bind ("M-o" . embark-act)
+  :bind
   (:map minibuffer-local-map
         ("M-o" . embark-act))
   (:map embark-file-map
@@ -146,12 +146,19 @@
     (let ((default-directory (file-name-directory dir)))
       (crux-visit-term-buffer t)))
   (define-key embark-file-map (kbd "t") #'embark-run-term)
+
   (defun embark-in-directory (dir &optional prefix)
     "Run CMD in directory DIR."
     (interactive "DIn directory:\nP")
-    (let ((default-directory (file-name-directory dir)))
-      (execute-extended-command prefix)))
+    (let ((default-directory (file-name-directory dir))
+          (embark-quit-after-action t)
+          (action (embark--with-indicator
+                   (propertize (format "Act:%s" dir) 'face 'highlight)
+                   embark-prompter
+                   (embark--action-keymap 'file))))
+      (command-execute action)))
   (define-key embark-file-map (kbd "/") #'embark-in-directory)
+
   (defun embark-make-directory(dir)
     (interactive "D")
     (make-directory dir)
@@ -317,12 +324,18 @@
   (define-key projectile-command-map (kbd "s R") #'projectile-ripgrep)
   ;; integrate with embark
   (with-eval-after-load 'embark
-    (define-key embark-become-file+buffer-map (kbd "p") #'projectile-switch-project)
+    (defun embark-become-project(&optional full)
+      (interactive "P")
+      (embark--quit-and-run
+       (lambda ()
+         (let ((use-dialog-box nil)
+               (this-command 'projectile-switch-project))
+           (command-execute this-command)))))
+    (define-key embark-general-map (kbd "p") #'embark-become-project)
     (defun embark-switch-project-with-persp (dir)
-      (if-let* ((fboundp 'persp-switch)
-                (project-root (projectile-project-root (expand-file-name dir)))
-                (project-name (projectile-project-name project-root)))
-          (persp-switch project-name)))
+      (if-let ((fboundp 'persp-switch)
+               (default-directory (projectile-project-root (expand-file-name dir))))
+          (persp-switch default-directory)))
     (add-to-list 'marginalia-prompt-categories '("project" . project))
     (add-to-list 'embark-keymap-alist '(project . embark-project-map))
     (defun embark-project-rg(dir &optional initial)
@@ -338,17 +351,38 @@
       (embark-switch-project-with-persp dir)
       (let ((default-directory (file-name-directory dir)))
         (call-interactively 'projectile-run-term)))
-    (defun magit-in-project (dir)
+    (defun magit-project (dir)
       "Run CMD in directory DIR."
       (interactive "D")
       (embark-switch-project-with-persp dir)
       (magit-status dir nil))
+    (defun embark-project-switch-buffer (dir)
+      "Run CMD in directory DIR."
+      (interactive "D")
+      (embark-switch-project-with-persp dir)
+      (let ((default-directory (file-name-directory dir)))
+        (call-interactively 'persp-switch-to-buffer*)))
+    (defun embark-project-compile (dir)
+      "Run CMD in directory DIR."
+      (interactive "D")
+      (embark-switch-project-with-persp dir)
+      (let ((default-directory (file-name-directory dir)))
+        (call-interactively 'projectile-compile-project)))
+    (defun embark-project-find-file (dir)
+      "Run CMD in directory DIR."
+      (interactive "D")
+      (embark-switch-project-with-persp dir)
+      (let ((default-directory (file-name-directory dir)))
+        (call-interactively 'projectile-find-file)))
     (embark-define-keymap embark-project-map
       "Keymap for Embark project actions."
       ("sr" embark-project-rg)
       ("sg" embark-project-grep)
       ("xt" embark-project-term)
-      ("v" magit-in-project))))
+      ("b" embark-project-switch-buffer)
+      ("c" embark-project-compile)
+      ("f" embark-project-find-file)
+      ("v" magit-project))))
 
 ;; ibuffer-projectile
 (use-package ibuffer-projectile
@@ -388,21 +422,24 @@
   (setq persp-mode-prefix-key (kbd "C-z")
         persp-initial-frame-name "0")
   (persp-mode)
-  :bind ("C-x x" . persp-switch-last)
+  :bind
+  ("C-x x" . persp-switch-last)
+  ("<f5>" . persp-switch-last)
   (:map perspective-map ("z" . perspective-map))
   :config
   (add-hook 'persp-switch-hook #'hack-dir-local-variables-non-file-buffer)
-  ;; Just name of current persp
+  ;; Show project folder of persp-curr
   (defun persp-update-modestring ()
     "Override persp-update-modestring."
-    (when persp-show-modestring
+    (when (and persp-show-modestring (persp-name (persp-curr)))
       (let ((open (list (nth 0 persp-modestring-dividers)))
-            (close (list (nth 1 persp-modestring-dividers)))
-            (sep (nth 2 persp-modestring-dividers)))
+            (close (list (nth 1 persp-modestring-dividers))))
         (set-frame-parameter
          nil 'persp--modestring
          (append open
-                 (cons (persp-format-name (persp-name (persp-curr)))()) close)))))
+                 (cons (propertize
+                        (file-name-base (directory-file-name (persp-name (persp-curr))))
+                        'face 'persp-selected-face)()) close)))))
   ;; xref ring
   (defvar persp-xref--marker-ring (make-hash-table :test 'equal))
   (defun persp-set-xref--marker-ring ()
@@ -428,9 +465,8 @@
      (find-file-read-args "Find file: "
                           (confirm-nonexistent-file-or-buffer)))
     (if (and (bound-and-true-p persp-mode) (bound-and-true-p projectile-mode))
-        (if-let* ((project-root (projectile-project-root (expand-file-name filename)))
-                  (project-name (projectile-project-name project-root)))
-            (persp-switch project-name)))
+        (if-let ((default-directory (projectile-project-root (expand-file-name filename))))
+            (persp-switch default-directory)))
     (let ((value (find-file-noselect filename nil nil wildcards)))
       (if (listp value)
           (mapcar 'pop-to-buffer-same-window (nreverse value))
@@ -580,7 +616,7 @@
       (ansi-color-apply-on-region compilation-filter-start (point))))
   (setq compilation-always-kill t       ; kill compilation process before starting another
         compilation-ask-about-save nil  ; save all buffers on `compile'
-        compilation-scroll-output 'first-error)
+        compilation-scroll-output t)
   ;; Handle ansi codes in compilation buffer
   (add-hook 'compilation-filter-hook #'doom-apply-ansi-color-to-compilation-buffer-h))
 
@@ -603,8 +639,7 @@
     ('shell-mode (comint-send-input))
     ('eshell-mode (eshell-send-input))
     ('term-mode (term-send-input))))
-(use-package esh-mode
-  :bind (:map eshell-mode-map ("C-c d" . interactive-cd)))
+
 (use-package shell
   :bind (:map shell-mode-map ("C-c d" . interactive-cd)))
 (use-package term
@@ -1073,15 +1108,17 @@ https://download.eclipse.org/jdtls/snapshots/jdt-language-server-latest.tar.gz"
   :hook (html-mode . indent-guide-mode)
   :config (set-face-foreground 'indent-guide-face "dimgray"))
 
-;; web-mode
+;; web-mode; js, ts mode
 (defun develop-web()
   "WEB development.
-npm i -g javascript-typescript-langserver"
+npm i -g typescript-language-server; npm i -g typescript"
   (interactive)
-  (package-installs 'web-mode 'eslint-fix))
+  (package-installs 'web-mode 'eslint-fix 'typescript-mode))
 (use-package web-mode
   :defer t
   :init (add-to-list 'auto-mode-alist '("\\.js\\'" . web-mode)))
+(add-hook 'typescript-mode-hook #'lsp-deferred)
+
 
 ;; erlang
 (add-hook 'erlang-mode-hook #'lsp-deferred)
