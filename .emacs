@@ -269,13 +269,13 @@
   (setq projectile-dynamic-mode-line nil
         projectile-mode-line-prefix ""
         projectile-project-compilation-cmd "make ")
-  (run-with-idle-timer 0.1 nil (lambda()(projectile-mode)))
-  :bind (:map projectile-mode-map ("C-x p" . projectile-command-map))
-  :config
   (defvar savehist-additional-variables)
   (add-hook 'savehist-mode-hook
             (lambda nil
               (add-to-list 'savehist-additional-variables 'projectile-project-command-history)))
+  (run-with-idle-timer 0.1 nil (lambda()(projectile-mode)))
+  :bind (:map projectile-mode-map ("C-x p" . projectile-command-map))
+  :config
   (defun projectile-run-compilation (cmd)
     "Override projectile-run-compilation. Run external or Elisp CMD."
     (if (functionp cmd)
@@ -567,7 +567,7 @@
 ;;; BUILTIN
 (use-package savehist
   :ensure t
-  :init (savehist-mode))
+  :config (savehist-mode))
 (use-package autorevert
   ;; revert buffers when their files/state have changed
   :hook (focus-in . doom-auto-revert-buffers-h)
