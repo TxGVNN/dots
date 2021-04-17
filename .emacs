@@ -52,27 +52,7 @@
 ;; orderless - filtering
 (use-package orderless
   :ensure t
-  :config
-  (advice-add #'completion--category-override :filter-return
-              (defun completion-in-region-style-setup+ (res)
-                "Fallback to default styles for region completions with orderless."
-                (or res ;; Don't use orderless for initial candidate gathering.
-                    (and completion-in-region-mode-predicate
-                         (not (minibufferp))
-                         (equal '(orderless) completion-styles)
-                         '(basic partial-completion emacs22))))))
-
-;; prescient - sorting
-(use-package selectrum-prescient
-  :ensure t
-  :after (selectrum)
-  :config
-  (with-eval-after-load 'orderless
-    (setq selectrum-refine-candidates-function #'orderless-filter
-          selectrum-highlight-candidates-function #'orderless-highlight-matches))
-  :init
-  (selectrum-prescient-mode)
-  (prescient-persist-mode))
+  :config (setq completion-styles '(orderless)))
 
 (use-package marginalia
   :ensure t
