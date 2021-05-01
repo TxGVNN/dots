@@ -181,6 +181,10 @@
   ("C-x / e" . crux-open-with)
   ("C-x 7" . crux-swap-windows))
 
+(use-package expand-region
+  :ensure t :defer t
+  :bind ("M-@" . er/expand-region))
+
 ;; move-text
 (use-package move-text
   :ensure t :defer t
@@ -725,20 +729,6 @@
   (interactive "p")
   (split-window-horizontally) (other-window 1 nil)
   (if (= prefix 1 ) (switch-to-next-buffer)))
-(defun mark-backword (&optional arg allow-extend)
-  "Reverse of mark-word(ARG ALLOW-EXTEND)."
-  (interactive "P\np")
-  (cond ((and allow-extend
-              (or (and (eq last-command this-command) (mark t))
-                  (region-active-p)))
-         (setq arg (if arg (prefix-numeric-value arg)
-                     (if (> (mark) (point)) -1 1)))
-         (set-mark (save-excursion
-                     (goto-char (mark))
-                     (backward-word arg) (point))))
-        (t (push-mark
-            (save-excursion
-              (backward-word (prefix-numeric-value arg)) (point)) nil t))))
 (defun insert-temp-filename()
   "Insert new temp filename."
   (interactive)
@@ -820,7 +810,6 @@
 (global-set-key (kbd "C-x j") 'mode-line-other-buffer)
 (global-set-key (kbd "M-s e") 'eww)
 (global-set-key (kbd "M-s E") 'eww-search-local-help)
-(global-set-key (kbd "M-#") 'mark-backword)
 (global-set-key (kbd "C-M-_") 'dabbrev-completion)
 (global-set-key (kbd "C-x / .") 'delete-trailing-whitespace)
 (global-set-key (kbd "C-x / ;") 'indent-and-delete-trailing-whitespace)
