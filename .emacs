@@ -1120,7 +1120,7 @@ npm i -g typescript-language-server; npm i -g typescript"
   "Kubernetes tools."
   (interactive)
   (package-installs 'kubel 'k8s-mode))
-(add-hook 'k8s-mode-hook (lambda () (yas-minor-mode-on)))
+(add-hook 'k8s-mode-hook #'yas-minor-mode)
 
 ;; keep personal settings not in the .emacs file
 (let ((personal-settings (locate-user-emacs-file "personal.el")))
