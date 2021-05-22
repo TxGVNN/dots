@@ -369,17 +369,6 @@
       ("f" embark-project-find-file)
       ("v" magit-project))))
 
-;; ibuffer-projectile
-(use-package ibuffer-projectile
-  :ensure t :defer 2
-  :config
-  (setq ibuffer-projectile-prefix "")
-  (add-hook 'ibuffer-hook
-            (lambda ()
-              (ibuffer-projectile-set-filter-groups)
-              (unless (eq ibuffer-sorting-mode 'alphabetic)
-                (ibuffer-do-sort-by-alphabetic)))))
-
 ;; org-projectile
 (use-package org-projectile
   :ensure t :defer t
@@ -402,6 +391,7 @@
 
 ;; perspective
 (use-package perspective
+  :pin me
   :ensure t
   :init
   (setq persp-mode-prefix-key (kbd "C-z")
@@ -436,12 +426,21 @@
       (setq xref--marker-ring (gethash persp-curr-name persp-xref--marker-ring))))
   (add-hook 'persp-switch-hook #'persp-set-xref--marker-ring)
   ;; persp-ibuffer
+  (add-hook 'ibuffer-hook
+            (lambda ()
+              (persp-ibuffer-set-filter-groups)
+              (unless (eq ibuffer-sorting-mode 'alphabetic)
+                (ibuffer-do-sort-by-alphabetic))))
   (with-eval-after-load 'ibuffer
     (defun ibuffer-visit-buffer (&optional single)
       "Override 'ibuffer-visit-buffer with support perspective."
       (interactive "P")
-      (let ((buf (ibuffer-current-buffer t)))
-        (persp-switch-to-buffer buf)
+      (let ((buffer (ibuffer-current-buffer t)))
+        (if (persp-is-current-buffer buffer)
+            (switch-to-buffer buffer)
+          (let ((other-persp (persp-buffer-in-other-p buffer)))
+            (persp-switch (cdr other-persp))
+            (switch-to-buffer buffer)))
         (when single (delete-other-windows)))))
   ;; find-file
   (defun find-file (filename &optional wildcards)
