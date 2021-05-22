@@ -196,7 +196,7 @@
 
 (use-package expand-region
   :ensure t :defer t
-  :bind ("M-@" . er/expand-region))
+  :bind ("M-#" . er/expand-region))
 
 ;; move-text
 (use-package move-text
@@ -523,8 +523,9 @@
 
 ;; yasnippet
 (use-package yasnippet
-  :ensure t :defer t
+  :ensure t :defer t :pin me
   :config
+  (setq yas-lighter " υ")
   (define-key yas-minor-mode-map [(tab)] nil)
   (define-key yas-minor-mode-map (kbd "TAB") nil)
   :hook ((prog-mode org-mode markdown-mode) . yas-minor-mode))
@@ -864,7 +865,7 @@
  '(default-input-method "vietnamese-telex")
  '(delete-old-versions t)
  '(delete-selection-mode t)
- '(eldoc-minor-mode-string " ED")
+ '(eldoc-minor-mode-string " σ")
  '(electric-indent-mode nil)
  '(enable-local-variables :all)
  '(enable-recursive-minibuffers t)
