@@ -63,6 +63,8 @@
   :defer t
   :bind
   ("M-y" . consult-yank-pop)
+  ("M-g g" . consult-goto-line)
+  ("M-g M-g" . consult-goto-line)
   ("M-g i" . consult-imenu)
   ("M-g o" . consult-outline)
   ("M-g m" . consult-mark)
@@ -787,17 +789,6 @@
   (interactive)
   (call-interactively share-to-online-func))
 
-(defvar linum-func
-  (if (fboundp 'display-line-numbers-mode)
-      'display-line-numbers-mode 'linum-mode))
-(defun goto-line-with-feedback ()
-  "Show line numbers temporarily when 'goto-line."
-  (interactive)
-  (unwind-protect
-      (progn (funcall linum-func)
-             (goto-line (read-number "Goto line: ")))
-    (funcall linum-func 0)))
-(global-set-key [remap goto-line] #'goto-line-with-feedback)
 (defun package-installs (&rest packages)
   "Install PACKAGES."
   (dolist (package packages) (package-install package)))
