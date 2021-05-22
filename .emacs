@@ -166,15 +166,6 @@
     (find-file dir))
   (define-key embark-file-map (kbd "+") #'embark-make-directory))
 
-(use-package which-key
-  :ensure t
-  :config
-  (setq embark-action-indicator
-        (lambda (map)
-          (which-key--show-keymap "Embark" map nil nil 'no-paging)
-          #'which-key--hide-popup-ignore-command)
-        embark-become-indicator embark-action-indicator))
-
 ;; avy
 (use-package avy
   :ensure t :defer t
@@ -492,7 +483,9 @@
   :bind (:map smartparens-mode-map
               ("C-M-f" . 'sp-forward-sexp)
               ("C-M-b" . 'sp-backward-sexp))
-  :hook (prog-mode . smartparens-mode))
+  :hook
+  (markdown-mode . smartparens-mode)
+  (prog-mode . smartparens-mode))
 ;; rainbow-delimiters
 (use-package rainbow-delimiters
   :ensure t :defer t
@@ -839,7 +832,6 @@
 (global-set-key (kbd "C-x / T") 'tabify)
 (global-set-key (kbd "C-x / l") 'toggle-truncate-lines)
 (global-set-key (kbd "C-x / f") 'flush-lines)
-(global-set-key (kbd "C-x / k") 'keep-lines)
 (global-set-key (kbd "C-x 2") 'split-window-vertically-last-buffer)
 (global-set-key (kbd "C-x 3") 'split-window-horizontally-last-buffer)
 (global-set-key (kbd "C-x 4 C-v") 'scroll-other-window)
@@ -1100,7 +1092,16 @@ npm i -g typescript-language-server; npm i -g typescript"
   :defer t
   :init (add-to-list 'auto-mode-alist '("\\.js\\'" . web-mode)))
 (add-hook 'typescript-mode-hook #'lsp-deferred)
-
+(defun js-print-debug-at-point()
+  "Print debug."
+  (interactive)
+  (let ((var (substring-no-properties (thing-at-point 'symbol))))
+    (move-end-of-line nil)
+    (newline-and-indent)
+    (insert (format "console.log(\"D: %s@%s %s: \", %s);"
+                    (file-name-nondirectory (buffer-file-name))
+                    (substring (md5 (format "%s%s" (emacs-pid) (current-time))) 0 4)
+                    var var))))
 
 ;; erlang
 (add-hook 'erlang-mode-hook #'lsp-deferred)
