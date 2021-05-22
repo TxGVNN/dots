@@ -56,6 +56,25 @@
 
 (use-package marginalia
   :ensure t
+  :config
+  (setq marginalia-annotator-registry
+        (mapcar
+         (lambda (x) (append x '(builtin none)))
+         '((command marginalia-annotate-command marginalia-annotate-binding)
+           (customize-group marginalia-annotate-customize-group)
+           (face marginalia-annotate-face)
+           (color marginalia-annotate-color)
+           (unicode-name marginalia-annotate-char)
+           (minor-mode marginalia-annotate-minor-mode)
+           (symbol marginalia-annotate-symbol)
+           (variable marginalia-annotate-variable)
+           (environment-variable marginalia-annotate-environment-variable)
+           (input-method marginalia-annotate-input-method)
+           (coding-system marginalia-annotate-coding-system)
+           (charset marginalia-annotate-charset)
+           (package marginalia-annotate-package)
+           (imenu marginalia-annotate-imenu)
+           (bookmark marginalia-annotate-bookmark))))
   :init (marginalia-mode))
 
 (use-package consult
@@ -74,7 +93,8 @@
   ("M-s g" . consult-grep)
   ("M-s r" . consult-ripgrep)
   ("M-s f" . consult-find)
-  ("M-s m" . consult-multi-occur)
+  ("M-s u" . consult-focus-lines)
+  ("C-x / k" . consult-keep-lines)
   ("M-X" . consult-mode-command)
   ("C-x B" . consult-buffer)
   (:map minibuffer-local-map ("M-r" . consult-history))
@@ -85,8 +105,8 @@
   (setf (alist-get 'slime-repl-mode consult-mode-histories)
         'slime-repl-input-history)
   (setq consult-ripgrep-command
-        "rg -i --null --line-buffered --color=always --max-columns=500\
-   --no-heading --line-number --hidden . -e ARG OPTS")
+        "rg -i --null --line-buffered --color=ansi --max-columns=1000\
+   --no-heading --line-number . -e ARG OPTS")
   (defun consult-thing-at-point ()
     "Return a string that corresponds to the current thing at point."
     (substring-no-properties
