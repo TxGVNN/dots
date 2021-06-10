@@ -972,7 +972,7 @@ Please install:
 (defun develop-python()
   "Python development.
 Please install:
-   pip install python-language-server"
+   pip install python-lsp-server[all]"
   (interactive)
   (package-installs 'pyvenv 'lsp-mode))
 (defun python-pyvenv-activate (&rest args)
