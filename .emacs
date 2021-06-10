@@ -266,10 +266,6 @@
   (setq projectile-dynamic-mode-line nil
         projectile-mode-line-prefix ""
         projectile-project-compilation-cmd "make ")
-  (defvar savehist-additional-variables)
-  (add-hook 'savehist-mode-hook
-            (lambda nil
-              (add-to-list 'savehist-additional-variables 'projectile-project-command-history)))
   (run-with-idle-timer 0.1 nil (lambda()(projectile-mode)))
   :bind (:map projectile-mode-map ("C-x p" . projectile-command-map))
   :config
