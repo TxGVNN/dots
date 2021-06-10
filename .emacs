@@ -387,7 +387,6 @@
 
 ;; perspective
 (use-package perspective
-  :pin me
   :ensure t
   :init
   (setq persp-mode-prefix-key (kbd "C-z")
@@ -409,18 +408,8 @@
          nil 'persp--modestring
          (append open
                  (cons (propertize
-                        (file-name-base (directory-file-name (persp-name (persp-curr))))
+                        (file-name-nondirectory (directory-file-name (persp-name (persp-curr))))
                         'face 'persp-selected-face)()) close)))))
-  ;; xref ring
-  (defvar persp-xref--marker-ring (make-hash-table :test 'equal))
-  (defun persp-set-xref--marker-ring ()
-    "Sets xref--marker-ring per persp"
-    (let ((persp-curr-name (persp-name (persp-curr))))
-      (unless (gethash persp-curr-name persp-xref--marker-ring)
-        (puthash persp-curr-name (make-ring xref-marker-ring-length)
-                 persp-xref--marker-ring))
-      (setq xref--marker-ring (gethash persp-curr-name persp-xref--marker-ring))))
-  (add-hook 'persp-switch-hook #'persp-set-xref--marker-ring)
   ;; persp-ibuffer
   (add-hook 'ibuffer-hook
             (lambda ()
