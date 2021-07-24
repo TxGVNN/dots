@@ -1100,13 +1100,7 @@ npm i -g typescript-language-server; npm i -g typescript"
 (defun develop-gitlab-ci()
   "Gitlab-CI development."
   (interactive)
-  (package-installs 'gitlab-ci-mode 'gitlab-pipeline
-                    'gitlab-ci-mode-flycheck))
-(defun gitlab-ci-mode-my-hook ()
-  "Gitlab ci my hook."
-  (gitlab-ci-mode-flycheck-enable)
-  (if (fboundp 'flycheck-mode) (flycheck-mode)))
-(add-hook 'gitlab-ci-mode-hook #'gitlab-ci-mode-my-hook)
+  (package-installs 'gitlab-ci-mode 'gitlab-pipeline))
 
 (defun develop-vagrant()
   "Vagrant tools."
