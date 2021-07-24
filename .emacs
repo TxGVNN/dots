@@ -140,9 +140,14 @@
   (:map minibuffer-local-map
         ("M-o" . embark-act))
   (:map embark-file-map
+        ("t" . embark-run-term)
+        ("+" . embark-make-directory)
         ("x" . consult-file-externally))
+  (:map embark-general-map
+        ("/" . embark-chroot))
   :config
-  (defun embark-in-directory (dir &optional prefix)
+  ;; as chroot
+  (defun embark-chroot (dir &optional prefix)
     "Run CMD in directory DIR."
     (interactive "DIn directory:\nP")
     (let ((default-directory (file-name-directory dir))
@@ -159,12 +164,10 @@
     (interactive "D")
     (let ((default-directory (file-name-directory dir)))
       (crux-visit-term-buffer t)))
-  (define-key embark-file-map (kbd "t") #'embark-run-term)
   (defun embark-make-directory(dir)
     (interactive "D")
     (make-directory dir)
-    (find-file dir))
-  (define-key embark-file-map (kbd "+") #'embark-make-directory))
+    (find-file dir)))
 
 ;; avy
 (use-package avy
