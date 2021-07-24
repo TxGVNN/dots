@@ -7,8 +7,8 @@
 ;;; [ @author TxGVNN ]
 
 ;;; Code:
-(when (version< emacs-version "25.1")
-  (error "Requires GNU Emacs 25.1 or newer, but you're running %s" emacs-version))
+(when (version< emacs-version "26.1")
+  (error "Requires GNU Emacs 26.1 or newer, but you're running %s" emacs-version))
 (when (version< emacs-version "26.3")
   (setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3"))
 
@@ -537,7 +537,12 @@
     (if prefix
         (if (not company-mode) (yas-expand)
           (call-interactively 'company-yasnippet))
-      (call-interactively 'company-complete))))
+      (call-interactively 'company-complete)))
+  ;; oantolin/orderless#48
+  (define-advice company-capf
+      (:around (orig-fun &rest args) set-completion-styles)
+    (let ((completion-styles '(basic partial-completion)))
+      (apply orig-fun args))))
 
 ;; undo-tree
 (use-package undo-tree
