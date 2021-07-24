@@ -554,6 +554,11 @@
   (global-undo-tree-mode))
 
 ;;; BUILTIN
+(use-package ediff
+  :ensure nil :defer t
+  :config
+  (setq ediff-window-setup-function 'ediff-setup-windows-plain)
+  (setq ediff-split-window-function 'split-window-horizontally))
 (use-package savehist
   :ensure t
   :config (savehist-mode))
