@@ -157,7 +157,15 @@
                    embark-prompter
                    (embark--action-keymap 'file))))
       (command-execute action)))
-  (define-key embark-general-map (kbd "/") #'embark-in-directory)
+  ;; project become
+  (defun embark-become-project(&optional full)
+    (interactive "P")
+    (embark--quit-and-run
+     (lambda ()
+       (let ((use-dialog-box nil)
+             (this-command 'project-switch-project))
+         (command-execute this-command)))))
+  (define-key embark-general-map (kbd "p") #'embark-become-project)
   ;; term
   (defun embark-run-term(dir)
     "Create or visit a terminal buffer."
@@ -251,7 +259,7 @@
   :init (setq magit-define-global-key-bindings nil)
   :bind
   ("C-x g f" . magit-find-file)
-  ("C-x g g" . magit-status)
+  ("C-x g g" . magit-project-status)
   ("C-x M-g" . magit-dispatch)
   ("C-c M-g" . magit-file-dispatch))
 ;; git-link
@@ -262,131 +270,79 @@
 ;; ripgrep
 (use-package rg :ensure t :defer t)
 
-;; projectile
-(use-package projectile
+;; project-0.6.0
+(use-package project
   :ensure t :defer t
-  :init
-  (setq projectile-dynamic-mode-line nil
-        projectile-mode-line-prefix ""
-        projectile-project-compilation-cmd "make ")
-  (run-with-idle-timer 0.1 nil (lambda()(projectile-mode)))
-  :bind (:map projectile-mode-map ("C-x p" . projectile-command-map))
+  :bind
+  (:map project-prefix-map
+        ("M-x" . project-execute-extended-command)
+        ("v" . magit-project-status))
   :config
-  (defun projectile-run-compilation (cmd)
-    "Override projectile-run-compilation. Run external or Elisp CMD."
-    (if (functionp cmd)
-        (funcall cmd)
-      (let ((project (projectile-project-name
-                      (projectile-ensure-project (projectile-project-root)))))
-        (cl-letf ((compilation-buffer-name-function
-                   #'(lambda (&rest _)(format "*compilation(%s)*" (persp-name (persp-curr))))))
-          (compile cmd)))))
-  (defun projectile-run-term (arg)
-    "Override projectile-run-term."
-    (interactive (list nil))
-    (let* ((project (projectile-ensure-project (projectile-project-root)))
-           (termname (concat "term " (projectile-project-name project)))
-           (buffer (concat "*" termname "*")))
+  (unless (assq 'project package-alist)
+    (user-error "Please install 'project package latest from ELPA"))
+  (setq project-compilation-buffer-name-function 'project-prefixed-buffer-name)
+  (defun project-consult-grep (&optional initial)
+    "Using consult-grep(INITIAL) in project."
+    (interactive)
+    (consult-grep (project-root (project-current t)) initial))
+  (define-key project-prefix-map (kbd "w") #'project-consult-grep)
+  (defun project-consult-ripgrep (&optional initial)
+    "Using consult-ripgrep(INITIAL) in project."
+    (interactive)
+    (consult-ripgrep (project-root (project-current t)) initial))
+  (define-key project-prefix-map (kbd "r") #'project-consult-ripgrep)
+  (define-key project-prefix-map (kbd "R") #'project-query-replace-regexp)
+  ;; term
+  (defun project-term ()
+    "project-term."
+    (interactive)
+    (let* ((default-directory (cdr (project-current t)))
+           (termname (format "%s-term" (file-name-nondirectory
+                                        (directory-file-name default-directory))))
+           (buffer (format "*%s*" termname)))
       (unless (get-buffer buffer)
         (require 'term)
-        (projectile-with-default-dir project
-          (ansi-term (or explicit-shell-file-name (getenv "SHELL") "/bin/sh") termname)))
+        (ansi-term (or explicit-shell-file-name (getenv "SHELL") "/bin/sh") termname))
       (switch-to-buffer buffer)))
-  ;; integrate with consult
-  (defun consult-projectile-grep (&optional initial)
-    "Using consult-grep(INITIAL) in projectile."
+  (define-key project-prefix-map (kbd "t") #'project-term)
+  ;; embark
+  (defun embark-on-project()
     (interactive)
-    (consult-grep (projectile-project-root) initial))
-  (define-key projectile-command-map (kbd "s g") #'consult-projectile-grep)
-  (define-key projectile-command-map (kbd "s G") #'projectile-grep)
+    (require 'embark nil t)
+    (embark-chroot (project-root (project-current t))))
+  (define-key project-prefix-map (kbd "o") #'embark-on-project)
+  ;; perspective
+  (with-eval-after-load 'perspective
+    (defun project-current (&optional maybe-prompt directory)
+      "Override project-current"
+      (unless directory (setq directory default-directory))
+      (let ((pr (project--find-in-directory directory)))
+        (cond
+         (pr)
+         ((unless project-current-inhibit-prompt
+            maybe-prompt)
+          (setq directory (project-prompt-project-dir)
+                pr (project--find-in-directory directory))))
+        (when maybe-prompt
+          (if pr
+              (project-remember-project pr)
+            (project--remove-from-project-list
+             directory "Project `%s' not found; removed from list")
+            (setq pr (cons 'transient directory))))
+        (if-let (cdr pr)
+            (persp-switch (cdr pr)))
+        pr)))
 
-  (defun consult-projectile-ripgrep (&optional initial)
-    "Using consult-ripgrep(INITIAL) in projectile."
-    (interactive)
-    (consult-ripgrep (projectile-project-root) initial))
-  (define-key projectile-command-map (kbd "s r") #'consult-projectile-ripgrep)
-  (define-key projectile-command-map (kbd "s R") #'projectile-ripgrep)
-  ;; integrate with embark
-  (with-eval-after-load 'embark
-    (defun embark-become-project(&optional full)
-      (interactive "P")
-      (embark--quit-and-run
-       (lambda ()
-         (let ((use-dialog-box nil)
-               (this-command 'projectile-switch-project))
-           (command-execute this-command)))))
-    (define-key embark-general-map (kbd "p") #'embark-become-project)
-    (defun embark-switch-project-with-persp (dir)
-      (if-let ((fboundp 'persp-switch)
-               (default-directory (projectile-project-root (expand-file-name dir))))
-          (persp-switch default-directory)))
-    (add-to-list 'marginalia-prompt-categories '("project" . project))
-    (add-to-list 'embark-keymap-alist '(project . embark-project-map))
-    (defun embark-project-rg(dir &optional initial)
-      (interactive "D")
-      (embark-switch-project-with-persp dir)
-      (consult-ripgrep dir initial))
-    (defun embark-project-grep(dir &optional initial)
-      (interactive "D")
-      (embark-switch-project-with-persp dir)
-      (consult-grep dir initial))
-    (defun embark-project-term(dir &optional initial)
-      (interactive "D")
-      (embark-switch-project-with-persp dir)
-      (let ((default-directory (file-name-directory dir)))
-        (call-interactively 'projectile-run-term)))
-    (defun magit-project (dir)
-      "Run CMD in directory DIR."
-      (interactive "D")
-      (embark-switch-project-with-persp dir)
-      (magit-status dir nil))
-    (defun embark-project-switch-buffer (dir)
-      "Run CMD in directory DIR."
-      (interactive "D")
-      (embark-switch-project-with-persp dir)
-      (let ((default-directory (file-name-directory dir)))
-        (call-interactively 'persp-switch-to-buffer*)))
-    (defun embark-project-compile (dir)
-      "Run CMD in directory DIR."
-      (interactive "D")
-      (embark-switch-project-with-persp dir)
-      (let ((default-directory (file-name-directory dir)))
-        (call-interactively 'projectile-compile-project)))
-    (defun embark-project-find-file (dir)
-      "Run CMD in directory DIR."
-      (interactive "D")
-      (embark-switch-project-with-persp dir)
-      (let ((default-directory (file-name-directory dir)))
-        (call-interactively 'projectile-find-file)))
-    (embark-define-keymap embark-project-map
-      "Keymap for Embark project actions."
-      ("sr" embark-project-rg)
-      ("sg" embark-project-grep)
-      ("xt" embark-project-term)
-      ("b" embark-project-switch-buffer)
-      ("c" embark-project-compile)
-      ("f" embark-project-find-file)
-      ("v" magit-project))))
-
-;; org-projectile
-(use-package org-projectile
-  :ensure t :defer t
-  :after (projectile)
-  :bind
-  ("C-x p O c" . org-projectile-capture-for-current-project)
-  ("C-x p O f" . org-projectile-open-file-current-project)
-  :config
-  (defun org-projectile-open-file-current-project()
-    (interactive)
-    (let* ((project-root (projectile-acquire-root))
-           (file (org-projectile-current-file project-root)))
-      (find-file (expand-file-name file project-root))
-      (run-hooks 'projectile-find-file-hook)))
-  (defun org-projectile-current-file (&optional project)
-    "org file in each project."
-    (concat (projectile-project-name project) ".org"))
-  (setq org-projectile-per-project-filepath #'org-projectile-current-file)
-  (org-projectile-per-project))
+  ;; switch commands
+  (setq project-switch-commands
+        '((project-find-file "file")
+          (project-consult-ripgrep "rg")
+          (project-compile "compile")
+          (project-switch-to-buffer "buf")
+          (project-term "term")
+          (project-shell "shell")
+          (magit-project-status "git")
+          (embark-on-project "embark"))))
 
 ;; perspective
 (use-package perspective
@@ -436,19 +392,12 @@
     (interactive
      (find-file-read-args "Find file: "
                           (confirm-nonexistent-file-or-buffer)))
-    (if (and (bound-and-true-p persp-mode) (bound-and-true-p projectile-mode))
-        (if-let ((default-directory (projectile-project-root (expand-file-name filename))))
-            (persp-switch default-directory)))
+    (if (bound-and-true-p persp-mode)
+        (project-current nil filename))
     (let ((value (find-file-noselect filename nil nil wildcards)))
       (if (listp value)
           (mapcar 'pop-to-buffer-same-window (nreverse value))
-        (pop-to-buffer-same-window value))))
-  ;; projectile
-  (add-hook 'projectile-before-switch-project-hook
-            (lambda (&optional project-to-switch)
-              (if (and project-to-switch (bound-and-true-p persp-mode))
-                  (persp-switch (funcall projectile-project-name-function project-to-switch))))))
-
+        (pop-to-buffer-same-window value)))))
 
 ;; multiple-cursors
 (use-package multiple-cursors
@@ -564,7 +513,11 @@
   (setq ediff-split-window-function 'split-window-horizontally))
 (use-package savehist
   :ensure t
-  :config (savehist-mode))
+  :config (savehist-mode)
+  (add-hook 'savehist-save-hook
+            (lambda () (setq savehist-minibuffer-history-variables
+                             (delete 'eww-prompt-history savehist-minibuffer-history-variables))))
+  (add-to-list 'savehist-additional-variables 'persp-compile-history))
 (use-package autorevert
   ;; revert buffers when their files/state have changed
   :hook (focus-in . doom-auto-revert-buffers-h)
@@ -646,8 +599,8 @@
   "With PREFIX we will set project-temp-root."
   (interactive "P")
   (if prefix (setq project-temp-root (read-directory-name "Select dir: ")))
-  (unless (fboundp 'embark-in-directory) (require 'embark))
-  (embark-in-directory project-temp-root))
+  (unless (fboundp 'embark-chroot) (require 'embark))
+  (embark-chroot project-temp-root))
 (global-set-key (kbd "C-x P") #'project-temp-M-x)
 
 ;;; MODELINE
@@ -845,7 +798,6 @@
 (setq select-safe-coding-system-function t)
 (set-default-coding-systems 'utf-8)
 (prefer-coding-system 'utf-8)
-
 (setq create-lockfiles nil
       auto-save-file-name-transforms `((".*" ,temporary-file-directory t))
       backup-directory-alist `((".*" . ,temporary-file-directory)))
@@ -993,7 +945,7 @@ Please install:
   (if (and (equal major-mode 'python-mode)
            (fboundp 'pyvenv-activate))
       (dolist (env '(".venv" ".env" "venv" "env"))
-        (if-let ((dir (locate-dominating-file (or (projectile-project-root) default-directory) env)))
+        (if-let ((dir (locate-dominating-file (or (cdr (project-current nil)) default-directory) env)))
             (if (file-directory-p (concat dir env))
                 (pyvenv-activate (concat dir env)))))))
 (defun python-install-hooks ()
