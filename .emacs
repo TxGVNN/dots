@@ -550,15 +550,43 @@
 (use-package compile :defer t
   :init (global-set-key (kbd "C-x m") 'compile)
   :config
+  (setq compilation-always-kill t       ; kill compilation process before starting another
+        compilation-ask-about-save nil  ; save all buffers on `compile'
+        compilation-scroll-output t)
   (defun doom-apply-ansi-color-to-compilation-buffer-h ()
     "Applies ansi codes to the compilation buffers."
     (with-silent-modifications
       (ansi-color-apply-on-region compilation-filter-start (point))))
-  (setq compilation-always-kill t       ; kill compilation process before starting another
-        compilation-ask-about-save nil  ; save all buffers on `compile'
-        compilation-scroll-output t)
   ;; Handle ansi codes in compilation buffer
-  (add-hook 'compilation-filter-hook #'doom-apply-ansi-color-to-compilation-buffer-h))
+  (add-hook 'compilation-filter-hook #'doom-apply-ansi-color-to-compilation-buffer-h)
+  ;; Isolate
+  (with-eval-after-load 'perspective
+    (defun compile (command &optional comint)
+      "Override compile(COMMAND &optional COMINT)."
+      (interactive
+       (list
+        (let ((command (eval compile-command)))
+          (if (or compilation-read-command current-prefix-arg)
+              (compilation-read-command command) command))
+        (consp current-prefix-arg)))
+      (save-some-buffers (not compilation-ask-about-save)
+                         compilation-save-buffers-predicate)
+      (setq-default compilation-directory default-directory)
+      (compilation-start command comint))
+    (defvar persp-compile-history (make-hash-table :test 'equal))
+    (defun persp--get-command-history (persp)
+      (or (gethash persp persp-compile-history)
+          (puthash persp (make-ring 16) persp-compile-history)))
+    (defun compilation-read-command (command)
+      "Override"
+      (let ((compile-history
+             (ring-elements (persp--get-command-history (persp-name (persp-curr))))))
+        (ring-insert (persp--get-command-history (persp-name (persp-curr)))
+                     (read-shell-command (format "Compile [%s]: " default-directory)
+                                         (or (car compile-history) command)
+                                         (if (equal (car compile-history) command)
+                                             '(compile-history . 1)
+                                           'compile-history)))))))
 
 (use-package gnus :defer t
   :config
@@ -857,7 +885,6 @@
             :before (lambda (&rest _args)
                       "Pass prefix arg as third arg to `base64-encode-region'."
                       (interactive "r\nP")))
-
 
 ;;; LANGUAGES
 ;; .emacs
