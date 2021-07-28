@@ -146,16 +146,15 @@
   (:map embark-general-map
         ("/" . embark-chroot))
   :config
+  (setq embark-indicator #'embark-minimal-indicator)
   ;; as chroot
   (defun embark-chroot (dir &optional prefix)
     "Run CMD in directory DIR."
     (interactive "DIn directory:\nP")
     (let ((default-directory (file-name-directory dir))
           (embark-quit-after-action t)
-          (action (embark--with-indicator
-                   (propertize (format "Act:%s" dir) 'face 'highlight)
-                   embark-prompter
-                   (embark--action-keymap 'file))))
+          (action (embark--prompt
+                   (embark--action-keymap 'file nil) `((nil . ,dir)))))
       (command-execute action)))
   ;; project become
   (defun embark-become-project(&optional full)
@@ -493,7 +492,7 @@
   ;; oantolin/orderless#48
   (define-advice company-capf
       (:around (orig-fun &rest args) set-completion-styles)
-    (let ((completion-styles '(basic partial-completion)))
+    (let ((completion-styles '(basic partial-completion orderless)))
       (apply orig-fun args))))
 
 ;; undo-tree
