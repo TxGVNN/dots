@@ -154,6 +154,7 @@
     (let ((default-directory (file-name-directory dir))
           (embark-quit-after-action t)
           (action (embark--prompt
+                   (funcall embark-indicator)
                    (embark--action-keymap 'file nil) `((nil . ,dir)))))
       (command-execute action)))
   ;; project become
