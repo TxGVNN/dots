@@ -104,9 +104,6 @@
   (setq consult-preview-key (kbd "C-l"))
   (setf (alist-get 'slime-repl-mode consult-mode-histories)
         'slime-repl-input-history)
-  (setq consult-ripgrep-command
-        "rg -i --null --line-buffered --color=ansi --max-columns=1000\
-   --no-heading --line-number . -e ARG OPTS")
   (defun consult-thing-at-point ()
     "Return a string that corresponds to the current thing at point."
     (substring-no-properties
