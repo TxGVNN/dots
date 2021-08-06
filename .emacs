@@ -282,7 +282,8 @@
     "Using consult-grep(INITIAL) in project."
     (interactive)
     (consult-grep (project-root (project-current t)) initial))
-  (define-key project-prefix-map (kbd "w") #'project-consult-grep)
+  (define-key project-prefix-map (kbd "g") #'project-consult-grep)
+  (define-key project-prefix-map (kbd "G") #'project-find-regexp)
   (defun project-consult-ripgrep (&optional initial)
     "Using consult-ripgrep(INITIAL) in project."
     (interactive)
