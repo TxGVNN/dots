@@ -143,7 +143,7 @@
   (:map embark-general-map
         ("/" . embark-chroot))
   :config
-  (setq embark-indicator #'embark-minimal-indicator)
+  (setq embark-indicators '(embark-minimal-indicator))
   ;; as chroot
   (defun embark-chroot (dir &optional prefix)
     "Run CMD in directory DIR."
@@ -151,8 +151,8 @@
     (let ((default-directory (file-name-directory dir))
           (embark-quit-after-action t)
           (action (embark--prompt
-                   (funcall embark-indicator)
-                   (embark--action-keymap 'file nil) `((nil . ,dir)))))
+                   (mapcar #'funcall embark-indicators)
+                   (embark--action-keymap 'file nil) `(,(list :type 'file :target `,dir)))))
       (command-execute action)))
   ;; project become
   (defun embark-become-project(&optional full)
