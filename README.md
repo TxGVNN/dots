@@ -26,9 +26,9 @@ wget -O ~/.authinfo https://raw.githubusercontent.com/txgvnn/dots/master/.authin
 ```
 You have to customize the `.gnus` and `.authinfo` (default 2 accounts) with your credentials.
 
-Setup `.authinfo.gpg`(by gnupg) instead of `.authinfo` if you wanna to protect your sensitive data
+Setup `.authinfo.gpg`(by gnupg) instead of `.authinfo` if you want to protect your sensitive data.
 
-## GNU Screen
+## Screen
 
 ```
 wget -O ~/.screenrc https://raw.githubusercontent.com/txgvnn/dots/master/.screenrc
