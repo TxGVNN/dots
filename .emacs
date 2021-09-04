@@ -308,10 +308,17 @@
             (project--remove-from-project-list
              directory "Project `%s' not found; removed from list")
             (setq pr (cons 'transient directory))))
-        (if-let (cdr pr)
+        (if-let* ((bound-and-true-p persp-mode)
+                  (cdr pr))
             (persp-switch (cdr pr)))
         pr)))
-
+  ;; org-capture
+  (defun project-org-capture ()
+    (interactive)
+    (unless (bound-and-true-p org-default-notes-file) (require 'org-capture))
+    (let* ((project (project-current t))
+           (org-default-notes-file (concat (cdr project) "tasks.org")))
+      (call-interactively 'org-capture)))
   ;; switch commands
   (setq project-switch-commands
         '((project-find-file "file")
@@ -557,10 +564,12 @@
       (or (gethash persp persp-compile-history)
           (puthash persp (make-ring 16) persp-compile-history)))
     (defun compilation-read-command (command)
-      "Override"
-      (let ((compile-history
-             (ring-elements (persp--get-command-history (persp-name (persp-curr))))))
-        (ring-insert (persp--get-command-history (persp-name (persp-curr)))
+      "Override compilation-read-command (COMMAND)."
+      (let* ((persp-name (if (bound-and-true-p persp-mode)
+                             (persp-name (persp-curr)) "0"))
+             (compile-history
+              (ring-elements (persp--get-command-history persp-name))))
+        (ring-insert (persp--get-command-history persp-name)
                      (read-shell-command (format "Compile [%s]: " default-directory)
                                          (or (car compile-history) command)
                                          (if (equal (car compile-history) command)
