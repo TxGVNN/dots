@@ -73,7 +73,7 @@
   ("M-s w" . consult-line-at-point)
   ("M-s g" . consult-grep)
   ("M-s r" . consult-ripgrep)
-  ("M-s f" . consult-find)
+  ("M-s F" . consult-find)
   ("M-s u" . consult-focus-lines)
   ("C-x / k" . consult-keep-lines)
   ("M-X" . consult-mode-command)
@@ -746,7 +746,16 @@
                     (format-time-string "%y%m%d-%H%M%S_" (time-to-seconds))))
           nil (file-name-extension (buffer-name) t))))
     (copy-region-to-scratch filename)))
-
+(defun find-file-rec ()
+  "Find a file in the current working directory recursively."
+  (interactive)
+  (let ((find-files-program
+         (cond
+          ((executable-find "rg") '("rg" "--color=never" "--files"))
+          ((executable-find "find") '("find" "-type" "f")))))
+    (find-file
+     (completing-read
+      "Find file: " (apply #'process-lines find-files-program)))))
 (defun eww-search-local-help ()
   "Search with keyword from local-help."
   (interactive)
@@ -772,6 +781,7 @@
 (global-set-key (kbd "C-x j") 'mode-line-other-buffer)
 (global-set-key (kbd "M-s e") 'eww)
 (global-set-key (kbd "M-s E") 'eww-search-local-help)
+(global-set-key (kbd "M-s f") 'find-file-rec)
 (global-set-key (kbd "C-M-_") 'dabbrev-completion)
 (global-set-key (kbd "C-x / .") 'delete-trailing-whitespace)
 (global-set-key (kbd "C-x / ;") 'indent-and-delete-trailing-whitespace)
