@@ -13,12 +13,14 @@
   (setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3"))
 
 (setq gc-cons-threshold most-positive-fixnum) ;; enable gcmh
-;; doom-emacs:docs/faq.org#unset-file-name-handler-alist-temporarily
-(defvar doom--file-name-handler-alist file-name-handler-alist)
-(setq file-name-handler-alist nil)
-(add-hook 'emacs-startup-hook
-          (lambda ()
-            (setq file-name-handler-alist doom--file-name-handler-alist)))
+(unless (member "comp.o" build-files)
+  ;; @FIXME Seems it break emacs-native-comp
+  ;; doom-emacs:docs/faq.org#unset-file-name-handler-alist-temporarily
+  (defvar doom--file-name-handler-alist file-name-handler-alist)
+  (setq file-name-handler-alist nil)
+  (add-hook 'emacs-startup-hook
+            (lambda ()
+              (setq file-name-handler-alist doom--file-name-handler-alist))))
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
