@@ -83,10 +83,15 @@
   (:map minibuffer-local-map ("M-r" . consult-history))
   :config
   (setq register-preview-delay 0
-        register-preview-function #'consult-register-format)
-  (setq consult-preview-key (kbd "C-l"))
+        register-preview-function #'consult-register-format
+        consult-preview-key (kbd "C-l"))
   (setf (alist-get 'slime-repl-mode consult-mode-histories)
         'slime-repl-input-history)
+  (defun consult--directory-prompt-1 (prompt dir)
+    "Override consult--directory-prompt-1(PROMPT DIR)."
+    (let ((edir (file-name-as-directory (expand-file-name dir)))
+          (ddir (file-name-as-directory (expand-file-name default-directory))))
+      (cons (format "%s (%s): " prompt (consult--abbreviate-directory dir)) edir)))
   (defun consult-thing-at-point ()
     "Return a string that corresponds to the current thing at point."
     (substring-no-properties
@@ -209,7 +214,8 @@
   :ensure t :defer t
   :init
   (add-hook 'tty-setup-hook
-            (lambda()(require 'xclip nil t)(xclip-mode))))
+            (lambda()(require 'xclip nil t)
+              (ignore-errors (xclip-mode)))))
 
 ;; error-checker kbd("C-h .")
 (use-package flycheck
