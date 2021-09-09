@@ -431,11 +431,13 @@
   :ensure t
   :init
   (setq anzu-mode-lighter "")
+  (global-anzu-mode)
+  :config
   (global-set-key [remap query-replace] 'anzu-query-replace)
   (global-set-key [remap query-replace-regexp] 'anzu-query-replace-regexp)
   (define-key isearch-mode-map [remap isearch-query-replace] #'anzu-isearch-query-replace)
-  (define-key isearch-mode-map [remap isearch-query-replace-regexp] #'anzu-isearch-query-replace-regexp)
-  (global-anzu-mode))
+  (define-key isearch-mode-map [remap isearch-query-replace-regexp] #'anzu-isearch-query-replace-regexp))
+
 ;; symbol-overlay
 (use-package symbol-overlay
   :ensure t :defer t
@@ -727,11 +729,11 @@
    (concat (file-name-as-directory temporary-file-directory)
            (make-temp-name
             (format "%s_%s_" user-login-name
-                    (format-time-string "%y%m%d-%H%M" (time-to-seconds)))))))
-(defun insert-datetime()
-  "Insert YYYYmmdd-HHMM."
-  (interactive)
-  (insert (format-time-string "%Y%m%d-%H%M" (current-time) t)))
+                    (format-time-string "%y%m%d-%H%M"))))))
+(defun insert-datetime(&optional prefix)
+  "Insert YYYYmmdd-HHMM or YYYY-mm-dd_HH-MM if PREFIX set."
+  (interactive "P")
+  (insert (format-time-string (if prefix "%Y-%m-%d_%H-%M" "%Y%m%d-%H%M") (current-time) t)))
 (defun linux-stat-file()
   "Run stat command in linux in current file."
   (interactive)
@@ -748,7 +750,8 @@
             (mapconcat 'concat (extract-rectangle (region-beginning) (region-end)) "\n"))
            ((use-region-p) (buffer-substring-no-properties (point) (mark)))
            (t (buffer-substring (point-min) (point-max)))))
-         (buffer-name (format "%s_%s" (file-name-base (buffer-name)) (format-time-string "%y%m%d_%H%M%S")))
+         (buffer-name (format "%s_%s" (file-name-base (buffer-name))
+                              (format-time-string "%y%m%d_%H%M%S")))
          (buffer (get-buffer-create buffer-name)))
     (with-current-buffer buffer
       (insert string)
@@ -761,7 +764,7 @@
          (make-temp-file
           (concat (file-name-base (buffer-name)) "_"
                   (unless (string-prefix-p "*scratch-" (buffer-name))
-                    (format-time-string "%y%m%d-%H%M%S_" (time-to-seconds))))
+                    (format-time-string "%y%m%d-%H%M%S_")))
           nil (file-name-extension (buffer-name) t))))
     (copy-region-to-scratch filename)))
 (defun find-file-rec ()
@@ -825,10 +828,10 @@
 (global-set-key (kbd "C-x 4 M-<") 'beginning-of-buffer-other-window)
 (global-set-key (kbd "C-x 4 M->") 'end-of-buffer-other-window)
 (global-set-key (kbd "M-z") 'zap-up-to-char)
-(global-set-key (kbd "ESC <up>") '(lambda () (interactive) (previous-line 3)))
-(global-set-key (kbd "ESC <down>") '(lambda () (interactive) (next-line 3)))
-(global-set-key (kbd "M-<up>") '(lambda () (interactive) (previous-line 3)))
-(global-set-key (kbd "M-<down>") '(lambda () (interactive) (next-line 3)))
+(global-set-key (kbd "ESC <up>") #'(lambda () (interactive) (previous-line 3)))
+(global-set-key (kbd "ESC <down>") #'(lambda () (interactive) (next-line 3)))
+(global-set-key (kbd "M-<up>") #'(lambda () (interactive) (previous-line 3)))
+(global-set-key (kbd "M-<down>") #'(lambda () (interactive) (next-line 3)))
 
 (setq select-safe-coding-system-function t)
 (set-default-coding-systems 'utf-8)
@@ -863,6 +866,7 @@
  '(kept-new-versions 6)
  '(kill-do-not-save-duplicates t)
  '(menu-bar-mode nil)
+ '(minibuffer-depth-indicate-mode t)
  '(proced-tree-flag t)
  '(read-quoted-char-radix 16)
  '(ring-bell-function #'ignore)
