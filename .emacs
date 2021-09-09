@@ -9,7 +9,7 @@
 ;;; Code:
 (when (version< emacs-version "26.1")
   (error "Requires GNU Emacs 26.1 or newer, but you're running %s" emacs-version))
-(when (version< emacs-version "26.3")
+(when (version< emacs-version "27")
   (setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3"))
 
 (setq gc-cons-threshold most-positive-fixnum) ;; enable gcmh
@@ -370,15 +370,16 @@
               (unless (eq ibuffer-sorting-mode 'alphabetic)
                 (ibuffer-do-sort-by-alphabetic))))
   (with-eval-after-load 'ibuffer
+    (require 'ibuf-ext)
     (defun ibuffer-visit-buffer (&optional single)
       "Override 'ibuffer-visit-buffer with support perspective."
       (interactive "P")
       (let ((buffer (ibuffer-current-buffer t)))
-        (if (persp-is-current-buffer buffer)
-            (switch-to-buffer buffer)
-          (let ((other-persp (persp-buffer-in-other-p buffer)))
-            (persp-switch (cdr other-persp))
-            (switch-to-buffer buffer)))
+        (if (bound-and-true-p persp-mode)
+            (unless (persp-is-current-buffer buffer)
+              (let ((other-persp (persp-buffer-in-other-p buffer)))
+                (persp-switch (cdr other-persp)))))
+        (switch-to-buffer buffer)
         (when single (delete-other-windows)))))
   ;; find-file
   (defun find-file (filename &optional wildcards)
