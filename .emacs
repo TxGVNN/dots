@@ -501,6 +501,10 @@
         undo-tree-history-directory-alist
         `((".*" . ,temporary-file-directory)))
   (global-undo-tree-mode))
+;; pinentry for GPG
+(use-package pinentry
+  :ensure t
+  :init (pinentry-start))
 
 ;;; BUILTIN
 (use-package ediff
@@ -589,6 +593,7 @@
 
 (use-package gnus :defer t
   :config
+  (setq gnus-select-method '(nntp "news.gmane.org"))
   (setq gnus-summary-line-format "%U%R%z %d %-23,23f (%4,4L) %{%B%}%s\n"
         gnus-sum-thread-tree-root            ""
         gnus-sum-thread-tree-false-root      "──> "
