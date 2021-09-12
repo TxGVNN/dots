@@ -514,6 +514,7 @@
   :ensure t
   :init
   (setq undo-tree-mode-lighter ""
+        undo-tree-enable-undo-in-region t
         undo-tree-history-directory-alist
         `((".*" . ,temporary-file-directory)))
   (global-undo-tree-mode))
@@ -521,6 +522,10 @@
 (use-package pinentry
   :ensure t
   :init (pinentry-start))
+
+(use-package diredfl
+  :ensure t
+  :config (add-hook 'dired-mode-hook 'diredfl-mode))
 
 ;;; BUILTIN
 (use-package ediff
@@ -917,6 +922,10 @@
             :before (lambda (&rest _args)
                       "Pass prefix arg as third arg to `base64-encode-region'."
                       (interactive "r\nP")))
+(setq minibuffer-prompt-properties
+      '(read-only t cursor-intangible t face minibuffer-prompt))
+(add-hook 'minibuffer-setup-hook #'cursor-intangible-mode)
+
 
 ;;; LANGUAGES
 ;; .emacs
