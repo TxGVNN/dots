@@ -41,20 +41,24 @@
   :init (gcmh-mode)
   :config (add-to-list 'hidden-minor-modes 'gcmh-mode))
 
-;; selectrum
-(use-package selectrum
-  :ensure t
-  :init (selectrum-mode)
+;; vertico
+(use-package vertico
+  :init (vertico-mode)
+  :config
+  (setq vertico-cycle t)
   :bind
-  ("C-x C-r" . selectrum-repeat)
-  (:map selectrum-minibuffer-map
-        ("<prior>" . selectrum-previous-page)
-        ("<next>" . selectrum-next-page)))
+  (:map vertico-map
+        ("<prior>" . vertico-scroll-down)
+        ("<next>" . vertico-scroll-up)))
 
 ;; orderless - filtering
 (use-package orderless
   :ensure t
-  :config (setq completion-styles '(orderless)))
+  :custom
+  (completion-styles '(orderless))
+  (completion-category-defaults nil)
+  (completion-category-overrides '((file (styles partial-completion))
+                                   (minibuffer (initials)))))
 
 (use-package marginalia
   :ensure t
@@ -81,6 +85,18 @@
   ("M-X" . consult-mode-command)
   ("C-x B" . consult-buffer)
   (:map minibuffer-local-map ("M-r" . consult-history))
+  :init
+  ;; Use `consult-completion-in-region' if Vertico is enabled.
+  ;; Otherwise use the default `completion--in-region' function.
+  (setq completion-in-region-function
+        (lambda (&rest args)
+          (apply (if vertico-mode
+                     #'consult-completion-in-region
+                   #'completion--in-region)
+                 args)))
+  (advice-add #'completing-read-multiple
+              :override #'consult-completing-read-multiple)
+  (advice-add #'multi-occur :override #'consult-multi-occur)
   :config
   (setq register-preview-delay 0
         register-preview-function #'consult-register-format
@@ -265,7 +281,7 @@
         ("v" . magit-project-status))
   :config
   (unless (assq 'project package-alist)
-    (user-error "Please install 'project package latest from ELPA"))
+    (user-error "Please install `project' package latest from ELPA"))
   (setq project-compilation-buffer-name-function 'project-prefixed-buffer-name)
   (defun project-consult-grep (&optional initial)
     "Using consult-grep(INITIAL) in project."
