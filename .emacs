@@ -53,7 +53,7 @@
 
 ;; orderless - filtering
 (use-package orderless
-  :ensure t
+  :ensure t :defer t
   :custom
   (completion-styles '(orderless))
   (completion-category-defaults nil)
@@ -272,7 +272,7 @@
 ;; ripgrep
 (use-package rg :ensure t :defer t)
 
-;; project-0.6.0
+;; project-0.6.1
 (use-package project
   :ensure t :defer t
   :bind
@@ -314,30 +314,9 @@
     (require 'embark nil t)
     (embark-chroot (project-root (project-current t))))
   (define-key project-prefix-map (kbd "o") #'embark-on-project)
-  ;; perspective
-  (with-eval-after-load 'perspective
-    (defun project-current (&optional maybe-prompt directory)
-      "Override project-current"
-      (unless directory (setq directory default-directory))
-      (let ((pr (project--find-in-directory directory)))
-        (cond
-         (pr)
-         ((unless project-current-inhibit-prompt
-            maybe-prompt)
-          (setq directory (project-prompt-project-dir)
-                pr (project--find-in-directory directory))))
-        (when maybe-prompt
-          (if pr
-              (project-remember-project pr)
-            (project--remove-from-project-list
-             directory "Project `%s' not found; removed from list")
-            (setq pr (cons 'transient directory))))
-        (if-let* ((bound-and-true-p persp-mode)
-                  (cdr pr))
-            (persp-switch (cdr pr)))
-        pr)))
   ;; org-capture
   (defun project-org-capture ()
+    "Capture to project dir."
     (interactive)
     (unless (bound-and-true-p org-default-notes-file) (require 'org-capture))
     (let* ((project (project-current t))
@@ -366,8 +345,30 @@
   ("<f5>" . persp-switch-last)
   (:map perspective-map ("z" . perspective-map))
   :config
+  ;; switch persp with project
+  (defun project-current (&optional maybe-prompt directory)
+    "Override project-current"
+    (unless directory (setq directory default-directory))
+    (let ((pr (project--find-in-directory directory)))
+      (cond
+       (pr)
+       ((unless project-current-inhibit-prompt
+          maybe-prompt)
+        (setq directory (project-prompt-project-dir)
+              pr (project--find-in-directory directory))))
+      (when maybe-prompt
+        (if pr
+            (project-remember-project pr)
+          (project--remove-from-project-list
+           directory "Project `%s' not found; removed from list")
+          (setq pr (cons 'transient directory))))
+      (if-let* ((bound-and-true-p persp-mode)
+                (cdr pr))
+          (persp-switch (cdr pr)))
+      pr))
+  ;; hack local var when switch
   (add-hook 'persp-switch-hook #'hack-dir-local-variables-non-file-buffer)
-  ;; Show project folder of persp-curr
+  ;; show project folder of persp-curr
   (defun persp-update-modestring ()
     "Override persp-update-modestring."
     (when (and persp-show-modestring (persp-name (persp-curr)))
@@ -408,7 +409,40 @@
     (let ((value (find-file-noselect filename nil nil wildcards)))
       (if (listp value)
           (mapcar 'pop-to-buffer-same-window (nreverse value))
-        (pop-to-buffer-same-window value)))))
+        (pop-to-buffer-same-window value))))
+  ;; compile
+  (with-eval-after-load 'compile
+    (defun compile (command &optional comint)
+      "Override compile(COMMAND &optional COMINT)."
+      (interactive
+       (list
+        (let ((command (eval compile-command)))
+          (if (or compilation-read-command current-prefix-arg)
+              (compilation-read-command command) command))
+        (consp current-prefix-arg)))
+      (save-some-buffers (not compilation-ask-about-save)
+                         compilation-save-buffers-predicate)
+      (setq-default compilation-directory default-directory)
+      (compilation-start command comint))
+    (defvar persp-compile-history (make-hash-table :test 'equal))
+    (defun persp--get-command-history (persp)
+      (or (gethash persp persp-compile-history)
+          (puthash persp (make-ring 16) persp-compile-history)))
+    (defun compilation-read-command (command)
+      "Override compilation-read-command (COMMAND)."
+      (let* ((persp-name (if (bound-and-true-p persp-mode)
+                             (persp-name (persp-curr)) "0"))
+             (compile-history
+              (ring-elements (persp--get-command-history persp-name))))
+        (ring-insert (persp--get-command-history persp-name)
+                     (read-shell-command (format "Compile [%s]: " default-directory)
+                                         (or (car compile-history) command)
+                                         (if (equal (car compile-history) command)
+                                             '(compile-history . 1)
+                                           'compile-history))))))
+  (with-eval-after-load 'savehist
+    (add-to-list 'savehist-additional-variables 'persp-compile-history)))
+
 
 ;; multiple-cursors
 (use-package multiple-cursors
@@ -524,8 +558,8 @@
   :init (pinentry-start))
 
 (use-package diredfl
-  :ensure t
-  :config (add-hook 'dired-mode-hook 'diredfl-mode))
+  :ensure t :defer t
+  :init (add-hook 'dired-mode-hook 'diredfl-mode))
 
 ;;; BUILTIN
 (use-package ediff
@@ -538,8 +572,8 @@
   :config (savehist-mode)
   (add-hook 'savehist-save-hook
             (lambda () (setq savehist-minibuffer-history-variables
-                             (delete 'eww-prompt-history savehist-minibuffer-history-variables))))
-  (add-to-list 'savehist-additional-variables 'persp-compile-history))
+                             (delete 'eww-prompt-history savehist-minibuffer-history-variables)))))
+
 (use-package autorevert
   ;; revert buffers when their files/state have changed
   :hook (focus-in . doom-auto-revert-buffers-h)
@@ -580,37 +614,7 @@
     (with-silent-modifications
       (ansi-color-apply-on-region compilation-filter-start (point))))
   ;; Handle ansi codes in compilation buffer
-  (add-hook 'compilation-filter-hook #'doom-apply-ansi-color-to-compilation-buffer-h)
-  ;; Isolate
-  (with-eval-after-load 'perspective
-    (defun compile (command &optional comint)
-      "Override compile(COMMAND &optional COMINT)."
-      (interactive
-       (list
-        (let ((command (eval compile-command)))
-          (if (or compilation-read-command current-prefix-arg)
-              (compilation-read-command command) command))
-        (consp current-prefix-arg)))
-      (save-some-buffers (not compilation-ask-about-save)
-                         compilation-save-buffers-predicate)
-      (setq-default compilation-directory default-directory)
-      (compilation-start command comint))
-    (defvar persp-compile-history (make-hash-table :test 'equal))
-    (defun persp--get-command-history (persp)
-      (or (gethash persp persp-compile-history)
-          (puthash persp (make-ring 16) persp-compile-history)))
-    (defun compilation-read-command (command)
-      "Override compilation-read-command (COMMAND)."
-      (let* ((persp-name (if (bound-and-true-p persp-mode)
-                             (persp-name (persp-curr)) "0"))
-             (compile-history
-              (ring-elements (persp--get-command-history persp-name))))
-        (ring-insert (persp--get-command-history persp-name)
-                     (read-shell-command (format "Compile [%s]: " default-directory)
-                                         (or (car compile-history) command)
-                                         (if (equal (car compile-history) command)
-                                             '(compile-history . 1)
-                                           'compile-history)))))))
+  (add-hook 'compilation-filter-hook #'doom-apply-ansi-color-to-compilation-buffer-h))
 
 (use-package gnus :defer t
   :config
