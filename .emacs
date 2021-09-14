@@ -29,19 +29,17 @@
 (when (< emacs-major-version 27)
   (package-initialize))
 
-;;; BOOTSTRAP `use-package'
+;; BOOTSTRAP `use-package'
 (unless (package-installed-p 'use-package)
   (package-refresh-contents)
   (package-install 'use-package))
 
-;;; PACKAGES
-;; gcmh
 (use-package gcmh
   :ensure t
   :init (gcmh-mode)
   :config (add-to-list 'hidden-minor-modes 'gcmh-mode))
 
-;; vertico
+;;; COMPLETION SYSTEM: vertico, orderless, marginalia, consult, embark
 (use-package vertico
   :init (vertico-mode)
   :config
@@ -50,8 +48,6 @@
   (:map vertico-map
         ("<prior>" . vertico-scroll-down)
         ("<next>" . vertico-scroll-up)))
-
-;; orderless - filtering
 (use-package orderless
   :ensure t :defer t
   :custom
@@ -59,11 +55,9 @@
   (completion-category-defaults nil)
   (completion-category-overrides '((file (styles partial-completion))
                                    (minibuffer (initials)))))
-
 (use-package marginalia
   :ensure t
   :init (marginalia-mode))
-
 (use-package consult
   :ensure t
   :defer t
@@ -134,7 +128,6 @@
         (deactivate-mark))
       (consult-line (regexp-quote thing))))
   (require 'consult))
-
 (use-package embark
   :ensure t
   :bind
@@ -177,74 +170,8 @@
     (interactive "D")
     (make-directory dir)
     (find-file dir)))
-
-;; avy
-(use-package avy
-  :ensure t :defer t
-  :config
-  (setq avy-all-windows nil
-        avy-background t)
-  :bind
-  ("M-g a" . avy-goto-char)
-  ("M-g l" . avy-goto-line))
-
-;; crux - modified
-(use-package crux
-  :ensure t :defer t :pin me
-  :bind
-  ("C-^" . crux-top-join-line)
-  ("C-a" . crux-move-beginning-of-line)
-  ("C-o" . crux-smart-open-line-above)
-  ("M-o" . crux-smart-open-line)
-  ("C-c c" . crux-create-scratch-buffer)
-  ("C-c d" . crux-duplicate-current-line-or-region)
-  ("C-c M-d" . crux-duplicate-and-comment-current-line-or-region)
-  ("C-c D" . crux-delete-file-and-buffer)
-  ("C-c r" . crux-rename-buffer-and-file)
-  ("C-c t" . crux-visit-term-buffer)
-  ("C-h RET" . crux-find-user-init-file)
-  ("C-x / e" . crux-open-with)
-  ("C-x 7" . crux-swap-windows))
-
-(use-package expand-region
-  :ensure t :defer t
-  :bind ("M-#" . er/expand-region))
-
-;; move-text
-(use-package move-text
-  :ensure t :defer t
-  :bind
-  ("M-g <up>" . move-text-up)
-  ("M-g <down>" . move-text-down))
-
-;; switch-window
-(use-package ace-window
-  :ensure t :defer t
-  :bind ("C-x o" . ace-window)
-  :config
-  (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l)
-        aw-scope (quote frame)))
-
-;; xclip -- don't use xsel
-(use-package xclip
-  :ensure t :defer t
-  :init
-  (add-hook 'tty-setup-hook
-            (lambda()(require 'xclip nil t)
-              (ignore-errors (xclip-mode)))))
-
-;; error-checker kbd("C-h .")
-(use-package flycheck
-  :ensure t :defer t
-  :config
-  (defun flycheck-maybe-display-error-at-point-soon() nil)
-  (setq flycheck-highlighting-mode (quote columns))
-  ;; g-n & g-p bindings
-  (define-key flycheck-mode-map (kbd "M-g n") #'flycheck-next-error)
-  (define-key flycheck-mode-map (kbd "M-g p") #'flycheck-previous-error)
-  :hook (prog-mode . flycheck-mode))
-
-;; git-gutter
+
+;;; VERSION CONTROL: git-gutter, magit, git-link
 (use-package git-gutter
   :ensure t
   :init (setq git-gutter:lighter "")
@@ -255,7 +182,6 @@
   ("C-x g n" . git-gutter:next-hunk)
   ("C-x g s" . git-gutter:stage-hunk)
   ("C-x g r" . git-gutter:revert-hunk))
-;; magit
 (use-package magit
   :ensure t :defer t
   :init (setq magit-define-global-key-bindings nil)
@@ -264,15 +190,28 @@
   ("C-x g g" . magit-project-status)
   ("C-x M-g" . magit-dispatch)
   ("C-c M-g" . magit-file-dispatch))
-;; git-link
 (use-package git-link
   :ensure t :defer t
   :config (setq git-link-use-commit t))
 
-;; ripgrep
+;;; SEARCHING: ripgrep, anzu
+(use-package isearch :defer t
+  :init
+  (global-set-key (kbd "M-s s") 'isearch-forward-regexp)
+  (define-key isearch-mode-map (kbd "M-s %") 'isearch-query-replace-regexp))
+(use-package anzu
+  :ensure t
+  :init
+  (setq anzu-mode-lighter "")
+  (global-anzu-mode)
+  :config
+  (global-set-key [remap query-replace] 'anzu-query-replace)
+  (global-set-key [remap query-replace-regexp] 'anzu-query-replace-regexp)
+  (define-key isearch-mode-map [remap isearch-query-replace] #'anzu-isearch-query-replace)
+  (define-key isearch-mode-map [remap isearch-query-replace-regexp] #'anzu-isearch-query-replace-regexp))
 (use-package rg :ensure t :defer t)
-
-;; project-0.6.1
+
+;;; WORKSPACE: project-0.6, perrspective
 (use-package project
   :ensure t :defer t
   :bind
@@ -332,8 +271,6 @@
           (project-shell "shell")
           (magit-project-status "git")
           (embark-on-project "embark"))))
-
-;; perspective
 (use-package perspective
   :ensure t
   :init
@@ -442,19 +379,17 @@
                                            'compile-history))))))
   (with-eval-after-load 'savehist
     (add-to-list 'savehist-additional-variables 'persp-compile-history)))
-
-
-;; multiple-cursors
-(use-package multiple-cursors
-  :ensure t :defer t
-  :bind
-  ("C-c e a" . mc/mark-all-like-this)
-  ("C-c e n" . mc/mark-next-like-this)
-  ("C-c e p" . mc/mark-previous-like-this)
-  ("C-c e l" . mc/edit-lines)
-  ("C-c e r" . mc/mark-all-in-region))
-
-;; smartparens
+;; project-temp-root
+(defvar project-temp-root "~/projects/")
+(defun project-temp-M-x (&optional prefix)
+  "With PREFIX we will set project-temp-root."
+  (interactive "P")
+  (if prefix (setq project-temp-root (read-directory-name "Select dir: ")))
+  (unless (fboundp 'embark-chroot) (require 'embark))
+  (embark-chroot project-temp-root))
+(global-set-key (kbd "C-x P") #'project-temp-M-x)
+
+;;; DISPLAY ENHANCE
 (use-package smartparens
   :ensure t :defer t
   :config (require 'smartparens-config)
@@ -467,44 +402,23 @@
   :hook
   (markdown-mode . smartparens-mode)
   (prog-mode . smartparens-mode))
-;; rainbow-delimiters
 (use-package rainbow-delimiters
   :ensure t :defer t
   :hook (prog-mode . rainbow-delimiters-mode))
-;; volatile-highlights
 (use-package volatile-highlights
   :ensure t
   :init (volatile-highlights-mode)
   :config (add-to-list 'hidden-minor-modes 'volatile-highlights-mode))
-;; anzu
-(use-package anzu
-  :ensure t
-  :init
-  (setq anzu-mode-lighter "")
-  (global-anzu-mode)
-  :config
-  (global-set-key [remap query-replace] 'anzu-query-replace)
-  (global-set-key [remap query-replace-regexp] 'anzu-query-replace-regexp)
-  (define-key isearch-mode-map [remap isearch-query-replace] #'anzu-isearch-query-replace)
-  (define-key isearch-mode-map [remap isearch-query-replace-regexp] #'anzu-isearch-query-replace-regexp))
-
-;; symbol-overlay
 (use-package symbol-overlay
   :ensure t :defer t
   :bind ("M-s H" . symbol-overlay-put)
   :hook (prog-mode . symbol-overlay-mode)
   :config (add-to-list 'hidden-minor-modes 'symbol-overlay-mode))
-;; hl-todo
 (use-package hl-todo
   :ensure t :defer t
   :hook (prog-mode . hl-todo-mode))
-;; themes
-(use-package doom-themes
-  :ensure t
-  :init (load-theme 'doom-gruvbox t)
-  :config (doom-themes-org-config))
-
-;; yasnippet
+
+;;; COMPLETION CODE: yasnippet, company
 (use-package yasnippet
   :ensure t :defer t :pin me
   :config
@@ -512,11 +426,8 @@
   (define-key yas-minor-mode-map [(tab)] nil)
   (define-key yas-minor-mode-map (kbd "TAB") nil)
   :hook ((prog-mode org-mode markdown-mode) . yas-minor-mode))
-;; My yasnippet-snippets
 (use-package yasnippet-snippets
   :ensure t :defer t :pin me)
-
-;; company
 (use-package company
   :ensure t
   :init (global-company-mode)
@@ -542,8 +453,46 @@
       (:around (orig-fun &rest args) set-completion-styles)
     (let ((completion-styles '(basic partial-completion orderless)))
       (apply orig-fun args))))
-
-;; undo-tree
+
+;;; TOOLS: avy, crux, expand-region, move-text, ace-window, undo-tree,...
+(use-package avy
+  :ensure t :defer t
+  :config
+  (setq avy-all-windows nil
+        avy-background t)
+  :bind
+  ("M-g a" . avy-goto-char)
+  ("M-g l" . avy-goto-line))
+(use-package crux
+  :ensure t :defer t :pin me
+  :bind
+  ("C-^" . crux-top-join-line)
+  ("C-a" . crux-move-beginning-of-line)
+  ("C-o" . crux-smart-open-line-above)
+  ("M-o" . crux-smart-open-line)
+  ("C-c c" . crux-create-scratch-buffer)
+  ("C-c d" . crux-duplicate-current-line-or-region)
+  ("C-c M-d" . crux-duplicate-and-comment-current-line-or-region)
+  ("C-c D" . crux-delete-file-and-buffer)
+  ("C-c r" . crux-rename-buffer-and-file)
+  ("C-c t" . crux-visit-term-buffer)
+  ("C-h RET" . crux-find-user-init-file)
+  ("C-x / e" . crux-open-with)
+  ("C-x 7" . crux-swap-windows))
+(use-package expand-region
+  :ensure t :defer t
+  :bind ("M-#" . er/expand-region))
+(use-package move-text
+  :ensure t :defer t
+  :bind
+  ("M-g <up>" . move-text-up)
+  ("M-g <down>" . move-text-down))
+(use-package ace-window
+  :ensure t :defer t
+  :bind ("C-x o" . ace-window)
+  :config
+  (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l)
+        aw-scope (quote frame)))
 (use-package undo-tree
   :ensure t
   :init
@@ -552,16 +501,67 @@
         undo-tree-history-directory-alist
         `((".*" . ,temporary-file-directory)))
   (global-undo-tree-mode))
-;; pinentry for GPG
 (use-package pinentry
   :ensure t
   :init (pinentry-start))
+(use-package multiple-cursors
+  :ensure t :defer t
+  :bind
+  ("C-c e a" . mc/mark-all-like-this)
+  ("C-c e n" . mc/mark-next-like-this)
+  ("C-c e p" . mc/mark-previous-like-this)
+  ("C-c e l" . mc/edit-lines)
+  ("C-c e r" . mc/mark-all-in-region))
+
+;;; CHECKER: flycheck(C-h .)
+(use-package flycheck
+  :ensure t :defer t
+  :config
+  (defun flycheck-maybe-display-error-at-point-soon() nil)
+  (setq flycheck-highlighting-mode (quote columns))
+  ;; g-n & g-p bindings
+  (define-key flycheck-mode-map (kbd "M-g n") #'flycheck-next-error)
+  (define-key flycheck-mode-map (kbd "M-g p") #'flycheck-previous-error)
+  :hook (prog-mode . flycheck-mode))
 
+;;; DIRED
+(use-package dired :defer t
+  :config (setq dired-listing-switches "-alh"))
 (use-package diredfl
   :ensure t :defer t
   :init (add-hook 'dired-mode-hook 'diredfl-mode))
 
-;;; BUILTIN
+;;; TERM: shell, term, xclip
+(defun interactive-cd (dir)
+  "Prompt for a DIR and cd to it."
+  (interactive "Dcd ")
+  (let ((inhibit-read-only t))
+    (insert (concat "cd " dir)))
+  (pcase major-mode
+    ('shell-mode (comint-send-input))
+    ('eshell-mode (eshell-send-input))
+    ('term-mode (term-send-input))))
+(use-package shell
+  :bind (:map shell-mode-map ("C-c d" . interactive-cd)))
+(use-package term
+  :hook
+  (term-mode . (lambda()
+                 (let (term-escape-char) (term-set-escape-char ?\C-x))))
+  :bind
+  (:map term-mode-map
+        ("C-c d" . interactive-cd))
+  (:map term-raw-map
+        ("M-x"  . execute-extended-command)
+        ("C-c C-y" . term-paste)
+        ("C-c d" . interactive-cd)))
+(use-package xclip ;; -- don't use xsel
+  :ensure t :defer t
+  :init
+  (add-hook 'tty-setup-hook
+            (lambda()(require 'xclip nil t)
+              (ignore-errors (xclip-mode)))))
+
+;; BUILTIN
 (use-package ediff
   :ensure nil :defer t
   :config
@@ -573,7 +573,6 @@
   (add-hook 'savehist-save-hook
             (lambda () (setq savehist-minibuffer-history-variables
                              (delete 'eww-prompt-history savehist-minibuffer-history-variables)))))
-
 (use-package autorevert
   ;; revert buffers when their files/state have changed
   :hook (focus-in . doom-auto-revert-buffers-h)
@@ -597,12 +596,6 @@
     "Auto revert stale buffers in visible windows, if necessary."
     (dolist (buf (doom-visible-buffers))
       (with-current-buffer buf (doom-auto-revert-buffer-h)))))
-(use-package isearch :defer t
-  :init
-  (global-set-key (kbd "M-s s") 'isearch-forward-regexp)
-  (define-key isearch-mode-map (kbd "M-s %") 'isearch-query-replace-regexp))
-(use-package dired :defer t
-  :config (setq dired-listing-switches "-alh"))
 (use-package compile :defer t
   :init (global-set-key (kbd "C-x m") 'compile)
   :config
@@ -615,7 +608,8 @@
       (ansi-color-apply-on-region compilation-filter-start (point))))
   ;; Handle ansi codes in compilation buffer
   (add-hook 'compilation-filter-hook #'doom-apply-ansi-color-to-compilation-buffer-h))
-
+
+;; MAIL
 (use-package gnus :defer t
   :config
   (setq gnus-select-method '(nntp "news.gmane.org"))
@@ -625,48 +619,18 @@
         gnus-sum-thread-tree-leaf-with-other "├─> "
         gnus-sum-thread-tree-vertical        "│ "
         gnus-sum-thread-tree-single-leaf     "└─> "))
-
-;; term/shell
-(defun interactive-cd (dir)
-  "Prompt for a DIR and cd to it."
-  (interactive "Dcd ")
-  (let ((inhibit-read-only t))
-    (insert (concat "cd " dir)))
-  (pcase major-mode
-    ('shell-mode (comint-send-input))
-    ('eshell-mode (eshell-send-input))
-    ('term-mode (term-send-input))))
-
-(use-package shell
-  :bind (:map shell-mode-map ("C-c d" . interactive-cd)))
-(use-package term
-  :hook
-  (term-mode . (lambda()
-                 (let (term-escape-char) (term-set-escape-char ?\C-x))))
-  :bind
-  (:map term-mode-map
-        ("C-c d" . interactive-cd))
-  (:map term-raw-map
-        ("M-x"  . execute-extended-command)
-        ("C-c C-y" . term-paste)
-        ("C-c d" . interactive-cd)))
-;; project-temp-root
-(defvar project-temp-root "~/projects/")
-(defun project-temp-M-x (&optional prefix)
-  "With PREFIX we will set project-temp-root."
-  (interactive "P")
-  (if prefix (setq project-temp-root (read-directory-name "Select dir: ")))
-  (unless (fboundp 'embark-chroot) (require 'embark))
-  (embark-chroot project-temp-root))
-(global-set-key (kbd "C-x P") #'project-temp-M-x)
 
-;;; MODELINE
+;;; THEMES
+(use-package doom-themes
+  :ensure t
+  :init (load-theme 'doom-gruvbox t)
+  :config (doom-themes-org-config))
+;; MODELINE
 (setq mode-line-position
       '((line-number-mode ("(%l" (column-number-mode ",%c")))
         (-4 ":%p" ) (")")))
 (setq-default mode-line-buffer-identification
               (propertized-buffer-identification "%b"))
-
 (defsubst modeline-column (pos)
   "Get the column of the position `POS'."
   (save-excursion (goto-char pos) (current-column)))
@@ -819,10 +783,6 @@
   "Share buffer to online."
   (interactive)
   (call-interactively share-to-online-func))
-
-(defun package-installs (&rest packages)
-  "Install PACKAGES."
-  (dolist (package packages) (package-install package)))
 
 (global-set-key (kbd "M-D") 'kill-whole-line)
 (global-set-key (kbd "M-w") 'my-kill-ring-save)
@@ -918,7 +878,7 @@
  '(symbol-overlay-default-face ((t (:inherit bold :underline t))))
  '(vc-state-base ((t (:inherit font-lock-string-face :weight bold)))))
 
-;;; PATCHING
+;; PATCHING
 (advice-add #'yes-or-no-p :override #'y-or-n-p)
 (unless (daemonp)
   (advice-add #'display-startup-echo-area-message :override #'ignore))
@@ -929,9 +889,12 @@
 (setq minibuffer-prompt-properties
       '(read-only t cursor-intangible t face minibuffer-prompt))
 (add-hook 'minibuffer-setup-hook #'cursor-intangible-mode)
-
 
-;;; LANGUAGES
+;;; DEVELOPMENT ENV
+(defun package-installs (&rest packages)
+  "Install PACKAGES."
+  (dolist (package packages) (package-install package)))
+
 ;; .emacs
 (defun develop-dot()
   "Diff 'user-init-file - .emacs."
@@ -1094,6 +1057,7 @@ https://download.eclipse.org/jdtls/snapshots/jdt-language-server-latest.tar.gz"
 (use-package lsp-java
   :defer t
   :init (add-hook 'java-mode-hook #'lsp-deferred))
+
 ;; html-mode
 (defun develop-html()
   "HTML development."
