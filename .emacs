@@ -278,6 +278,7 @@
         persp-initial-frame-name "0")
   (persp-mode)
   :bind
+  ("C-x b" . persp-switch-to-buffer*)
   ("C-x x" . persp-switch-last)
   ("<f5>" . persp-switch-last)
   (:map perspective-map ("z" . perspective-map))
