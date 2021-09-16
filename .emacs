@@ -41,6 +41,7 @@
 
 ;;; COMPLETION SYSTEM: vertico, orderless, marginalia, consult, embark
 (use-package vertico
+  :ensure t
   :init (vertico-mode)
   :config
   (setq vertico-cycle t)
