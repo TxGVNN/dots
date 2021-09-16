@@ -272,7 +272,7 @@
           (magit-project-status "git")
           (embark-on-project "embark"))))
 (use-package perspective
-  :ensure t
+  :ensure t :pin me
   :init
   (setq persp-mode-prefix-key (kbd "C-z")
         persp-initial-frame-name "0")
@@ -283,6 +283,8 @@
   ("<f5>" . persp-switch-last)
   (:map perspective-map ("z" . perspective-map))
   :config
+  (with-eval-after-load 'marginalia
+    (add-to-list 'marginalia-command-categories '(persp-switch-to-buffer* . buffer)))
   ;; switch persp with project
   (defun project-current (&optional maybe-prompt directory)
     "Override project-current"
