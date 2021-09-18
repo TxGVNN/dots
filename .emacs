@@ -45,6 +45,7 @@
   :init (vertico-mode)
   :config
   (setq vertico-cycle t)
+  (delete ".git/" completion-ignored-extensions)
   :bind
   (:map vertico-map
         ("<prior>" . vertico-scroll-down)
@@ -272,6 +273,11 @@
           (project-shell "shell")
           (magit-project-status "git")
           (embark-on-project "embark"))))
+(use-package envrc
+  :ensure t
+  :config
+  (setq envrc-none-lighter nil)
+  :init (envrc-global-mode))
 (use-package perspective
   :ensure t :pin me
   :init
@@ -704,8 +710,8 @@
 (defun yank-file-path ()
   "Yank file path of buffer."
   (interactive)
-  (let ((filename (if (equal major-mode 'dired-mode) default-directory
-                    (buffer-file-name))))
+  (let ((filename (if (buffer-file-name) (buffer-file-name)
+                    default-directory)))
     (when filename (kill-new filename)
           (message "Yanked %s (%s)" filename (what-line)))))
 (defun split-window-vertically-last-buffer (prefix)

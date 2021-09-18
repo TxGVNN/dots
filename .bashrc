@@ -85,12 +85,15 @@ function mkcd(){
     fi
     mkdir "$1" && cd "$1"
 }
+# direnv
+if type -p direnv &>/dev/null; then
+    eval "$(direnv hook bash)"
+fi
 
 # SSH and screen
 function sshscreen(){
     ssh "$@" -v -t 'if screen -ls | grep gtx -q ; then screen -x gtx ;else screen -S gtx ;fi'
 }
-
 # SSH and screen
 function sshtmux(){
     ssh "$@" -v -t 'if tmux ls | grep gtx -q ; then tmux at -t gtx ;else tmux new -s gtx ;fi'
