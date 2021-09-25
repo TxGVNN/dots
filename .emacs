@@ -154,8 +154,8 @@
                    (embark--action-keymap 'file nil) `(,(list :type 'file :target `,dir)))))
       (command-execute action)))
   ;; project become
-  (defun embark-become-project(&optional full)
-    (interactive "P")
+  (defun embark-become-project (&optional _target)
+    (interactive "s") ; prompt for _target and ignore it
     (embark--quit-and-run
      (lambda ()
        (let ((use-dialog-box nil)
@@ -858,7 +858,7 @@
  '(electric-indent-mode nil)
  '(enable-local-variables :all)
  '(enable-recursive-minibuffers t)
- '(ffap-machine-p-known 'reject)
+ '(ffap-machine-p-known 'reject t)
  '(global-hl-line-mode t)
  '(indent-tabs-mode nil)
  '(inhibit-default-init nil)
