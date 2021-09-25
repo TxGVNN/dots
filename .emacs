@@ -213,7 +213,7 @@
   (define-key isearch-mode-map [remap isearch-query-replace-regexp] #'anzu-isearch-query-replace-regexp))
 (use-package rg :ensure t :defer t)
 
-;;; WORKSPACE: project-0.6, perrspective
+;;; WORKSPACE: project-0.6, perspective, envrc
 (use-package project
   :ensure t :defer t
   :bind
@@ -276,7 +276,9 @@
 (use-package envrc
   :ensure t
   :config
-  (setq envrc-none-lighter nil)
+  (setq envrc-none-lighter nil
+        envrc-on-lighter '(" env[" (:propertize "on" face envrc-mode-line-on-face) "]")
+        envrc-error-lighter '(" env[" (:propertize "error" face envrc-mode-line-error-face) "]"))
   :init (envrc-global-mode))
 (use-package perspective
   :ensure t :pin me
