@@ -7,10 +7,8 @@
 ;;; [ @author TxGVNN ]
 
 ;;; Code:
-(when (version< emacs-version "26.1")
-  (error "Requires GNU Emacs 26.1 or newer, but you're running %s" emacs-version))
-(when (version< emacs-version "27")
-  (setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3"))
+(when (version< emacs-version "27.1")
+  (error "Requires GNU Emacs 27.1 or newer, but you're running %s" emacs-version))
 
 (setq gc-cons-threshold most-positive-fixnum) ;; enable gcmh
 (unless (member "comp.o" build-files)
