@@ -288,8 +288,8 @@
   :ensure t
   :config
   (setq envrc-none-lighter nil
-        envrc-on-lighter '(" env[" (:propertize "on" face envrc-mode-line-on-face) "]")
-        envrc-error-lighter '(" env[" (:propertize "error" face envrc-mode-line-error-face) "]"))
+        envrc-on-lighter " env"
+        envrc-error-lighter '(:propertize " env" face envrc-mode-line-error-face))
   :init (envrc-global-mode))
 (use-package perspective
   :ensure t :pin me
@@ -1134,7 +1134,7 @@ npm i -g typescript-language-server; npm i -g typescript"
 (defun develop-kubernetes()
   "Kubernetes tools."
   (interactive)
-  (package-installs 'kubel 'k8s-mode))
+  (package-installs 'kubel 'kubedoc 'k8s-mode))
 (add-hook 'k8s-mode-hook #'yas-minor-mode)
 
 ;; keep personal settings not in the .emacs file
