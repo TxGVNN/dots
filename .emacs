@@ -144,6 +144,7 @@
 (use-package embark
   :ensure t
   :bind
+  ("C-c /" . embark-act)
   (:map minibuffer-local-map
         ("M-o" . embark-act))
   (:map embark-file-map
@@ -173,6 +174,9 @@
              (this-command 'project-switch-project))
          (command-execute this-command)))))
   (define-key embark-general-map (kbd "p") #'embark-become-project)
+  ;; region
+  (add-to-list 'embark-allow-edit-actions 'async-shell-from-region)
+  (define-key embark-region-map (kbd "&") #'async-shell-from-region)
   ;; term
   (defun embark-run-term(dir)
     "Create or visit a terminal buffer."
@@ -405,7 +409,7 @@
 ;; project-temp-root
 (defvar project-temp-root "~/projects/")
 (defun project-temp-M-x (&optional prefix)
-  "With PREFIX we will set project-temp-root."
+  "With PREFIX we will set `project-temp-root'."
   (interactive "P")
   (if prefix (setq project-temp-root (read-directory-name "Select dir: ")))
   (unless (fboundp 'embark-chroot) (require 'embark))
@@ -800,6 +804,17 @@
   (let ((help (help-at-pt-kbd-string)))
     (if help (eww (read-string "Search: " help)) (message "Nothing!"))))
 
+(defun async-shell-from-region (start end &optional command)
+  "Run async shell from region(START END &optional COMMAND)."
+  (interactive
+   (let (string)
+     (unless (mark)
+       (user-error "The mark is not set now, so there is no region"))
+     (setq string (read-shell-command "Async shell command: "
+                                      (buffer-substring-no-properties (region-beginning) (region-end))))
+     (list (region-beginning) (region-end) string)))
+  (async-shell-command command (format "*async-shell:%s*"(format-time-string "%y%m%d_%H%M%S"))))
+
 (defvar share-to-online-func
   'crux-share-to-transfersh)
 (defun share-to-online ()
@@ -1049,6 +1064,9 @@ Please install:
 (add-hook 'php-mode-hook
           (lambda() (add-to-list 'company-backends 'company-ac-php-backend)))
 
+;; erlang
+(add-hook 'erlang-mode-hook #'lsp-deferred)
+
 ;; terraform-mode
 (defun develop-terraform()
   "Terraform development."
@@ -1081,7 +1099,6 @@ https://download.eclipse.org/jdtls/snapshots/jdt-language-server-latest.tar.gz"
   :defer t
   :init (add-hook 'java-mode-hook #'lsp-deferred))
 
-;; html-mode
 (defun develop-html()
   "HTML development."
   (interactive)
@@ -1112,10 +1129,6 @@ npm i -g typescript-language-server; npm i -g typescript"
                     (substring (md5 (format "%s%s" (emacs-pid) (current-time))) 0 4)
                     var var))))
 
-;; erlang
-(add-hook 'erlang-mode-hook #'lsp-deferred)
-
-;; gitlab-mode
 (defun develop-gitlab-ci()
   "Gitlab-CI development."
   (interactive)
