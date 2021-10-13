@@ -7,8 +7,10 @@
 ;;; [ @author TxGVNN ]
 
 ;;; Code:
-(when (version< emacs-version "27.1")
-  (error "Requires GNU Emacs 27.1 or newer, but you're running %s" emacs-version))
+(when (version< emacs-version "26.1")
+  (error "Requires GNU Emacs 26.1 or newer, but you're running %s" emacs-version))
+(when (version< emacs-version "27")
+  (setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3"))
 
 (setq gc-cons-threshold most-positive-fixnum) ;; enable gcmh
 (unless (member "comp.o" build-files)
@@ -37,17 +39,28 @@
   :init (gcmh-mode)
   :config (add-to-list 'hidden-minor-modes 'gcmh-mode))
 
-;;; COMPLETION SYSTEM: vertico, orderless, marginalia, consult, embark
-(use-package vertico
-  :ensure t
-  :init (vertico-mode)
-  :config
-  (setq vertico-cycle t)
-  (delete ".git/" completion-ignored-extensions)
-  :bind
-  (:map vertico-map
-        ("<prior>" . vertico-scroll-down)
-        ("<next>" . vertico-scroll-up)))
+;;; COMPLETION SYSTEM: vertico|selectrum, orderless, marginalia, consult, embark
+(if (version< emacs-version "27.1")
+    (use-package selectrum
+      :ensure t
+      :init (selectrum-mode)
+      :bind
+      ("C-x C-r" . selectrum-repeat)
+      (:map selectrum-minibuffer-map
+            ("<prior>" . selectrum-previous-page)
+            ("<next>" . selectrum-next-page)))
+  (use-package vertico
+    :ensure t
+    :init (vertico-mode)
+    :config
+    (setq vertico-cycle t)
+    (delete ".git/" completion-ignored-extensions)
+    :bind
+    ("C-x C-r" . vertico-repeat)
+    (:map vertico-map
+          ("<prior>" . vertico-scroll-down)
+          ("<next>" . vertico-scroll-up))))
+
 (use-package orderless
   :ensure t :defer t
   :custom
@@ -84,7 +97,7 @@
   ;; Otherwise use the default `completion--in-region' function.
   (setq completion-in-region-function
         (lambda (&rest args)
-          (apply (if vertico-mode
+          (apply (if (and (fboundp 'vertico-mode) vertico-mode)
                      #'consult-completion-in-region
                    #'completion--in-region)
                  args)))
@@ -1129,11 +1142,10 @@ npm i -g typescript-language-server; npm i -g typescript"
   (when (file-exists-p personal-settings)
     (load-file personal-settings)))
 
-(run-with-idle-timer
- 0.1 nil
- (lambda()
-   (message (format "init-time %.03fs"
-                    (float-time (time-subtract after-init-time before-init-time))))))
+(add-hook 'emacs-startup-hook
+          (lambda ()
+            (message "init-time %.03fs"
+                     (float-time (time-subtract after-init-time before-init-time)))))
 
 (provide '.emacs)
 ;;; .emacs ends here
