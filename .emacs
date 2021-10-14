@@ -553,7 +553,16 @@
 
 ;;; DIRED
 (use-package dired :defer t
-  :config (setq dired-listing-switches "-alh"))
+  :config
+  (defun dired-auto-update-name (&optional suffix)
+    "Auto update name with SUFFIX.ext."
+    (interactive "p")
+    (let* ((filename (file-name-nondirectory (dired-get-file-for-visit)))
+           (suffix (replace-regexp-in-string
+                    "\n" "" (shell-command-to-string (format "stat %s|grep Change|awk '{print $2\"_\"$3}'" filename)))))
+      (rename-file filename (file-name-with-extension filename (format "%s.%s" suffix (file-name-extension filename))) t)
+      (revert-buffer)))
+  (setq dired-listing-switches "-alh"))
 (use-package diredfl
   :ensure t :defer t
   :init (add-hook 'dired-mode-hook 'diredfl-mode))
