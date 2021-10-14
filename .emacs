@@ -110,7 +110,8 @@
         consult-preview-key (kbd "C-l"))
   (setf (alist-get 'slime-repl-mode consult-mode-histories)
         'slime-repl-input-history)
-  (defun consult--directory-prompt-1 (prompt dir)
+  (advice-add #'consult--directory-prompt-1 :override #'consult--directory-prompt-1-with-dir)
+  (defun consult--directory-prompt-1-with-dir (prompt dir)
     "Override consult--directory-prompt-1(PROMPT DIR)."
     (let ((edir (file-name-as-directory (expand-file-name dir)))
           (ddir (file-name-as-directory (expand-file-name default-directory))))
@@ -310,7 +311,7 @@
   (with-eval-after-load 'marginalia
     (add-to-list 'marginalia-command-categories '(persp-switch-to-buffer* . buffer)))
   ;; switch persp with project
-  (advice-add 'project-current :filter-return #'project-current-with-persp)
+  (advice-add #'project-current :filter-return #'project-current-with-persp)
   (defun project-current-with-persp (pr)
     "Override project-current(MAYBE-PROMPT DIRECTORY)."
     (if-let* ((bound-and-true-p persp-mode)
@@ -319,7 +320,8 @@
   ;; hack local var when switch
   (add-hook 'persp-switch-hook #'hack-dir-local-variables-non-file-buffer)
   ;; show project folder of persp-curr
-  (defun persp-update-modestring ()
+  (advice-add #'persp-update-modestring :override #'persp-update-modestring-only-curr)
+  (defun persp-update-modestring-only-curr ()
     "Override persp-update-modestring."
     (when (and persp-show-modestring (persp-name (persp-curr)))
       (let ((open (list (nth 0 persp-modestring-dividers)))
@@ -338,7 +340,8 @@
                 (ibuffer-do-sort-by-alphabetic))))
   (with-eval-after-load 'ibuffer
     (require 'ibuf-ext)
-    (defun ibuffer-visit-buffer (&optional single)
+    (advice-add #'ibuffer-visit-buffer :override #'ibuffer-visit-buffer-persp)
+    (defun ibuffer-visit-buffer-persp (&optional single)
       "Override 'ibuffer-visit-buffer with support perspective."
       (interactive "P")
       (let ((buffer (ibuffer-current-buffer t)))
@@ -349,7 +352,8 @@
         (switch-to-buffer buffer)
         (when single (delete-other-windows)))))
   ;; find-file
-  (defun find-file (filename &optional wildcards)
+  (advice-add #'find-file :override #'find-file-persp)
+  (defun find-file-persp (filename &optional wildcards)
     "Override 'find-file(FILENAME WILDCARDS)."
     (interactive
      (find-file-read-args "Find file: "
@@ -362,7 +366,8 @@
         (pop-to-buffer-same-window value))))
   ;; compile
   (with-eval-after-load 'compile
-    (defun compile (command &optional comint)
+    (advice-add #'compile :override #'compile-with-nohistory)
+    (defun compile-with-nohistory (command &optional comint)
       "Override compile(COMMAND &optional COMINT)."
       (interactive
        (list
@@ -378,7 +383,8 @@
     (defun persp--get-command-history (persp)
       (or (gethash persp persp-compile-history)
           (puthash persp (make-ring 16) persp-compile-history)))
-    (defun compilation-read-command (command)
+    (advice-add #'compilation-read-command :override #'compilation-read-command-persp)
+    (defun compilation-read-command-persp (command)
       "Override compilation-read-command (COMMAND)."
       (let* ((persp-name (if (bound-and-true-p persp-mode)
                              (persp-name (persp-curr)) "0"))
@@ -915,7 +921,7 @@
 (advice-add #'yes-or-no-p :override #'y-or-n-p)
 (unless (daemonp)
   (advice-add #'display-startup-echo-area-message :override #'ignore))
-(advice-add 'base64-encode-region
+(advice-add #'base64-encode-region
             :before (lambda (&rest _args)
                       "Pass prefix arg as third arg to `base64-encode-region'."
                       (interactive "r\nP")))
@@ -1020,7 +1026,7 @@ Please install:
   "Hooks for python."
   (python-pyvenv-activate)
   (lsp-deferred)
-  (advice-add 'switch-to-buffer :after 'python-pyvenv-activate '((name . "python-pyvenv")))
+  (advice-add #'switch-to-buffer :after #'python-pyvenv-activate '((name . "python-pyvenv")))
   (add-hook 'find-file-hook #'python-pyvenv-activate t t))
 (add-hook 'python-mode-hook #'python-install-hooks)
 (with-eval-after-load 'python ;; built-in
