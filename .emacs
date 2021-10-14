@@ -310,26 +310,12 @@
   (with-eval-after-load 'marginalia
     (add-to-list 'marginalia-command-categories '(persp-switch-to-buffer* . buffer)))
   ;; switch persp with project
-  (defun project-current (&optional maybe-prompt directory)
-    "Override project-current"
-    (unless directory (setq directory default-directory))
-    (let ((pr (project--find-in-directory directory)))
-      (cond
-       (pr)
-       ((unless project-current-inhibit-prompt
-          maybe-prompt)
-        (setq directory (project-prompt-project-dir)
-              pr (project--find-in-directory directory))))
-      (when maybe-prompt
-        (if pr
-            (project-remember-project pr)
-          (project--remove-from-project-list
-           directory "Project `%s' not found; removed from list")
-          (setq pr (cons 'transient directory))))
-      (if-let* ((bound-and-true-p persp-mode)
-                (cdr pr))
-          (persp-switch (cdr pr)))
-      pr))
+  (advice-add 'project-current :filter-return #'project-current-with-persp)
+  (defun project-current-with-persp (pr)
+    "Override project-current(MAYBE-PROMPT DIRECTORY)."
+    (if-let* ((bound-and-true-p persp-mode)
+              (cdr pr))
+        (persp-switch (cdr pr))) pr)
   ;; hack local var when switch
   (add-hook 'persp-switch-hook #'hack-dir-local-variables-non-file-buffer)
   ;; show project folder of persp-curr
