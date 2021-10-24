@@ -279,6 +279,21 @@
     (let* ((project (project-current t))
            (org-default-notes-file (concat (cdr project) "tasks.org")))
       (call-interactively 'org-capture)))
+  (defun project-save-buffers ()
+    "Save all project buffers."
+    (interactive)
+    (let* ((project (project-current t))
+           (buffers (project--buffer-list project))
+           (modified-buffers (cl-remove-if-not (lambda (buf)
+                                                 (and (buffer-file-name buf)
+                                                      (buffer-modified-p buf)))
+                                               buffers)))
+      (if (null modified-buffers)
+          (message "No buffers need saving")
+        (dolist (buf modified-buffers)
+          (with-current-buffer buf
+            (save-buffer)))
+        (message "Saved %d buffers" (length modified-buffers)))))
   ;; switch commands
   (setq project-switch-commands
         '((project-find-file "file")
