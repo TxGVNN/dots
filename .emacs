@@ -153,6 +153,7 @@
         ("M-o" . embark-act))
   (:map embark-file-map
         ("t" . embark-run-term)
+        ("s" . embark-run-shell)
         ("+" . embark-make-directory)
         ("x" . consult-file-externally))
   (:map embark-general-map
@@ -183,10 +184,19 @@
   (define-key embark-region-map (kbd "&") #'async-shell-from-region)
   ;; term
   (defun embark-run-term(dir)
-    "Create or visit a terminal buffer."
+    "Create or visit a ansi-term buffer."
     (interactive "D")
     (let ((default-directory (file-name-directory dir)))
       (crux-visit-term-buffer t)))
+  (defun embark-run-shell(dir)
+    "Create or visit a shell buffer."
+    (interactive "D")
+    (let* ((default-directory dir)
+           (shell-name (format "shell(%s)" (crux-directory-domain-name)))
+           (shell-buffer (get-buffer shell-name)))
+      (if (and shell-buffer (not current-prefix-arg))
+          (pop-to-buffer-same-window shell-buffer)
+        (shell (generate-new-buffer-name shell-name)))))
   (defun embark-make-directory(dir)
     (interactive "D")
     (make-directory dir)
