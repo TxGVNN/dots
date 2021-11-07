@@ -59,18 +59,21 @@
     ("C-x C-r" . vertico-repeat)
     (:map vertico-map
           ("<prior>" . vertico-scroll-down)
-          ("<next>" . vertico-scroll-up))))
+          ("<next>" . vertico-scroll-up)))
+  (use-package marginalia
+    :ensure t
+    :init (marginalia-mode)))
 
 (use-package orderless
   :ensure t :defer t
   :custom
+  (orderless-matching-styles
+   '(orderless-regexp orderless-literal orderless-strict-initialism))
   (completion-styles '(orderless))
   (completion-category-defaults nil)
-  (completion-category-overrides '((file (styles partial-completion))
+  (completion-category-overrides '((file (styles basic partial-completion))
                                    (minibuffer (initials)))))
-(use-package marginalia
-  :ensure t
-  :init (marginalia-mode))
+
 (use-package consult
   :ensure t
   :defer t
@@ -229,16 +232,16 @@
   (define-key isearch-mode-map [remap isearch-query-replace-regexp] #'anzu-isearch-query-replace-regexp))
 (use-package rg :ensure t :defer t)
 
-;;; WORKSPACE: project-0.6, perspective, envrc
+;;; WORKSPACE: project, perspective, envrc
 (use-package project
-  :ensure t :defer t
+  :defer t
   :bind
   (:map project-prefix-map
         ("M-x" . project-execute-extended-command)
         ("v" . magit-project-status))
   :config
   (unless (assq 'project package-alist)
-    (user-error "Please install `project' package latest from ELPA"))
+    (warn "If `project' < 0.6, please install latest from ELPA"))
   (setq project-compilation-buffer-name-function 'project-prefixed-buffer-name)
   (defun project-consult-grep (&optional initial)
     "Using consult-grep(INITIAL) in project."
@@ -304,7 +307,7 @@
           (project-shell "shell")
           (magit-project-status "git")
           (embark-on-project "embark"))))
-(use-package envrc
+(use-package envrc ;; direnv > 2.7
   :ensure t
   :config
   (setq envrc-none-lighter nil
@@ -655,7 +658,7 @@
 ;; MAIL
 (use-package gnus :defer t
   :config
-  (setq gnus-select-method '(nntp "news.gmane.org"))
+  (setq gnus-select-method '(nntp "news.gmane.io"))
   (setq gnus-summary-line-format "%U%R%z %d %-23,23f (%4,4L) %{%B%}%s\n"
         gnus-sum-thread-tree-root            ""
         gnus-sum-thread-tree-false-root      "──> "
