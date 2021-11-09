@@ -21,7 +21,7 @@
   (add-hook 'emacs-startup-hook
             (lambda ()
               (setq file-name-handler-alist doom--file-name-handler-alist))))
-(defvar emacs-config-version "20211108.0324")
+(defvar emacs-config-version "20211109.0446")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -854,7 +854,8 @@
      (setq string (read-shell-command "Async shell command: "
                                       (buffer-substring-no-properties (region-beginning) (region-end))))
      (list (region-beginning) (region-end) string)))
-  (async-shell-command command (format "*async-shell:%s*"(format-time-string "%y%m%d_%H%M%S"))))
+  (let ((bufname (car (split-string command))))
+    (async-shell-command command (format "*shell:%s:%s*" bufname (format-time-string "%y%m%d_%H%M%S")))))
 
 (defvar share-to-online-func
   'crux-share-to-transfersh)
