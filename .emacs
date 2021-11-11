@@ -21,7 +21,7 @@
   (add-hook 'emacs-startup-hook
             (lambda ()
               (setq file-name-handler-alist doom--file-name-handler-alist))))
-(defvar emacs-config-version "20211109.0446")
+(defvar emacs-config-version "20211111.0224")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -284,7 +284,7 @@
     (interactive)
     (require 'embark nil t)
     (embark-chroot (project-root (project-current t))))
-  (define-key project-prefix-map (kbd "o") #'embark-on-project)
+  (define-key project-prefix-map (kbd "/") #'embark-on-project)
   ;; org-capture
   (defun project-org-capture ()
     "Capture to project dir."
