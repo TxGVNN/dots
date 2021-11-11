@@ -21,7 +21,7 @@
   (add-hook 'emacs-startup-hook
             (lambda ()
               (setq file-name-handler-alist doom--file-name-handler-alist))))
-(defvar emacs-config-version "20211111.1327")
+(defvar emacs-config-version "20211111.1328")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -1020,11 +1020,15 @@
 ;; org-mode
 (setq org-babel-load-languages (quote ((emacs-lisp . t) (shell . t)))
       org-enforce-todo-dependencies t
+      org-log-done 'time
       org-todo-keyword-faces (quote (("BLOCKED" . error) ("WIP" . warning)))
       org-todo-keywords
       (quote
        ((sequence "TODO(t)" "|" "DONE(d)")
         (sequence "WIP(w)" "BLOCKED(b)" "|" "REJECTED(r)"))))
+(use-package org-bullets
+  :ensure t :defer t
+  :init (add-hook 'org-mode-hook #'org-bullets-mode))
 
 ;; lsp-mode
 (use-package lsp-mode
