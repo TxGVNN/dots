@@ -21,7 +21,7 @@
   (add-hook 'emacs-startup-hook
             (lambda ()
               (setq file-name-handler-alist doom--file-name-handler-alist))))
-(defvar emacs-config-version "20211111.0224")
+(defvar emacs-config-version "20211111.1327")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -226,7 +226,7 @@
   :ensure t :defer t
   :config (setq git-link-use-commit t))
 
-;;; SEARCHING: ripgrep, anzu
+;;; SEARCHING: ripgrep, anzu, engine-mode
 (use-package isearch :defer t
   :init
   (global-set-key (kbd "M-s s") 'isearch-forward-regexp)
@@ -242,6 +242,15 @@
   (define-key isearch-mode-map [remap isearch-query-replace] #'anzu-isearch-query-replace)
   (define-key isearch-mode-map [remap isearch-query-replace-regexp] #'anzu-isearch-query-replace-regexp))
 (use-package rg :ensure t :defer t)
+(use-package engine-mode
+  :ensure t :defer 1
+  :config
+  (defengine debian-package
+    "https://packages.debian.org/search?searchon=names&keywords=%s")
+  (defengine alpine-apk-file
+    "https://pkgs.alpinelinux.org/contents?file=%s&path=&name=&branch=edge&arch=x86_64")
+  (defengine ubuntu-package
+    "https://packages.ubuntu.com/search?keywords=%s&searchon=names&suite=all&section=all"))
 
 ;;; WORKSPACE: project, perspective, envrc
 (use-package project
