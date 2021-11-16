@@ -21,7 +21,7 @@
   (add-hook 'emacs-startup-hook
             (lambda ()
               (setq file-name-handler-alist doom--file-name-handler-alist))))
-(defvar emacs-config-version "20211116.0447")
+(defvar emacs-config-version "20211116.0448")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -1197,6 +1197,17 @@ npm i -g typescript-language-server; npm i -g typescript"
   "Vagrant tools."
   (interactive)
   (package-installs 'vagrant 'vagrant-tramp))
+(use-package vagrant
+  :defer t
+  :config
+  (advice-add #'vagrant-command :override #'vagrant-command-with-name)
+  (defun vagrant-command-with-name (cmd)
+    "Override vagrant-command(CMD)."
+    (let* ((default-directory (file-name-directory (vagrant-locate-vagrantfile)))
+           (name (if current-prefix-arg
+                     (completing-read "Vagrant box: " (vagrant-box-list)) "")))
+      (async-shell-command (concat cmd " " name)
+                           (format "*Vagrant:%s:%s*" default-directory name)))))
 
 (defun develop-docker()
   "Docker tools."
