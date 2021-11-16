@@ -21,7 +21,7 @@
   (add-hook 'emacs-startup-hook
             (lambda ()
               (setq file-name-handler-alist doom--file-name-handler-alist))))
-(defvar emacs-config-version "20211111.1328")
+(defvar emacs-config-version "20211116.0447")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -180,6 +180,12 @@
              (this-command 'project-switch-project))
          (command-execute this-command)))))
   (define-key embark-general-map (kbd "p") #'embark-become-project)
+  ;; perspective
+  (defun embark-persp-to-buffer (&optional _target)
+    (interactive "s") ; prompt for _target and ignore it
+    (embark--quit-and-run
+     (lambda () (command-execute #'persp-switch-to-buffer))))
+  (define-key embark-general-map (kbd "P") #'embark-persp-to-buffer)
   ;; region
   (add-to-list 'embark-allow-edit-actions 'async-shell-from-region)
   (define-key embark-region-map (kbd "&") #'async-shell-from-region)
@@ -346,6 +352,7 @@
   ("<f5>" . persp-switch-last)
   (:map perspective-map ("z" . perspective-map))
   :config
+  ;; buffer
   (with-eval-after-load 'marginalia
     (add-to-list 'marginalia-command-categories '(persp-switch-to-buffer* . buffer)))
   ;; switch persp with project
