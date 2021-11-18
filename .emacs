@@ -21,7 +21,7 @@
   (add-hook 'emacs-startup-hook
             (lambda ()
               (setq file-name-handler-alist doom--file-name-handler-alist))))
-(defvar emacs-config-version "20211116.0448")
+(defvar emacs-config-version "20211118.0916")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -247,6 +247,8 @@
 (use-package engine-mode
   :ensure t :defer 1
   :config
+  (defengine vagrant-box
+    "https://app.vagrantup.com/boxes/search?provider=libvirt&q=%s&utf8=%%E2%%9C%%93")
   (defengine debian-package
     "https://packages.debian.org/search?searchon=names&keywords=%s")
   (defengine alpine-apk-file
@@ -262,8 +264,8 @@
         ("M-x" . project-execute-extended-command)
         ("v" . magit-project-status))
   :config
-  (unless (assq 'project package-alist)
-    (warn "If `project' < 0.6, please install latest from ELPA"))
+  (if (and (version< emacs-version "28") (not (assq 'project package-alist)))
+    (warn "If `project' < 0.8, please install latest from ELPA"))
   (setq project-compilation-buffer-name-function 'project-prefixed-buffer-name)
   (defun project-consult-grep (&optional initial)
     "Using consult-grep(INITIAL) in project."
@@ -916,10 +918,10 @@
 (global-set-key (kbd "M-<up>") #'(lambda () (interactive) (previous-line 3)))
 (global-set-key (kbd "M-<down>") #'(lambda () (interactive) (next-line 3)))
 
-(setq select-safe-coding-system-function t)
 (set-default-coding-systems 'utf-8)
 (prefer-coding-system 'utf-8)
-(setq create-lockfiles nil
+(setq select-safe-coding-system-function t
+      create-lockfiles nil
       auto-save-file-name-transforms `((".*" ,temporary-file-directory t))
       backup-directory-alist `((".*" . ,temporary-file-directory)))
 (custom-set-variables
