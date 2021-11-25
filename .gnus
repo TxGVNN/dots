@@ -29,6 +29,10 @@
 (defvar topic-topology nil)
 (defvar topic-alist nil)
 (defvar email-addresses nil)
+;; https://www.emacswiki.org/emacs/GnusDemon
+(gnus-demon-add-handler 'gnus-demon-scan-news 5 t)
+(add-hook 'gnus-after-getting-new-news-hook 'gnus-notifications)
+(setq gnus-notifications-minimum-level 3)
 ;; (STATELESS END)
 
 ;;; Default setting
