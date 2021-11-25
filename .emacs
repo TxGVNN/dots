@@ -21,7 +21,7 @@
   (add-hook 'emacs-startup-hook
             (lambda ()
               (setq file-name-handler-alist doom--file-name-handler-alist))))
-(defvar emacs-config-version "20211118.0916")
+(defvar emacs-config-version "20211125.1603")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -265,7 +265,15 @@
         ("v" . magit-project-status))
   :config
   (if (and (version< emacs-version "28") (not (assq 'project package-alist)))
-    (warn "If `project' < 0.8, please install latest from ELPA"))
+      (warn "If `project' < 0.8, please install latest from ELPA"))
+  (advice-add #'project-find-file :override #'project-find-file-cd)
+  (defun project-find-file-cd ()
+    "Project-find-file set default-directory is project-root"
+    (interactive)
+    (let* ((pr (project-current t))
+           (default-directory (project-root pr))
+           (dirs (list default-directory)))
+      (project-find-file-in (thing-at-point 'filename) dirs pr)))
   (setq project-compilation-buffer-name-function 'project-prefixed-buffer-name)
   (defun project-consult-grep (&optional initial)
     "Using consult-grep(INITIAL) in project."
@@ -1036,6 +1044,7 @@
   :ensure t :defer t
   :init (add-hook 'org-mode-hook #'org-bullets-mode))
 
+(use-package markdown-mode :ensure t :defer t)
 ;; lsp-mode
 (use-package lsp-mode
   :defer t
