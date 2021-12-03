@@ -1101,21 +1101,8 @@ Please install:
    pip install python-lsp-server[all]"
   (interactive)
   (package-installs 'pyvenv 'lsp-mode))
-(defun python-pyvenv-activate (&rest args)
-  "Python-pyvenv-activate(ARGS)."
-  (if (and (equal major-mode 'python-mode)
-           (fboundp 'pyvenv-activate))
-      (dolist (env '(".venv" ".env" "venv" "env"))
-        (if-let ((dir (locate-dominating-file (or (cdr (project-current nil)) default-directory) env)))
-            (if (file-directory-p (concat dir env))
-                (pyvenv-activate (concat dir env)))))))
-(defun python-install-hooks ()
-  "Hooks for python."
-  (python-pyvenv-activate)
-  (lsp-deferred)
-  (advice-add #'switch-to-buffer :after #'python-pyvenv-activate '((name . "python-pyvenv")))
-  (add-hook 'find-file-hook #'python-pyvenv-activate t t))
-(add-hook 'python-mode-hook #'python-install-hooks)
+(add-hook 'python-mode-hook #'lsp-deferred)
+
 (with-eval-after-load 'python ;; built-in
   (setq python-indent-guess-indent-offset-verbose nil)
   (when (and (executable-find "python3")
