@@ -21,7 +21,7 @@
   (add-hook 'emacs-startup-hook
             (lambda ()
               (setq file-name-handler-alist doom--file-name-handler-alist))))
-(defvar emacs-config-version "20211125.1603")
+(defvar emacs-config-version "20211203-0306")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -153,8 +153,9 @@
   (:map minibuffer-local-map
         ("M-o" . embark-act))
   (:map embark-file-map
-        ("t" . embark-run-term)
         ("s" . embark-run-shell)
+        ("t" . embark-run-term)
+        ("T" . embark-run-vterm)
         ("+" . embark-make-directory)
         ("x" . consult-file-externally))
   (:map embark-general-map
@@ -200,6 +201,11 @@
     (interactive "D")
     (let ((default-directory (file-name-directory dir)))
       (crux-visit-shell-buffer t)))
+  (defun embark-run-vterm(dir)
+    "Create or visit a vterm buffer."
+    (interactive "D")
+    (let ((default-directory (file-name-directory dir)))
+      (crux-visit-vterm-buffer t)))
   (defun embark-make-directory(dir)
     (interactive "D")
     (make-directory dir)
@@ -261,6 +267,8 @@
   :defer t
   :bind
   (:map project-prefix-map
+        ("t" . project-term)
+        ("T" . project-vterm)
         ("M-x" . project-execute-extended-command)
         ("v" . magit-project-status))
   :config
@@ -299,7 +307,16 @@
         (require 'term)
         (ansi-term (or explicit-shell-file-name (getenv "SHELL") "/bin/sh") termname))
       (switch-to-buffer buffer)))
-  (define-key project-prefix-map (kbd "t") #'project-term)
+  (defun project-vterm ()
+    "project-vterm."
+    (interactive)
+    (let* ((default-directory (cdr (project-current t)))
+           (buffer (format "*%s-vterm*" (file-name-nondirectory
+                                         (directory-file-name default-directory)))))
+      (unless (get-buffer buffer)
+        (require 'vterm)
+        (vterm buffer))
+      (switch-to-buffer buffer)))
   ;; embark
   (defun embark-on-project()
     (interactive)
@@ -547,6 +564,7 @@
   ("C-c r" . crux-rename-buffer-and-file)
   ("C-c s" . crux-visit-shell-buffer)
   ("C-c t" . crux-visit-term-buffer)
+  ("C-c T" . crux-visit-vterm-buffer)
   ("C-h RET" . crux-find-user-init-file)
   ("C-x / e" . crux-open-with)
   ("C-x 7" . crux-swap-windows))
