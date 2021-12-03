@@ -21,7 +21,7 @@
   (add-hook 'emacs-startup-hook
             (lambda ()
               (setq file-name-handler-alist doom--file-name-handler-alist))))
-(defvar emacs-config-version "20211203-0306")
+(defvar emacs-config-version "20211203-0308")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -602,6 +602,15 @@
   ("C-c e p" . mc/mark-previous-like-this)
   ("C-c e l" . mc/edit-lines)
   ("C-c e r" . mc/mark-all-in-region))
+(use-package helpful
+  :ensure t :defer t
+  :init
+  (global-set-key [remap describe-command] 'helpful-command)
+  (global-set-key [remap describe-function] 'helpful-function)
+  (global-set-key [remap describe-key] 'helpful-key)
+  (global-set-key [remap describe-macro] 'helpful-macro)
+  (global-set-key [remap describe-variable] 'helpful-variable)
+  (global-set-key [remap describe-symbol] 'helpful-symbol))
 
 ;;; CHECKER: flycheck(C-h .)
 (use-package flycheck
@@ -796,6 +805,13 @@
       (when trg (setcar trg "")))))
 (add-hook 'after-change-major-mode-hook #'purge-minor-modes)
 
+;; never lose cursor
+(defun pulse-line (&rest _)
+  "Pulse the current line."
+  (pulse-momentary-highlight-one-line (point)))
+(dolist (command '(scroll-up-command scroll-down-command recenter-top-bottom other-window))
+  (advice-add command :after #'pulse-line))
+
 (defun my-kill-ring-save ()
   "Better than 'kill-ring-save."
   (interactive)
@@ -896,7 +912,7 @@
      (setq string (read-shell-command "Async shell command: "
                                       (buffer-substring-no-properties (region-beginning) (region-end))))
      (list (region-beginning) (region-end) string)))
-  (let ((bufname (car (split-string command))))
+  (let ((bufname (car (split-string (substring command 0 (if (length< command 9) (length command) 9))))))
     (async-shell-command command (format "*shell:%s:%s*" bufname (format-time-string "%y%m%d_%H%M%S")))))
 
 (defvar share-to-online-func
