@@ -378,13 +378,14 @@
   ;; buffer
   (with-eval-after-load 'marginalia
     (add-to-list 'marginalia-command-categories '(persp-switch-to-buffer* . buffer)))
-  ;; switch persp with project
+  ;; switch persp with project - TODO: Find better solution
   (advice-add #'project-current :filter-return #'project-current-with-persp)
   (defun project-current-with-persp (pr)
     "Override project-current(MAYBE-PROMPT DIRECTORY)."
     (if-let* ((bound-and-true-p persp-mode)
-              (cdr pr))
-        (persp-switch (cdr pr))) pr)
+              (dir (cdr pr)))
+        (unless (equal (persp-name (persp-curr)) dir)
+          (persp-switch dir))) pr)
   ;; hack local var when switch
   (add-hook 'persp-switch-hook #'hack-dir-local-variables-non-file-buffer)
   ;; show project folder of persp-curr
