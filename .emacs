@@ -21,7 +21,7 @@
   (add-hook 'emacs-startup-hook
             (lambda ()
               (setq file-name-handler-alist doom--file-name-handler-alist))))
-(defvar emacs-config-version "20211231-0453")
+(defvar emacs-config-version "20211231-0455")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -353,14 +353,14 @@
   :ensure t
   :config
   (setq envrc-none-lighter nil
-        envrc-on-lighter " env"
+        envrc-on-lighter '(:propertize " env" face envrc-mode-line-on-face)
         envrc-error-lighter '(:propertize " env" face envrc-mode-line-error-face))
   :init (envrc-global-mode))
 (use-package perspective
   :ensure t :pin me
   :init
   (setq persp-mode-prefix-key (kbd "C-z")
-        persp-initial-frame-name "0")
+        persp-initial-frame-name "zero")
   (persp-mode)
   :bind
   ("C-x b" . persp-switch-to-buffer*)
@@ -895,7 +895,7 @@
      (setq string (read-shell-command "Async shell command: "
                                       (buffer-substring-no-properties (region-beginning) (region-end))))
      (list (region-beginning) (region-end) string)))
-  (let ((bufname (car (split-string (substring command 0 (if (length< command 9) (length command) 9))))))
+  (let ((bufname (car (split-string (substring command 0 (if (< (length command) 9) (length command) 9))))))
     (async-shell-command command (format "*shell:%s:%s*" bufname (format-time-string "%y%m%d_%H%M%S")))))
 
 (defvar share-to-online-func
@@ -1228,7 +1228,7 @@ npm i -g typescript-language-server; npm i -g typescript"
 (defun develop-docker()
   "Docker tools."
   (interactive)
-  (package-installs 'dockerfile-mode 'docker))
+  (package-installs 'dockerfile-mode 'docker 'docker-compose-mode))
 
 (defun develop-kubernetes()
   "Kubernetes tools."
