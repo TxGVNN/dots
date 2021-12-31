@@ -21,7 +21,7 @@
   (add-hook 'emacs-startup-hook
             (lambda ()
               (setq file-name-handler-alist doom--file-name-handler-alist))))
-(defvar emacs-config-version "20211203-0308")
+(defvar emacs-config-version "20211231-0453")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -76,8 +76,7 @@
                                    (minibuffer (initials)))))
 
 (use-package consult
-  :ensure t
-  :defer t
+  :ensure t :defer t :pin me
   :bind
   ("M-y" . consult-yank-pop)
   ("M-g g" . consult-goto-line)
@@ -114,12 +113,6 @@
         consult-preview-key (kbd "C-l"))
   (setf (alist-get 'slime-repl-mode consult-mode-histories)
         'slime-repl-input-history)
-  (advice-add #'consult--directory-prompt-1 :override #'consult--directory-prompt-1-with-dir)
-  (defun consult--directory-prompt-1-with-dir (prompt dir)
-    "Override consult--directory-prompt-1(PROMPT DIR)."
-    (let ((edir (file-name-as-directory (expand-file-name dir)))
-          (ddir (file-name-as-directory (expand-file-name default-directory))))
-      (cons (format "%s (%s): " prompt (consult--abbreviate-directory dir)) edir)))
   (defun consult-thing-at-point ()
     "Return a string that corresponds to the current thing at point."
     (substring-no-properties
