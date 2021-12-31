@@ -722,20 +722,10 @@
         gnus-sum-thread-tree-single-leaf     "└─> "))
 
 ;;; THEMES
-
-(if (version< emacs-version "27.1")
-    (use-package doom-themes
-      :ensure t
-      :init (load-theme 'doom-gruvbox t)
-      :config (doom-themes-org-config))
-  (use-package modus-themes
-    :ensure t
-    :init
-    (setq modus-themes-italic-constructs t
-          modus-themes-region '(bg-only no-extend))
-    (modus-themes-load-themes)
-    :config
-    (modus-themes-load-vivendi)))
+(use-package doom-themes
+  :ensure t
+  :init (load-theme 'doom-gruvbox t)
+  :config (doom-themes-org-config))
 
 ;; MODELINE
 (setq mode-line-position
