@@ -181,7 +181,8 @@
      (lambda () (command-execute #'persp-switch-to-buffer))))
   (define-key embark-general-map (kbd "P") #'embark-persp-to-buffer)
   ;; region
-  (add-to-list 'embark-allow-edit-actions 'async-shell-from-region)
+  (add-to-list 'embark-target-injection-hooks
+               '(async-shell-from-region embark--allow-edit))
   (define-key embark-region-map (kbd "&") #'async-shell-from-region)
   ;; term
   (defun embark-run-term(dir)
@@ -360,7 +361,7 @@
   :ensure t :pin me
   :init
   (setq persp-mode-prefix-key (kbd "C-z")
-        persp-initial-frame-name "zero")
+        persp-initial-frame-name "0")
   (persp-mode)
   :bind
   ("C-x b" . persp-switch-to-buffer*)
