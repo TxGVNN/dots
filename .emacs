@@ -19,7 +19,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20220104.1535")
+(defvar emacs-config-version "20220111.0253")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -1065,8 +1065,7 @@
 ;; lsp-mode
 (use-package lsp-mode
   :defer t
-  :init (setq lsp-keymap-prefix "C-x l")
-  :config (setq lsp-headerline-breadcrumb-enable nil))
+  :init (setq lsp-keymap-prefix "C-x l"))
 
 ;; go-mode
 (defun develop-go()
