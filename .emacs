@@ -19,7 +19,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20220112.0328")
+(defvar emacs-config-version "20220110.0330")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -68,7 +68,7 @@
   :ensure t :defer t
   :custom
   (orderless-matching-styles
-   '(orderless-regexp orderless-literal orderless-strict-initialism))
+   '(orderless-regexp orderless-literal orderless-initialism))
   (completion-styles '(orderless))
   (completion-category-defaults nil)
   (completion-category-overrides '((file (styles basic partial-completion))
