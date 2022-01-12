@@ -19,7 +19,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20220111.0253")
+(defvar emacs-config-version "20220112.0328")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -54,6 +54,7 @@
     :config
     (setq vertico-cycle t)
     (delete ".git/" completion-ignored-extensions)
+    (add-hook 'minibuffer-setup-hook #'vertico-repeat-save)
     :bind
     ("C-x C-r" . vertico-repeat)
     (:map vertico-map
@@ -95,7 +96,6 @@
   (:map minibuffer-local-map ("M-r" . consult-history))
   :init
   ;; Use `consult-completion-in-region' if Vertico is enabled.
-  ;; Otherwise use the default `completion--in-region' function.
   (setq completion-in-region-function
         (lambda (&rest args)
           (apply (if (and (fboundp 'vertico-mode) vertico-mode)
@@ -139,18 +139,16 @@
   (require 'consult))
 (use-package embark
   :ensure t
-  :bind
-  ("C-c /" . embark-act)
-  (:map minibuffer-local-map
-        ("M-o" . embark-act))
+  :bind ("C-c /" . embark-act)
+  (:map minibuffer-local-map ("M-o" . embark-act))
+  (:map embark-general-map ("/" . embark-chroot))
+  (:map embark-region-map ("M-&" . async-shell-from-region))
   (:map embark-file-map
         ("s" . embark-run-shell)
         ("t" . embark-run-term)
         ("T" . embark-run-vterm)
         ("+" . embark-make-directory)
         ("x" . consult-file-externally))
-  (:map embark-general-map
-        ("/" . embark-chroot))
   :config
   (setq embark-indicators '(embark-minimal-indicator))
   ;; as chroot
@@ -181,7 +179,6 @@
   ;; region
   (add-to-list 'embark-target-injection-hooks
                '(async-shell-from-region embark--allow-edit))
-  (define-key embark-region-map (kbd "&") #'async-shell-from-region)
   ;; term
   (defun embark-run-term(dir)
     "Create or visit a ansi-term buffer."
@@ -498,7 +495,7 @@
   :ensure t :defer t
   :hook (prog-mode . hl-todo-mode))
 
-;;; COMPLETION CODE: yasnippet, company
+;;; COMPLETION CODE: yasnippet, company, lsp-mode
 (use-package yasnippet
   :ensure t :defer t :pin me
   :config
@@ -533,6 +530,9 @@
       (:around (orig-fun &rest args) set-completion-styles)
     (let ((completion-styles '(basic partial-completion orderless)))
       (apply orig-fun args))))
+(use-package lsp-mode
+  :ensure t :defer t
+  :init (setq lsp-keymap-prefix "C-x l"))
 
 ;;; TOOLS: avy, crux, expand-region, move-text, ace-window, undo-tree,...
 (use-package avy
@@ -891,7 +891,7 @@
    (let (string)
      (unless (mark)
        (user-error "The mark is not set now, so there is no region"))
-     (setq string (read-shell-command "Async shell command: "
+     (setq string (read-shell-command "async-shell: "
                                       (buffer-substring-no-properties (region-beginning) (region-end))))
      (list (region-beginning) (region-end) string)))
   (let ((bufname (car (split-string (substring command 0 (if (< (length command) 9) (length command) 9))))))
@@ -1060,12 +1060,6 @@
 (use-package org-bullets
   :ensure t :defer t
   :init (add-hook 'org-mode-hook #'org-bullets-mode))
-
-(use-package markdown-mode :ensure t :defer t)
-;; lsp-mode
-(use-package lsp-mode
-  :defer t
-  :init (setq lsp-keymap-prefix "C-x l"))
 
 ;; go-mode
 (defun develop-go()
