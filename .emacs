@@ -19,7 +19,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20220112.0330")
+(defvar emacs-config-version "20220205.1606")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -662,6 +662,8 @@
               (ignore-errors (xclip-mode)))))
 
 ;; BUILTIN
+(use-package tramp :defer t
+  :config (setq tramp-allow-unsafe-temporary-files t))
 (use-package ediff
   :ensure nil :defer t
   :config
