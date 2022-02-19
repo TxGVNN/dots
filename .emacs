@@ -19,7 +19,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20220205.1606")
+(defvar emacs-config-version "20220219.0144")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -679,8 +679,6 @@
   ;; revert buffers when their files/state have changed
   :hook (focus-in . doom-auto-revert-buffers-h)
   :hook (after-save . doom-auto-revert-buffers-h)
-  :hook (doom-switch-buffer . doom-auto-revert-buffer-h)
-  :hook (doom-switch-window . doom-auto-revert-buffer-h)
   :config
   (setq auto-revert-verbose t ; let us know when it happens
         auto-revert-use-notify nil
