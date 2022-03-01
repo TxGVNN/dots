@@ -19,7 +19,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20220301.1348")
+(defvar emacs-config-version "20220301.1349")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -834,7 +834,7 @@
    (concat (file-name-as-directory temporary-file-directory)
            (make-temp-name
             (format "%s_%s_" user-login-name
-                    (format-time-string "%y%m%d-%H%M"))))))
+                    (format-time-string "%Y%m%d-%H%M"))))))
 (defun insert-datetime(&optional prefix)
   "Insert YYYYmmdd-HHMM or YYYY-mm-dd_HH-MM if PREFIX set."
   (interactive "P")
@@ -856,7 +856,7 @@
            ((use-region-p) (buffer-substring-no-properties (point) (mark)))
            (t (buffer-substring (point-min) (point-max)))))
          (buffer-name (format "%s_%s" (file-name-base (buffer-name))
-                              (format-time-string "%y%m%d_%H%M%S")))
+                              (format-time-string "%Y%m%d_%H%M%S")))
          (buffer (get-buffer-create buffer-name)))
     (with-current-buffer buffer
       (insert string)
@@ -869,7 +869,7 @@
          (make-temp-file
           (concat (file-name-base (buffer-name)) "_"
                   (unless (string-prefix-p "*scratch-" (buffer-name))
-                    (format-time-string "%y%m%d-%H%M%S_")))
+                    (format-time-string "%Y%m%d-%H%M%S_")))
           nil (file-name-extension (buffer-name) t))))
     (copy-region-to-scratch filename)))
 (defun find-file-rec ()
@@ -898,7 +898,7 @@
                                       (buffer-substring-no-properties (region-beginning) (region-end))))
      (list (region-beginning) (region-end) string)))
   (let ((bufname (car (split-string (substring command 0 (if (< (length command) 9) (length command) 9))))))
-    (async-shell-command command (format "*shell:%s:%s*" bufname (format-time-string "%y%m%d_%H%M%S")))))
+    (async-shell-command command (format "*shell:%s:%s*" bufname (format-time-string "%Y%m%d_%H%M%S")))))
 
 (defvar share-to-online-func
   'crux-share-to-transfersh)
