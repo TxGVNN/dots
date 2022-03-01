@@ -19,7 +19,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20220301.1349")
+(defvar emacs-config-version "20220301.1350")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -606,6 +606,9 @@
   (global-set-key [remap describe-macro] 'helpful-macro)
   (global-set-key [remap describe-variable] 'helpful-variable)
   (global-set-key [remap describe-symbol] 'helpful-symbol))
+(use-package shell-command+
+  :ensure t :defer t
+  :init (global-set-key (kbd "M-!") #'shell-command+))
 
 ;;; CHECKER: flycheck(C-h .)
 (use-package flycheck
