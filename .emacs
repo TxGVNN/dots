@@ -19,7 +19,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20220219.0144")
+(defvar emacs-config-version "20220301.1348")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -43,8 +43,7 @@
     (use-package selectrum
       :ensure t
       :init (selectrum-mode)
-      :bind
-      ("C-x C-r" . selectrum-repeat)
+      :bind ("C-x C-r" . selectrum-repeat)
       (:map selectrum-minibuffer-map
             ("<prior>" . selectrum-previous-page)
             ("<next>" . selectrum-next-page)))
@@ -55,11 +54,15 @@
     (setq vertico-cycle t)
     (delete ".git/" completion-ignored-extensions)
     (add-hook 'minibuffer-setup-hook #'vertico-repeat-save)
-    :bind
-    ("C-x C-r" . vertico-repeat)
+    :bind ("C-x C-r" . vertico-repeat)
     (:map vertico-map
           ("<prior>" . vertico-scroll-down)
           ("<next>" . vertico-scroll-up)))
+  (use-package vertico-directory
+    :after vertico
+    :ensure nil
+    :bind (:map vertico-map ("M-DEL" . vertico-directory-delete-word))
+    :hook (rfn-eshadow-update-overlay . vertico-directory-tidy))
   (use-package marginalia
     :ensure t
     :init (marginalia-mode)))
