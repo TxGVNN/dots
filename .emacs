@@ -19,7 +19,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20220301.1350")
+(defvar emacs-config-version "20220301.1511")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -1066,6 +1066,7 @@
 (use-package org-bullets
   :ensure t :defer t
   :init (add-hook 'org-mode-hook #'org-bullets-mode))
+(use-package ob-compile :ensure t :defer t)
 
 ;; go-mode
 (defun develop-go()
