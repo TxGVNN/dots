@@ -19,7 +19,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20220301.1511")
+(defvar emacs-config-version "20220311.1707")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -255,8 +255,7 @@
     "https://packages.ubuntu.com/search?keywords=%s&searchon=names&suite=all&section=all"))
 
 ;;; WORKSPACE: project, perspective, envrc
-(use-package project
-  :defer t
+(use-package project :defer t
   :bind
   (:map project-prefix-map
         ("t" . project-term)
@@ -609,6 +608,10 @@
 (use-package shell-command+
   :ensure t :defer t
   :init (global-set-key (kbd "M-!") #'shell-command+))
+(use-package eev
+  :ensure t :defer 1
+  :config (require 'eev-load)
+  (global-set-key (kbd "<f8>") #'eepitch-this-line))
 
 ;;; CHECKER: flycheck(C-h .)
 (use-package flycheck
@@ -1075,8 +1078,7 @@ Please install:
    GO111MODULE=on go get golang.org/x/tools/gopls@latest"
   (interactive)
   (package-installs 'go-mode 'lsp-mode))
-(use-package go-mode
-  :defer t
+(use-package go-mode :defer t
   :config
   (defun lsp-go-install-save-hooks ()
     (if (fboundp 'lsp-deferred)(lsp-deferred))
@@ -1159,8 +1161,7 @@ Please install:
           (lambda()
             (ansible-doc-mode) (yas-minor-mode-on)
             (add-to-list 'company-backends 'company-ansible)))
-(use-package ansible-doc
-  :defer t
+(use-package ansible-doc :defer t
   :config (define-key ansible-doc-mode-map (kbd "M-?") #'ansible-doc))
 
 ;; java-mode
@@ -1169,16 +1170,14 @@ Please install:
 https://download.eclipse.org/jdtls/snapshots/jdt-language-server-latest.tar.gz"
   (interactive)
   (package-install 'lsp-java))
-(use-package lsp-java
-  :defer t
+(use-package lsp-java :defer t
   :init (add-hook 'java-mode-hook #'lsp-deferred))
 
 (defun develop-html()
   "HTML development."
   (interactive)
   (package-install 'indent-guide))
-(use-package indent-guide
-  :defer t
+(use-package indent-guide :defer t
   :hook (html-mode . indent-guide-mode)
   :config (set-face-foreground 'indent-guide-face "dimgray"))
 
@@ -1188,8 +1187,7 @@ https://download.eclipse.org/jdtls/snapshots/jdt-language-server-latest.tar.gz"
 npm i -g typescript-language-server; npm i -g typescript"
   (interactive)
   (package-installs 'web-mode 'eslint-fix 'typescript-mode))
-(use-package web-mode
-  :defer t
+(use-package web-mode :defer t
   :init (add-to-list 'auto-mode-alist '("\\.js\\'" . web-mode)))
 (add-hook 'typescript-mode-hook #'lsp-deferred)
 (defun js-print-debug-at-point()
@@ -1212,8 +1210,7 @@ npm i -g typescript-language-server; npm i -g typescript"
   "Vagrant tools."
   (interactive)
   (package-installs 'vagrant 'vagrant-tramp))
-(use-package vagrant
-  :defer t
+(use-package vagrant :defer t
   :config
   (advice-add #'vagrant-command :override #'vagrant-command-with-name)
   (defun vagrant-command-with-name (cmd)
