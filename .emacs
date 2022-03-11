@@ -19,7 +19,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20220311.1707")
+(defvar emacs-config-version "20220311.1708")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -500,11 +500,11 @@
 ;;; COMPLETION CODE: yasnippet, company, lsp-mode
 (use-package yasnippet
   :ensure t :defer t :pin me
+  :init (yas-global-mode)
   :config
   (setq yas-lighter " υ")
   (define-key yas-minor-mode-map [(tab)] nil)
-  (define-key yas-minor-mode-map (kbd "TAB") nil)
-  :hook ((prog-mode org-mode markdown-mode) . yas-minor-mode))
+  (define-key yas-minor-mode-map (kbd "TAB") nil))
 (use-package yasnippet-snippets
   :ensure t :defer t :pin me)
 (use-package company
@@ -1159,7 +1159,7 @@ Please install:
   (package-installs 'ansible 'ansible-doc 'company-ansible))
 (add-hook 'ansible-hook
           (lambda()
-            (ansible-doc-mode) (yas-minor-mode-on)
+            (ansible-doc-mode)
             (add-to-list 'company-backends 'company-ansible)))
 (use-package ansible-doc :defer t
   :config (define-key ansible-doc-mode-map (kbd "M-?") #'ansible-doc))
@@ -1230,7 +1230,6 @@ npm i -g typescript-language-server; npm i -g typescript"
   "Kubernetes tools."
   (interactive)
   (package-installs 'kubel 'kubedoc 'k8s-mode))
-(add-hook 'k8s-mode-hook #'yas-minor-mode)
 
 ;; keep personal settings not in the .emacs file
 (let ((personal-settings (locate-user-emacs-file "personal.el")))
