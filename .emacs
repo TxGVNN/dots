@@ -19,7 +19,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20220311.1708")
+(defvar emacs-config-version "20220311.1709")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -1038,6 +1038,10 @@
   "ERC configuration."
   (interactive)
   (package-install 'ercn))
+(with-eval-after-load 'erc
+  (setq erc-hide-list '("JOIN" "PART" "QUIT"))
+  (setq erc-default-server "irc.libera.chat")
+  (setq erc-prompt-for-password nil))
 (with-eval-after-load 'ercn
   (setq ercn-notify-rules
         '((current-nick . all)
@@ -1058,14 +1062,19 @@
 (add-hook 'c-mode-common-hook #'my-c-mode-common-hook)
 
 ;; org-mode
-(setq org-babel-load-languages (quote ((emacs-lisp . t) (shell . t)))
-      org-enforce-todo-dependencies t
-      org-log-done 'time
-      org-todo-keyword-faces (quote (("BLOCKED" . error) ("WIP" . warning)))
-      org-todo-keywords
-      (quote
-       ((sequence "TODO(t)" "|" "DONE(d)")
-        (sequence "WIP(w)" "BLOCKED(b)" "|" "REJECTED(r)"))))
+(use-package org :defer t
+  :config
+  (define-key org-src-mode-map (kbd "C-c C-c") #'org-edit-src-exit)
+  (setq org-babel-load-languages (quote ((emacs-lisp . t) (shell . t)))
+        org-enforce-todo-dependencies t
+        org-src-preserve-indentation t
+        org-src-tab-acts-natively t
+        org-log-done 'time
+        org-todo-keyword-faces (quote (("BLOCKED" . error) ("WIP" . warning)))
+        org-todo-keywords
+        (quote
+         ((sequence "TODO(t)" "|" "DONE(d)")
+          (sequence "WIP(w)" "BLOCKED(b)" "|" "REJECTED(r)")))))
 (use-package org-bullets
   :ensure t :defer t
   :init (add-hook 'org-mode-hook #'org-bullets-mode))
@@ -1075,7 +1084,7 @@
 (defun develop-go()
   "Go develoment.
 Please install:
-   GO111MODULE=on go get golang.org/x/tools/gopls@latest"
+   go install golang.org/x/tools/gopls"
   (interactive)
   (package-installs 'go-mode 'lsp-mode))
 (use-package go-mode :defer t
