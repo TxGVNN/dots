@@ -19,7 +19,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20220314.1349")
+(defvar emacs-config-version "20220314.1350")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -208,7 +208,7 @@
   :ensure t
   :init (setq git-gutter:lighter "")
   (add-hook 'magit-post-refresh-hook #'git-gutter:update-all-windows)
-  (global-git-gutter-mode)
+  (add-hook 'after-init-hook #'global-git-gutter-mode)
   :bind
   ("C-x g p" . git-gutter:previous-hunk)
   ("C-x g n" . git-gutter:next-hunk)
@@ -360,7 +360,7 @@
   (setq envrc-none-lighter nil
         envrc-on-lighter '(:propertize " env" face envrc-mode-line-on-face)
         envrc-error-lighter '(:propertize " env" face envrc-mode-line-error-face))
-  :init (envrc-global-mode))
+  :init (add-hook 'after-init-hook #'envrc-global-mode))
 (use-package perspective
   :ensure t :pin me
   :init
@@ -507,7 +507,7 @@
 ;;; COMPLETION CODE: yasnippet, company, lsp-mode
 (use-package yasnippet
   :ensure t :defer t :pin me
-  :init (yas-global-mode)
+  :init (add-hook 'after-init-hook #'yas-global-mode)
   :config
   (setq yas-lighter " υ")
   (define-key yas-minor-mode-map [(tab)] nil)
@@ -516,9 +516,11 @@
   :ensure t :defer t :pin me)
 (use-package company
   :ensure t
-  :init (global-company-mode)
+  :init (add-hook 'after-init-hook #'global-company-mode)
   :bind ("M-]" . company-complete-custom)
   (:map company-active-map
+        ("C-j" . company-abort)
+        ("TAB" . company-complete-common-or-cycle)
         ("C-n" . company-select-next)
         ("C-p" . company-select-previous))
   :config
@@ -594,7 +596,7 @@
   (global-undo-tree-mode))
 (use-package pinentry
   :ensure t
-  :init (pinentry-start))
+  :init (add-hook 'after-init-hook #'pinentry-start))
 (use-package multiple-cursors
   :ensure t :defer t
   :bind
@@ -982,6 +984,7 @@
  '(electric-indent-mode nil)
  '(enable-local-variables :all)
  '(enable-recursive-minibuffers t)
+ '(epg-pinentry-mode 'loopback)
  '(ffap-machine-p-known 'reject t)
  '(global-hl-line-mode t)
  '(indent-tabs-mode nil)
@@ -1002,6 +1005,7 @@
  '(tab-width 4)
  '(tool-bar-mode nil)
  '(use-dialog-box nil)
+ '(vc-follow-symlinks nil)
  '(version-control t)
  '(whitespace-style
    '(face tabs trailing space-before-tab newline empty tab-mark))
