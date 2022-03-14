@@ -19,7 +19,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20220311.1709")
+(defvar emacs-config-version "20220314.1349")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -259,6 +259,7 @@
   :bind
   (:map project-prefix-map
         ("t" . project-term)
+        ("j" . project-jump-persp)
         ("T" . project-vterm)
         ("M-x" . project-execute-extended-command)
         ("v" . magit-project-status))
@@ -337,6 +338,11 @@
           (with-current-buffer buf
             (save-buffer)))
         (message "Saved %d buffers" (length modified-buffers)))))
+  (defun project-jump-persp ()
+    "Just jump to persp of project."
+    (interactive)
+    (let ((dir (cdr (project-current t))))
+      (persp-switch dir)))
   ;; switch commands
   (setq project-switch-commands
         '((project-find-file "file")
@@ -346,6 +352,7 @@
           (project-term "term")
           (project-shell "shell")
           (magit-project-status "git")
+          (project-jump-persp "jump")
           (embark-on-project "embark"))))
 (use-package envrc ;; direnv > 2.7
   :ensure t
