@@ -7,10 +7,8 @@
 ;;; [ @author TxGVNN ]
 
 ;;; Code:
-(when (version< emacs-version "26.1")
-  (error "Requires GNU Emacs 26.1 or newer, but you're running %s" emacs-version))
-(when (version< emacs-version "27")
-  (setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3"))
+(when (version< emacs-version "27.1")
+  (error "Requires GNU Emacs 27.1 or newer, but you're running %s" emacs-version))
 
 (setq gc-cons-threshold most-positive-fixnum) ;; enable gcmh
 ;; doom-emacs:docs/faq.org#unset-file-name-handler-alist-temporarily
@@ -19,14 +17,12 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20220402.1538")
+(defvar emacs-config-version "20220402.1539")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
 (add-to-list 'package-archives '("me" . "https://txgvnn.github.io/giaelpa/"))
-(when (< emacs-major-version 27)
-  (package-initialize))
 
 ;; BOOTSTRAP `use-package'
 (unless (package-installed-p 'use-package)
@@ -38,34 +34,26 @@
   :init (gcmh-mode)
   :config (add-to-list 'hidden-minor-modes 'gcmh-mode))
 
-;;; COMPLETION SYSTEM: vertico|selectrum, orderless, marginalia, consult, embark
-(if (version< emacs-version "27.1")
-    (use-package selectrum
-      :ensure t
-      :init (selectrum-mode)
-      :bind ("C-x C-r" . selectrum-repeat)
-      (:map selectrum-minibuffer-map
-            ("<prior>" . selectrum-previous-page)
-            ("<next>" . selectrum-next-page)))
-  (use-package vertico
-    :ensure t
-    :init (vertico-mode)
-    :config
-    (setq vertico-cycle t)
-    (delete ".git/" completion-ignored-extensions)
-    (add-hook 'minibuffer-setup-hook #'vertico-repeat-save)
-    :bind ("C-x C-r" . vertico-repeat)
-    (:map vertico-map
-          ("<prior>" . vertico-scroll-down)
-          ("<next>" . vertico-scroll-up)))
-  (use-package vertico-directory
-    :after vertico
-    :ensure nil
-    :bind (:map vertico-map ("M-DEL" . vertico-directory-delete-word))
-    :hook (rfn-eshadow-update-overlay . vertico-directory-tidy))
-  (use-package marginalia
-    :ensure t
-    :init (marginalia-mode)))
+;;; COMPLETION SYSTEM: vertico, orderless, marginalia, consult, embark
+(use-package vertico
+  :ensure t
+  :init (vertico-mode)
+  :config
+  (setq vertico-cycle t)
+  (delete ".git/" completion-ignored-extensions)
+  (add-hook 'minibuffer-setup-hook #'vertico-repeat-save)
+  :bind ("C-x C-r" . vertico-repeat)
+  (:map vertico-map
+        ("<prior>" . vertico-scroll-down)
+        ("<next>" . vertico-scroll-up)))
+(use-package vertico-directory
+  :after vertico
+  :ensure nil
+  :bind (:map vertico-map ("M-DEL" . vertico-directory-delete-word))
+  :hook (rfn-eshadow-update-overlay . vertico-directory-tidy))
+(use-package marginalia
+  :ensure t
+  :init (marginalia-mode))
 
 (use-package orderless
   :ensure t :defer t
@@ -241,6 +229,12 @@
   (global-set-key [remap query-replace-regexp] 'anzu-query-replace-regexp)
   (define-key isearch-mode-map [remap isearch-query-replace] #'anzu-isearch-query-replace)
   (define-key isearch-mode-map [remap isearch-query-replace-regexp] #'anzu-isearch-query-replace-regexp))
+(use-package isearch-mb
+  :ensure t :after anzu
+  :init (isearch-mb-mode)
+  :config
+  (add-to-list 'isearch-mb--after-exit #'anzu-isearch-query-replace)
+  (define-key isearch-mb-minibuffer-map (kbd "M-%") 'anzu-isearch-query-replace))
 (use-package rg :ensure t :defer t)
 (use-package engine-mode
   :ensure t :defer 1
