@@ -543,7 +543,10 @@
       (apply orig-fun args))))
 (use-package lsp-mode
   :ensure t :defer t
-  :init (setq lsp-keymap-prefix "C-x l"))
+  :init (setq lsp-keymap-prefix "C-x l")
+  :config
+  (setq lsp-enable-snippet nil
+        lsp-headerline-breadcrumb-segments '(symbols)))
 
 ;;; TOOLS: avy, crux, expand-region, move-text, ace-window, undo-tree,...
 (use-package avy
@@ -1089,8 +1092,12 @@
 (use-package org-bullets
   :ensure t :defer t
   :init (add-hook 'org-mode-hook #'org-bullets-mode))
-(use-package ob-compile :ensure t :defer t)
-
+(use-package ob-compile :ensure t :defer t
+  :config (add-hook 'compilation-finish-functions #'ob-compile-save-file))
+;; yaml
+(use-package yaml-mode
+  :ensure t
+  :init (add-hook 'yaml-mode-hook #'lsp-deferred))
 ;; go-mode
 (defun develop-go()
   "Go develoment.
