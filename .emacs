@@ -19,7 +19,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20220314.1350")
+(defvar emacs-config-version "20220402.1538")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -1257,6 +1257,12 @@ npm i -g typescript-language-server; npm i -g typescript"
   "Kubernetes tools."
   (interactive)
   (package-installs 'kubel 'kubedoc 'k8s-mode))
+(defun develop-keylog ()
+  "Keycast and log."
+  (interactive)
+  (package-installs 'keycast 'interaction-log))
+(use-package keycast :defer t
+  :config (setq keycast-mode-line-insert-after 'mode-line-misc-info))
 
 ;; keep personal settings not in the .emacs file
 (let ((personal-settings (locate-user-emacs-file "personal.el")))
