@@ -17,7 +17,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20220503.0725")
+(defvar emacs-config-version "20220503.0727")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -1256,6 +1256,8 @@ npm i -g typescript-language-server; npm i -g typescript"
   "Docker tools."
   (interactive)
   (package-installs 'dockerfile-mode 'docker 'docker-compose-mode))
+(use-package docker :defer t
+  :config (setq docker-run-async-with-buffer-function #'docker-run-async-with-buffer-shell))
 
 (defun develop-kubernetes()
   "Kubernetes tools."
