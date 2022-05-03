@@ -545,7 +545,7 @@
   (setq lsp-enable-snippet nil
         lsp-headerline-breadcrumb-segments '(symbols)))
 
-;;; TOOLS: avy, crux, expand-region, move-text, ace-window, undo-tree,...
+;;; TOOLS: avy, crux, expand-region, move-text, ace-window, vundo|undo-tree,...
 (use-package avy
   :ensure t :defer t
   :config
@@ -586,14 +586,21 @@
   :config
   (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l)
         aw-scope (quote frame)))
-(use-package undo-tree
-  :ensure t
-  :init
-  (setq undo-tree-mode-lighter ""
-        undo-tree-enable-undo-in-region t
-        undo-tree-history-directory-alist
-        `((".*" . ,temporary-file-directory)))
-  (global-undo-tree-mode))
+(if (version< emacs-version "28.1")
+    (use-package undo-tree
+      :ensure t
+      :init (add-hook 'after-init-hook #'global-undo-tree-mode)
+      :config
+      (setq undo-tree-mode-lighter ""
+            undo-limit 800000           ; 800kb
+            undo-strong-limit 12000000  ; 12mb
+            undo-outer-limit 128000000 ; 128mb
+            undo-tree-history-directory-alist
+            `((".*" . ,temporary-file-directory))))
+  (use-package vundo
+    :ensure t
+    :init (global-set-key (kbd "C-x u") #'vundo)
+    :config (define-key vundo-mode-map (kbd "q") #'vundo-confirm)))
 (use-package pinentry
   :ensure t
   :init (add-hook 'after-init-hook #'pinentry-start))
