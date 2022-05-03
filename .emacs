@@ -17,7 +17,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20220402.1539")
+(defvar emacs-config-version "20220503.0725")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -498,7 +498,7 @@
   :ensure t :defer t
   :hook (prog-mode . hl-todo-mode))
 
-;;; COMPLETION CODE: yasnippet, company, lsp-mode
+;;; COMPLETION CODE: yasnippet, company, lsp-mode, dump-jump
 (use-package yasnippet
   :ensure t :defer t :pin me
   :init (add-hook 'after-init-hook #'yas-global-mode)
@@ -535,6 +535,9 @@
       (:around (orig-fun &rest args) set-completion-styles)
     (let ((completion-styles '(basic partial-completion orderless)))
       (apply orig-fun args))))
+(use-package dumb-jump
+  :ensure t :defer t
+  :init (add-hook 'xref-backend-functions #'dumb-jump-xref-activate))
 (use-package lsp-mode
   :ensure t :defer t
   :init (setq lsp-keymap-prefix "C-x l")
