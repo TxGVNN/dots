@@ -17,7 +17,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20220503.0727")
+(defvar emacs-config-version "20220603.0743")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -218,6 +218,7 @@
 (use-package isearch :defer t
   :init
   (global-set-key (kbd "M-s s") 'isearch-forward-regexp)
+  (global-set-key (kbd "M-s %") 'query-replace-regexp)
   (define-key isearch-mode-map (kbd "M-s %") 'isearch-query-replace-regexp))
 (use-package anzu
   :ensure t
@@ -234,7 +235,8 @@
   :init (isearch-mb-mode)
   :config
   (add-to-list 'isearch-mb--after-exit #'anzu-isearch-query-replace)
-  (define-key isearch-mb-minibuffer-map (kbd "M-%") 'anzu-isearch-query-replace))
+  (define-key isearch-mb-minibuffer-map (kbd "M-%") 'anzu-isearch-query-replace)
+  (define-key isearch-mb-minibuffer-map (kbd "M-s %") 'isearch-query-replace-regexp))
 (use-package rg :ensure t :defer t)
 (use-package engine-mode
   :ensure t :defer 1
