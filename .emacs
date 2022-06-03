@@ -258,6 +258,8 @@
         ("j" . project-jump-persp)
         ("T" . project-vterm)
         ("M-x" . project-execute-extended-command)
+        ("o" . project-org-capture)
+        ("O" . project-org-go)
         ("v" . magit-project-status))
   :config
   (if (and (version< emacs-version "28") (not (assq 'project package-alist)))
@@ -319,6 +321,12 @@
     (let* ((project (project-current t))
            (org-default-notes-file (concat (cdr project) "tasks.org")))
       (call-interactively 'org-capture)))
+  (defun project-org-go ()
+    "Jump to project org file."
+    (interactive)
+    (let* ((project (project-current t))
+           (org-default-notes-file (concat (cdr project) "tasks.org")))
+      (find-file org-default-notes-file)))
   (defun project-save-buffers ()
     "Save all project buffers."
     (interactive)
