@@ -17,7 +17,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20220603.0743")
+(defvar emacs-config-version "20220603.0745")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -492,6 +492,9 @@
   :hook
   (markdown-mode . smartparens-mode)
   (prog-mode . smartparens-mode))
+(use-package rainbow-mode
+  :ensure t :defer t
+  :hook (prog-mode . rainbow-mode))
 (use-package rainbow-delimiters
   :ensure t :defer t
   :hook (prog-mode . rainbow-delimiters-mode))
@@ -667,6 +670,7 @@
   :init (add-hook 'dired-mode-hook 'diredfl-mode))
 
 ;;; TERM: shell, term, xclip
+(setenv "PAGER" "cat")
 (defun interactive-cd (dir)
   "Prompt for a DIR and cd to it."
   (interactive "Dcd ")
@@ -1229,8 +1233,10 @@ npm i -g typescript-language-server; npm i -g typescript"
   (interactive)
   (package-installs 'web-mode 'eslint-fix 'typescript-mode))
 (use-package web-mode :defer t
-  :init (add-to-list 'auto-mode-alist '("\\.js\\'" . web-mode)))
-(add-hook 'typescript-mode-hook #'lsp-deferred)
+  :init (add-to-list 'auto-mode-alist '("\\.js\\'" . web-mode))
+  (add-hook 'typescript-mode-hook #'lsp-deferred)
+  (add-hook 'web-mode-hook #'lsp-deferred))
+
 (defun js-print-debug-at-point()
   "Print debug."
   (interactive)
@@ -1251,16 +1257,6 @@ npm i -g typescript-language-server; npm i -g typescript"
   "Vagrant tools."
   (interactive)
   (package-installs 'vagrant 'vagrant-tramp))
-(use-package vagrant :defer t
-  :config
-  (advice-add #'vagrant-command :override #'vagrant-command-with-name)
-  (defun vagrant-command-with-name (cmd)
-    "Override vagrant-command(CMD)."
-    (let* ((default-directory (file-name-directory (vagrant-locate-vagrantfile)))
-           (name (if current-prefix-arg
-                     (completing-read "Vagrant box: " (vagrant-box-list)) "")))
-      (async-shell-command (concat cmd " " name)
-                           (format "*Vagrant:%s:%s*" default-directory name)))))
 
 (defun develop-docker()
   "Docker tools."
@@ -1269,6 +1265,12 @@ npm i -g typescript-language-server; npm i -g typescript"
 (use-package docker :defer t
   :config (setq docker-run-async-with-buffer-function #'docker-run-async-with-buffer-shell))
 
+(defun develop-restclient ()
+  "Install restclient."
+  (interactive)
+  (package-installs 'restclient 'restclient-jq))
+(use-package restclient :defer t
+  :config (require 'restclient-jq))
 (defun develop-kubernetes()
   "Kubernetes tools."
   (interactive)
