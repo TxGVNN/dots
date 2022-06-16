@@ -17,7 +17,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20220603.0745")
+(defvar emacs-config-version "20220616.0224")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -491,7 +491,8 @@
   (prog-mode . smartparens-mode))
 (use-package rainbow-mode
   :ensure t :defer t
-  :hook (prog-mode . rainbow-mode))
+  :hook (prog-mode . rainbow-mode)
+  :config (add-to-list 'hidden-minor-modes 'rainbow-mode))
 (use-package rainbow-delimiters
   :ensure t :defer t
   :hook (prog-mode . rainbow-delimiters-mode))
