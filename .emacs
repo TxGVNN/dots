@@ -91,10 +91,7 @@
         (lambda (&rest args)
           (apply (if (and (fboundp 'vertico-mode) vertico-mode)
                      #'consult-completion-in-region
-                   #'completion--in-region)
-                 args)))
-  (advice-add #'completing-read-multiple
-              :override #'consult-completing-read-multiple)
+                   #'completion--in-region) args)))
   (advice-add #'multi-occur :override #'consult-multi-occur)
   :config
   (setq register-preview-delay 0
