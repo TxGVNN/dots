@@ -11,13 +11,14 @@
   (error "Requires GNU Emacs 27.1 or newer, but you're running %s" emacs-version))
 
 (setq gc-cons-threshold most-positive-fixnum) ;; enable gcmh
+(setq read-process-output-max (* 1024 1024)) ;; 1mb
 ;; doom-emacs:docs/faq.org#unset-file-name-handler-alist-temporarily
 (defvar doom--file-name-handler-alist file-name-handler-alist)
 (setq file-name-handler-alist nil)
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20220616.0224")
+(defvar emacs-config-version "20220621.0300")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -187,6 +188,12 @@
     (interactive "D")
     (make-directory dir)
     (find-file dir)))
+(use-package embark-consult
+  :ensure t
+  :init
+  (with-eval-after-load 'consult
+    (with-eval-after-load 'embark
+      (require 'embark-consult))))
 
 ;;; VERSION CONTROL: git-gutter, magit, git-link
 (use-package git-gutter
