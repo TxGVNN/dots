@@ -279,6 +279,17 @@
            (dirs (list default-directory)))
       (project-find-file-in (thing-at-point 'filename) dirs pr)))
   (setq project-compilation-buffer-name-function 'project-prefixed-buffer-name)
+  (defun project-shell ()
+    "Override `project-shell'."
+    (interactive)
+    (let* ((default-directory (project-root (project-current t)))
+           (default-project-shell-name (project-prefixed-buffer-name "shell"))
+           (shell-buffer (get-buffer default-project-shell-name)))
+      (if current-prefix-arg
+          (shell (generate-new-buffer-name default-project-shell-name))
+        (if (comint-check-proc shell-buffer)
+            (pop-to-buffer-same-window shell-buffer)
+          (shell default-project-shell-name)))))
   (defun project-consult-grep (&optional initial)
     "Using consult-grep(INITIAL) in project."
     (interactive)
