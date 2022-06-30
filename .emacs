@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20220630.0701")
+(defvar emacs-config-version "20220630.0704")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -124,10 +124,9 @@
           (consult-preview-key 'any))
       (when (use-region-p)
         (deactivate-mark))
-      (consult-line (regexp-quote thing))))
-  (require 'consult))
+      (consult-line (regexp-quote thing)))))
 (use-package embark
-  :ensure t
+  :ensure t :defer t
   :bind ("C-c /" . embark-act)
   (:map minibuffer-local-map ("M-o" . embark-act))
   (:map embark-general-map ("/" . embark-chroot))
@@ -765,6 +764,12 @@
       (ansi-color-apply-on-region compilation-filter-start (point))))
   ;; Handle ansi codes in compilation buffer
   (add-hook 'compilation-filter-hook #'doom-apply-ansi-color-to-compilation-buffer-h))
+(use-package hideshow
+  :defer t
+  :init (add-hook 'prog-mode-hook #'hs-minor-mode)
+  :config
+  (global-set-key (kbd "<backtab>") 'hs-toggle-hiding)
+  (add-to-list 'hidden-minor-modes 'hs-minor-mode))
 
 ;; MAIL
 (use-package gnus :defer t
@@ -1057,8 +1062,10 @@
  '(symbol-overlay-default-face ((t (:inherit bold :underline t))))
  '(vc-state-base ((t (:inherit font-lock-string-face :weight bold)))))
 
-;; PATCHING
-(advice-add #'yes-or-no-p :override #'y-or-n-p)
+;;; PATCHING
+(if (boundp 'use-short-answers)
+    (setq use-short-answers t)
+  (advice-add 'yes-or-no-p :override #'y-or-n-p))
 (unless (daemonp)
   (advice-add #'display-startup-echo-area-message :override #'ignore))
 (advice-add #'base64-encode-region
