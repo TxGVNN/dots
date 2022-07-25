@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20220725.1507")
+(defvar emacs-config-version "20220725.1510")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -530,7 +530,7 @@
   :ensure t :defer t
   :hook (prog-mode . hl-todo-mode))
 
-;;; COMPLETION CODE: yasnippet, company, lsp-mode, dump-jump
+;;; COMPLETION CODE: yasnippet, company, eglot, dump-jump
 (use-package yasnippet
   :ensure t :defer t :pin me
   :init (add-hook 'after-init-hook #'yas-global-mode)
@@ -570,12 +570,10 @@
 (use-package dumb-jump
   :ensure t :defer t
   :init (add-hook 'xref-backend-functions #'dumb-jump-xref-activate))
-(use-package lsp-mode
-  :ensure t :defer t
-  :init (setq lsp-keymap-prefix "C-x l")
-  :config
-  (setq lsp-enable-snippet nil
-        lsp-headerline-breadcrumb-segments '(symbols)))
+(use-package eglot
+  :ensure t
+  :commands eglot-ensure
+  :after (project flymake))
 
 ;;; TOOLS: avy, crux, expand-region, move-text, ace-window, vundo|undo-tree,...
 (use-package avy
@@ -1141,20 +1139,19 @@
 ;; yaml
 (use-package yaml-mode
   :ensure t
-  :init (add-hook 'yaml-mode-hook #'lsp-deferred))
+  :init (add-hook 'yaml-mode-hook #'eglot-ensure))
 ;; go-mode
 (defun develop-go()
   "Go develoment.
 Please install:
    go install golang.org/x/tools/gopls"
   (interactive)
-  (package-installs 'go-mode 'lsp-mode))
+  (package-installs 'go-mode))
 (use-package go-mode :defer t
   :config
   (defun lsp-go-install-save-hooks ()
-    (if (fboundp 'lsp-deferred)(lsp-deferred))
-    (add-hook 'before-save-hook #'lsp-format-buffer t t)
-    (add-hook 'before-save-hook #'lsp-organize-imports t t))
+    (if (fboundp 'eglot-ensure)(eglot-ensure))
+    (add-hook 'before-save-hook #'eglot-format-buffer t t))
   (add-hook 'go-mode-hook #'lsp-go-install-save-hooks)
   (defun go-print-debug-at-point()
     "Print debug."
@@ -1171,9 +1168,8 @@ Please install:
   "Python development.
 Please install:
    pip install python-lsp-server[all]"
-  (interactive)
-  (package-installs 'pyvenv 'lsp-mode))
-(add-hook 'python-mode-hook #'lsp-deferred)
+  (interactive))
+(add-hook 'python-mode-hook #'eglot-ensure)
 
 (with-eval-after-load 'python ;; built-in
   (setq python-indent-guess-indent-offset-verbose nil)
@@ -1212,7 +1208,7 @@ Please install:
           (lambda() (add-to-list 'company-backends 'company-ac-php-backend)))
 
 ;; erlang
-(add-hook 'erlang-mode-hook #'lsp-deferred)
+(add-hook 'erlang-mode-hook #'eglot-ensure)
 
 ;; terraform-mode
 (defun develop-terraform()
