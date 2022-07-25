@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20220630.0704")
+(defvar emacs-config-version "20220725.1507")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -246,6 +246,7 @@
 (use-package engine-mode
   :ensure t :defer 1
   :config
+  (setq engine/browser-function 'eww-browse-url)
   (defengine vagrant-box
     "https://app.vagrantup.com/boxes/search?provider=libvirt&q=%s&utf8=%%E2%%9C%%93")
   (defengine debian-package
@@ -367,6 +368,7 @@
   (setq project-switch-commands
         '((project-find-file "file")
           (project-consult-ripgrep "rg")
+          (project-consult-grep "grep")
           (project-compile "compile")
           (project-switch-to-buffer "buf")
           (project-term "term")
@@ -764,12 +766,12 @@
       (ansi-color-apply-on-region compilation-filter-start (point))))
   ;; Handle ansi codes in compilation buffer
   (add-hook 'compilation-filter-hook #'doom-apply-ansi-color-to-compilation-buffer-h))
-(use-package hideshow
+(use-package epg
   :defer t
-  :init (add-hook 'prog-mode-hook #'hs-minor-mode)
-  :config
-  (global-set-key (kbd "<backtab>") 'hs-toggle-hiding)
-  (add-to-list 'hidden-minor-modes 'hs-minor-mode))
+  :config (setq epg-pinentry-mode 'loopback))
+(use-package epa
+  :defer t
+  :config (setq epa-armor t))
 
 ;; MAIL
 (use-package gnus :defer t
@@ -1028,7 +1030,6 @@
  '(electric-indent-mode nil)
  '(enable-local-variables :all)
  '(enable-recursive-minibuffers t)
- '(epg-pinentry-mode 'loopback)
  '(ffap-machine-p-known 'reject t)
  '(global-hl-line-mode t)
  '(indent-tabs-mode nil)
