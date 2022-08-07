@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20220725.1510")
+(defvar emacs-config-version "20220807.0223")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -188,7 +188,7 @@
     (make-directory dir)
     (find-file dir)))
 (use-package embark-consult
-  :ensure t
+  :ensure t :defer t
   :init
   (with-eval-after-load 'consult
     (with-eval-after-load 'embark
@@ -530,7 +530,7 @@
   :ensure t :defer t
   :hook (prog-mode . hl-todo-mode))
 
-;;; COMPLETION CODE: yasnippet, company, eglot, dump-jump
+;;; COMPLETION CODE: yasnippet, company, eglot, dumb-jump
 (use-package yasnippet
   :ensure t :defer t :pin me
   :init (add-hook 'after-init-hook #'yas-global-mode)
@@ -569,7 +569,7 @@
       (apply orig-fun args))))
 (use-package dumb-jump
   :ensure t :defer t
-  :init (add-hook 'xref-backend-functions #'dumb-jump-xref-activate))
+  :init (add-hook 'xref-backend-functions #'dumb-jump-xref-activate 100))
 (use-package eglot
   :ensure t
   :commands eglot-ensure
