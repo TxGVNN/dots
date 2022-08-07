@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20220807.0223")
+(defvar emacs-config-version "20220807.0224")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -659,16 +659,14 @@
   :config (require 'eev-load)
   (global-set-key (kbd "<f8>") #'eepitch-this-line))
 
-;;; CHECKER: flycheck(C-h .)
-(use-package flycheck
-  :ensure t :defer t
+;;; CHECKER: flymake(C-h .)
+(use-package flymake
   :config
-  (defun flycheck-maybe-display-error-at-point-soon() nil)
-  (setq flycheck-highlighting-mode (quote columns))
-  ;; g-n & g-p bindings
-  (define-key flycheck-mode-map (kbd "M-g n") #'flycheck-next-error)
-  (define-key flycheck-mode-map (kbd "M-g p") #'flycheck-previous-error)
-  :hook (prog-mode . flycheck-mode))
+  (define-key flymake-mode-map (kbd "C-c ! l") 'flymake-show-diagnostics-buffer)
+  (define-key flymake-mode-map (kbd "M-g n") #'flymake-goto-next-error)
+  (define-key flymake-mode-map (kbd "M-g p") #'flymake-goto-prev-error)
+  (remove-hook 'flymake-diagnostic-functions 'flymake-proc-legacy-flymake)
+  :hook (prog-mode . flymake-mode))
 
 ;;; DIRED
 (use-package dired :defer t
