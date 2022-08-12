@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20220807.0224")
+(defvar emacs-config-version "20220812.1011")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -87,12 +87,12 @@
   ("C-x B" . consult-buffer)
   (:map minibuffer-local-map ("M-r" . consult-history))
   :init
-  ;; Use `consult-completion-in-region' if Vertico is enabled.
-  (setq completion-in-region-function
-        (lambda (&rest args)
-          (apply (if (and (fboundp 'vertico-mode) vertico-mode)
-                     #'consult-completion-in-region
-                   #'completion--in-region) args)))
+  ;; @FIXME: Disable `consult-completion-in-region' buggy in (e)shell-mode (tramp), minibuffer (compile command)
+  ;; (setq completion-in-region-function
+  ;;       (lambda (&rest args)
+  ;;         (apply (if (and (fboundp 'vertico-mode) vertico-mode)
+  ;;                    #'consult-completion-in-region
+  ;;                  #'completion--in-region) args)))
   (advice-add #'multi-occur :override #'consult-multi-occur)
   :config
   (setq register-preview-delay 0
@@ -201,16 +201,16 @@
   (add-hook 'magit-post-refresh-hook #'git-gutter:update-all-windows)
   (add-hook 'after-init-hook #'global-git-gutter-mode)
   :bind
-  ("C-x g p" . git-gutter:previous-hunk)
-  ("C-x g n" . git-gutter:next-hunk)
-  ("C-x g s" . git-gutter:stage-hunk)
-  ("C-x g r" . git-gutter:revert-hunk))
+  ("C-x v p" . git-gutter:previous-hunk)
+  ("C-x v n" . git-gutter:next-hunk)
+  ("C-x v s" . git-gutter:stage-hunk)
+  ("C-x v r" . git-gutter:revert-hunk))
 (use-package magit
   :ensure t :defer t
   :init (setq magit-define-global-key-bindings nil)
   :bind
-  ("C-x g f" . magit-find-file)
-  ("C-x g g" . magit-project-status)
+  ("C-x v f" . magit-find-file)
+  ("C-x g" . magit-project-status)
   ("C-x M-g" . magit-dispatch)
   ("C-c M-g" . magit-file-dispatch))
 (use-package git-link
@@ -377,7 +377,7 @@
           (project-jump-persp "jump")
           (embark-on-project "embark"))))
 (use-package envrc ;; direnv > 2.7
-  :ensure t
+  :ensure t :defer t
   :config
   (setq envrc-none-lighter nil
         envrc-on-lighter '(:propertize " env" face envrc-mode-line-on-face)
@@ -519,7 +519,7 @@
   :hook (prog-mode . rainbow-delimiters-mode))
 (use-package volatile-highlights
   :ensure t
-  :init (volatile-highlights-mode)
+  :init (add-hook 'after-init-hook #'volatile-highlights-mode)
   :config (add-to-list 'hidden-minor-modes 'volatile-highlights-mode))
 (use-package symbol-overlay
   :ensure t :defer t
@@ -628,11 +628,11 @@
             undo-tree-history-directory-alist
             `((".*" . ,temporary-file-directory))))
   (use-package vundo
-    :ensure t
+    :ensure t :defer t
     :init (global-set-key (kbd "C-x u") #'vundo)
     :config (define-key vundo-mode-map (kbd "q") #'vundo-confirm)))
 (use-package pinentry
-  :ensure t
+  :ensure t :defer t
   :init (add-hook 'after-init-hook #'pinentry-start))
 (use-package multiple-cursors
   :ensure t :defer t
@@ -1233,10 +1233,8 @@ Please install:
 (defun develop-java()
   "Java development.
 https://download.eclipse.org/jdtls/snapshots/jdt-language-server-latest.tar.gz"
-  (interactive)
-  (package-install 'lsp-java))
-(use-package lsp-java :defer t
-  :init (add-hook 'java-mode-hook #'lsp-deferred))
+  (interactive))
+(add-hook 'java-mode-hook #'eglot-ensure)
 
 (defun develop-html()
   "HTML development."
@@ -1254,8 +1252,8 @@ npm i -g typescript-language-server; npm i -g typescript"
   (package-installs 'web-mode 'eslint-fix 'typescript-mode))
 (use-package web-mode :defer t
   :init (add-to-list 'auto-mode-alist '("\\.js\\'" . web-mode))
-  (add-hook 'typescript-mode-hook #'lsp-deferred)
-  (add-hook 'web-mode-hook #'lsp-deferred))
+  (add-hook 'typescript-mode-hook #'eglot-ensure)
+  (add-hook 'web-mode-hook #'eglot-ensure))
 
 (defun js-print-debug-at-point()
   "Print debug."
