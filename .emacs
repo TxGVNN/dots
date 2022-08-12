@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20220812.1011")
+(defvar emacs-config-version "20220812.1016")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -1244,16 +1244,16 @@ https://download.eclipse.org/jdtls/snapshots/jdt-language-server-latest.tar.gz"
   :hook (html-mode . indent-guide-mode)
   :config (set-face-foreground 'indent-guide-face "dimgray"))
 
-;; web-mode; js, ts mode
-(defun develop-web()
-  "WEB development.
+;; js, ts mode
+(defun develop-ts()
+  "TS development.
 npm i -g typescript-language-server; npm i -g typescript"
   (interactive)
-  (package-installs 'web-mode 'eslint-fix 'typescript-mode))
-(use-package web-mode :defer t
-  :init (add-to-list 'auto-mode-alist '("\\.js\\'" . web-mode))
+  (package-installs 'eslint-fix 'typescript-mode))
+(use-package typescript-mode :defer t
+  :init
   (add-hook 'typescript-mode-hook #'eglot-ensure)
-  (add-hook 'web-mode-hook #'eglot-ensure))
+  (add-hook 'js-mode-hook #'eglot-ensure))
 
 (defun js-print-debug-at-point()
   "Print debug."
