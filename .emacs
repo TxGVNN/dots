@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20220812.1016")
+(defvar emacs-config-version "20220814.0838")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -287,7 +287,7 @@
            (shell-buffer (get-buffer default-project-shell-name)))
       (if current-prefix-arg
           (shell (generate-new-buffer-name default-project-shell-name))
-        (if (comint-check-proc shell-buffer)
+        (if (get-buffer-process shell-buffer)
             (pop-to-buffer-same-window shell-buffer)
           (shell default-project-shell-name)))))
   (defun project-consult-grep (&optional initial)
