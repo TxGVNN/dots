@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20220818.1430")
+(defvar emacs-config-version "20220818.1432")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -1118,12 +1118,17 @@
 
 ;; org-mode
 (use-package org :defer t
+  :init (add-hook 'org-mode-hook #'org-indent-mode)
   :config
+  (add-to-list 'hidden-minor-modes 'org-indent-mode)
   (define-key org-src-mode-map (kbd "C-c C-c") #'org-edit-src-exit)
   (setq org-babel-load-languages (quote ((emacs-lisp . t) (shell . t)))
         org-enforce-todo-dependencies t
-        org-src-preserve-indentation t
+        org-adapt-indentation t
+        org-hide-leading-stars t
+        org-odd-levels-only t
         org-src-tab-acts-natively t
+        org-edit-src-content-indentation 0
         org-log-done 'time
         org-todo-keyword-faces (quote (("BLOCKED" . error) ("WIP" . warning)))
         org-todo-keywords
