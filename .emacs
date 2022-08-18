@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20220814.0838")
+(defvar emacs-config-version "20220818.1430")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -198,8 +198,8 @@
 (use-package git-gutter
   :ensure t
   :init (setq git-gutter:lighter "")
-  (add-hook 'magit-post-refresh-hook #'git-gutter:update-all-windows)
   (add-hook 'after-init-hook #'global-git-gutter-mode)
+  (add-hook 'magit-post-refresh-hook #'git-gutter:update-all-windows)
   :bind
   ("C-x v p" . git-gutter:previous-hunk)
   ("C-x v n" . git-gutter:next-hunk)
@@ -207,12 +207,12 @@
   ("C-x v r" . git-gutter:revert-hunk))
 (use-package magit
   :ensure t :defer t
-  :init (setq magit-define-global-key-bindings nil)
+  :config
+  (defun magit-find-file-on-project (project rev path)
+    (let ((default-directory project))
+      (magit-find-file rev path)))
   :bind
-  ("C-x v f" . magit-find-file)
-  ("C-x g" . magit-project-status)
-  ("C-x M-g" . magit-dispatch)
-  ("C-c M-g" . magit-file-dispatch))
+  ("C-x v f" . magit-find-file))
 (use-package git-link
   :ensure t :defer t
   :config (setq git-link-use-commit t))
@@ -671,6 +671,7 @@
 ;;; DIRED
 (use-package dired :defer t
   :config
+  (define-key dired-mode-map (kbd "E") #'dired-ediff-files)
   (defun dired-auto-update-name (&optional suffix)
     "Auto update name with SUFFIX.ext."
     (interactive "p")
