@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20220818.1432")
+(defvar emacs-config-version "20220827.0231")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -94,6 +94,8 @@
   ;;                    #'consult-completion-in-region
   ;;                  #'completion--in-region) args)))
   (advice-add #'multi-occur :override #'consult-multi-occur)
+  (setq xref-show-definitions-function #'consult-xref
+        xref-show-xrefs-function #'consult-xref)
   :config
   (setq register-preview-delay 0
         register-preview-function #'consult-register-format
@@ -227,7 +229,7 @@
   :ensure t
   :init
   (setq anzu-mode-lighter "")
-  (global-anzu-mode)
+  (add-hook 'after-init-hook #'global-anzu-mode)
   :config
   (global-set-key [remap query-replace] 'anzu-query-replace)
   (global-set-key [remap query-replace-regexp] 'anzu-query-replace-regexp)
@@ -658,6 +660,9 @@
   :ensure t :defer 1
   :config (require 'eev-load)
   (global-set-key (kbd "<f8>") #'eepitch-this-line))
+(use-package so-long
+  :ensure t :defer t
+  :init (add-hook 'after-init-hook #'global-so-long-mode))
 
 ;;; CHECKER: flymake(C-h .)
 (use-package flymake
@@ -831,15 +836,6 @@
               'markdown-mode-hook 'yaml-mode-hook
               'dockerfile-mode-hook)
 
-;; large-file
-(defun find-file-with-large-file ()
-  "If a file is over a given size, make the buffer read only."
-  (when (> (buffer-size) 7340032) ;; (* 7 1024 1024)
-    (setq buffer-read-only t)
-    (buffer-disable-undo)
-    (fundamental-mode)))
-(add-hook 'find-file-hook #'find-file-with-large-file)
-
 ;; hide the minor modes
 (defun purge-minor-modes ()
   "Dont show on modeline."
@@ -848,9 +844,8 @@
       (when trg (setcar trg "")))))
 (add-hook 'after-change-major-mode-hook #'purge-minor-modes)
 
-;; never lose cursor
 (defun pulse-line (&rest _)
-  "Pulse the current line."
+  "Pulse the current line (never lose cursor)."
   (pulse-momentary-highlight-one-line (point)))
 (dolist (command '(scroll-up-command scroll-down-command recenter-top-bottom other-window))
   (advice-add command :after #'pulse-line))
