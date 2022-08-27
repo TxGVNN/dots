@@ -4,7 +4,7 @@
 wget -O ~/.emacs https://raw.githubusercontent.com/txgvnn/dots/master/.emacs
 ```
 
-Just start and enjoy Emacs
+Just start and enjoy Emacs! You can customize more by creating `~/.emacs.d/personal.el`
 
 *Optional*
  * <kbd>M-x</kbd> <kbd>develop-dot</kbd> Diff new .emacs version
