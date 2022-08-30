@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20220827.0231")
+(defvar emacs-config-version "20220830.0354")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -53,8 +53,8 @@
   :bind (:map vertico-map ("M-DEL" . vertico-directory-delete-word))
   :hook (rfn-eshadow-update-overlay . vertico-directory-tidy))
 (use-package marginalia
-  :ensure t
-  :init (marginalia-mode))
+  :ensure t :defer t
+  :hook (after-init . marginalia-mode))
 
 (use-package orderless
   :ensure t :defer t
@@ -198,10 +198,11 @@
 
 ;;; VERSION CONTROL: git-gutter, magit, git-link
 (use-package git-gutter
-  :ensure t
+  :ensure t :defer t
   :init (setq git-gutter:lighter "")
-  (add-hook 'after-init-hook #'global-git-gutter-mode)
-  (add-hook 'magit-post-refresh-hook #'git-gutter:update-all-windows)
+  :hook
+  (after-init . global-git-gutter-mode)
+  (magit-post-refresh . git-gutter:update-all-windows)
   :bind
   ("C-x v p" . git-gutter:previous-hunk)
   ("C-x v n" . git-gutter:next-hunk)
@@ -226,11 +227,11 @@
   (global-set-key (kbd "M-s %") 'query-replace-regexp)
   (define-key isearch-mode-map (kbd "M-s %") 'isearch-query-replace-regexp))
 (use-package anzu
-  :ensure t
+  :ensure t :defer t
   :init
-  (setq anzu-mode-lighter "")
-  (add-hook 'after-init-hook #'global-anzu-mode)
+  :hook (after-init . global-anzu-mode)
   :config
+  (setq anzu-mode-lighter "")
   (global-set-key [remap query-replace] 'anzu-query-replace)
   (global-set-key [remap query-replace-regexp] 'anzu-query-replace-regexp)
   (define-key isearch-mode-map [remap isearch-query-replace] #'anzu-isearch-query-replace)
@@ -384,7 +385,7 @@
   (setq envrc-none-lighter nil
         envrc-on-lighter '(:propertize " env" face envrc-mode-line-on-face)
         envrc-error-lighter '(:propertize " env" face envrc-mode-line-error-face))
-  :init (add-hook 'after-init-hook #'envrc-global-mode))
+  :hook (after-init . envrc-global-mode))
 (use-package perspective
   :ensure t :pin me
   :init
@@ -521,7 +522,7 @@
   :hook (prog-mode . rainbow-delimiters-mode))
 (use-package volatile-highlights
   :ensure t
-  :init (add-hook 'after-init-hook #'volatile-highlights-mode)
+  :hook (after-init . volatile-highlights-mode)
   :config (add-to-list 'hidden-minor-modes 'volatile-highlights-mode))
 (use-package symbol-overlay
   :ensure t :defer t
@@ -535,7 +536,7 @@
 ;;; COMPLETION CODE: yasnippet, company, eglot, dumb-jump
 (use-package yasnippet
   :ensure t :defer t :pin me
-  :init (add-hook 'after-init-hook #'yas-global-mode)
+  :hook (after-init . yas-global-mode)
   :config
   (setq yas-lighter " υ")
   (define-key yas-minor-mode-map [(tab)] nil)
@@ -571,7 +572,7 @@
       (apply orig-fun args))))
 (use-package dumb-jump
   :ensure t :defer t
-  :init (add-hook 'xref-backend-functions #'dumb-jump-xref-activate 100))
+  :init (add-to-list 'xref-backend-functions #'dumb-jump-xref-activate))
 (use-package eglot
   :ensure t
   :commands eglot-ensure
@@ -635,7 +636,7 @@
     :config (define-key vundo-mode-map (kbd "q") #'vundo-confirm)))
 (use-package pinentry
   :ensure t :defer t
-  :init (add-hook 'after-init-hook #'pinentry-start))
+  :hook (after-init . pinentry-start))
 (use-package multiple-cursors
   :ensure t :defer t
   :bind
@@ -662,7 +663,7 @@
   (global-set-key (kbd "<f8>") #'eepitch-this-line))
 (use-package so-long
   :ensure t :defer t
-  :init (add-hook 'after-init-hook #'global-so-long-mode))
+  :hook (after-init . global-so-long-mode))
 
 ;;; CHECKER: flymake(C-h .)
 (use-package flymake
@@ -1252,9 +1253,9 @@ npm i -g typescript-language-server; npm i -g typescript"
   (interactive)
   (package-installs 'eslint-fix 'typescript-mode))
 (use-package typescript-mode :defer t
-  :init
-  (add-hook 'typescript-mode-hook #'eglot-ensure)
-  (add-hook 'js-mode-hook #'eglot-ensure))
+  :hook
+  (typescript-mode . eglot-ensure)
+  (js-mode . eglot-ensure))
 
 (defun js-print-debug-at-point()
   "Print debug."
