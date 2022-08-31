@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20220830.0354")
+(defvar emacs-config-version "20220831.0307")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -1120,9 +1120,9 @@
   (define-key org-src-mode-map (kbd "C-c C-c") #'org-edit-src-exit)
   (setq org-babel-load-languages (quote ((emacs-lisp . t) (shell . t)))
         org-enforce-todo-dependencies t
-        org-adapt-indentation t
+        org-adapt-indentation nil
+        org-odd-levels-only nil
         org-hide-leading-stars t
-        org-odd-levels-only t
         org-src-tab-acts-natively t
         org-edit-src-content-indentation 0
         org-log-done 'time
