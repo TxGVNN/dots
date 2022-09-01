@@ -18,12 +18,15 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20220831.0307")
+(defvar emacs-config-version "20220901.1456")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
-(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
-(add-to-list 'package-archives '("me" . "https://txgvnn.github.io/giaelpa/"))
+(setq package-archives
+      '(("me" . "https://txgvnn.github.io/giaelpa/")
+        ("melpa" . "https://melpa.org/packages/")
+        ("gnu" . "https://elpa.gnu.org/packages/")
+        ("nongnu" . "https://elpa.nongnu.org/nongnu/")))
 
 ;; BOOTSTRAP `use-package'
 (unless (package-installed-p 'use-package)
@@ -533,7 +536,77 @@
   :ensure t :defer t
   :hook (prog-mode . hl-todo-mode))
 
-;;; COMPLETION CODE: yasnippet, company, eglot, dumb-jump
+;;; COMPLETION CODE: corfu, yasnippet, eglot, dumb-jump
+(use-package corfu
+  :ensure t :defer t
+  :init (global-corfu-mode)
+  :bind
+  (:map corfu-map
+        ("M-m" . corfu-move-to-minibuffer)
+        ("TAB" . corfu-complete-common-or-next) ;; Use TAB for cycling, default is `corfu-complete'.
+        ([tab] . corfu-complete-common-or-next)
+        ("S-TAB" . corfu-previous)
+        ([backtab] . corfu-previous))
+  :config
+  (unless (display-graphic-p)
+    (use-package corfu-terminal
+      :ensure t :defer t
+      :init (add-hook 'corfu-mode-hook #'corfu-terminal-mode)))
+  (setq completion-cycle-threshold 3
+        corfu-auto t
+        corfu-cycle t
+        corfu-auto-prefix 2
+        corfu-preselect-first nil
+        corfu-history-mode t)
+  (defvar-local corfu-common-old nil)
+  (defun corfu-complete-common-or-next ()
+    "Complete common prefix or go to next candidate (@minad/corfu#170)."
+    (interactive)
+    (if (= corfu--total 1)
+        (if (not (thing-at-point 'filename))
+            (progn
+              (corfu--goto 1)
+              (corfu-insert))))
+    (let* ((input (car corfu--input))
+           (str (if (thing-at-point 'filename) (file-name-nondirectory input) input))
+           (pt (length str))
+           (common (try-completion str corfu--candidates)))
+      (if (and (> pt 0)
+               (stringp common)
+               (not (string= str common)))
+          (insert (substring common pt))
+        (if (equal common corfu-common-old)
+            (corfu-next)))
+      (setq-local corfu-common-old common)))
+  (put 'corfu-complete-common-or-next 'completion-predicate #'ignore)
+  (defun corfu-enable-in-minibuffer ()
+    "Enable Corfu in the minibuffer if `completion-at-point' is bound."
+    (when (where-is-internal #'completion-at-point (list (current-local-map)))
+      (setq-local corfu-auto nil)
+      (corfu-mode 1)))
+  (add-hook 'minibuffer-setup-hook #'corfu-enable-in-minibuffer)
+  (defun corfu-move-to-minibuffer ()
+    "Move completion to minibuffer instead of corfu."
+    (interactive)
+    (let ((completion-extra-properties corfu--extra)
+          completion-cycle-threshold completion-cycling)
+      (apply #'consult-completion-in-region completion-in-region--data))))
+(use-package cape
+  :ensure t :defer t
+  :bind (("C-c p p" . completion-at-point) ;; capf
+         ("C-c p t" . complete-tag)        ;; etags
+         ("C-c p d" . cape-dabbrev)        ;; or dabbrev-completion
+         ("C-c p h" . cape-history)
+         ("C-c p f" . cape-file)
+         ("C-c p k" . cape-keyword)
+         ("C-c p s" . cape-symbol)
+         ("C-c p a" . cape-abbrev)
+         ("C-c p i" . cape-ispell)
+         ("C-c p l" . cape-line)
+         ("C-c p w" . cape-dict))
+  :init
+  (add-to-list 'completion-at-point-functions #'cape-dabbrev)
+  (add-to-list 'completion-at-point-functions #'cape-file))
 (use-package yasnippet
   :ensure t :defer t :pin me
   :hook (after-init . yas-global-mode)
@@ -543,33 +616,15 @@
   (define-key yas-minor-mode-map (kbd "TAB") nil))
 (use-package yasnippet-snippets
   :ensure t :defer t :pin me)
-(use-package company
-  :ensure t
-  :init (add-hook 'after-init-hook #'global-company-mode)
-  :bind ("M-]" . company-complete-custom)
-  (:map company-active-map
-        ("C-j" . company-abort)
-        ("TAB" . company-complete-common-or-cycle)
-        ("C-n" . company-select-next)
-        ("C-p" . company-select-previous))
-  :config
-  (setq company-lighter-base "@"
-        company-require-match 'never
-        company-idle-delay 0.1)
-  (defun company-complete-custom (&optional prefix)
-    "Company and Yasnippet(PREFIX)."
+(use-package consult-yasnippet
+  :ensure t :defer t
+  :init (global-set-key (kbd "M-]") #'completion-customize)
+  (defun completion-customize(&optional prefix)
+    "Complete and Yasnippet(PREFIX)."
     (interactive "P")
-    (if (fboundp 'company--active-p)
-        (if (company--active-p) (company-cancel)))
     (if prefix
-        (if (not company-mode) (yas-expand)
-          (call-interactively 'company-yasnippet))
-      (call-interactively 'company-complete)))
-  ;; oantolin/orderless#48
-  (define-advice company-capf
-      (:around (orig-fun &rest args) set-completion-styles)
-    (let ((completion-styles '(basic partial-completion orderless)))
-      (apply orig-fun args))))
+        (consult-yasnippet nil)
+      (call-interactively 'completion-at-point))))
 (use-package dumb-jump
   :ensure t :defer t
   :init (add-to-list 'xref-backend-functions #'dumb-jump-xref-activate))
