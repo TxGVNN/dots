@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20220901.1459")
+(defvar emacs-config-version "20220906.0821")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -535,6 +535,11 @@
 (use-package hl-todo
   :ensure t :defer t
   :hook (prog-mode . hl-todo-mode))
+(use-package beacon
+  :ensure t :defer t
+  :hook (after-init . beacon-mode)
+  :config (add-to-list 'hidden-minor-modes 'beacon-mode))
+
 
 ;;; COMPLETION CODE: corfu, yasnippet, eglot, dumb-jump
 (use-package corfu
@@ -627,7 +632,9 @@
       (call-interactively 'completion-at-point))))
 (use-package dumb-jump
   :ensure t :defer t
-  :init (add-to-list 'xref-backend-functions #'dumb-jump-xref-activate))
+  :init
+  (with-eval-after-load 'xref
+    (add-to-list 'xref-backend-functions #'dumb-jump-xref-activate)))
 (use-package eglot
   :ensure t
   :commands eglot-ensure
@@ -898,13 +905,6 @@
     (let ((trg (cdr (assoc x minor-mode-alist))))
       (when trg (setcar trg "")))))
 (add-hook 'after-change-major-mode-hook #'purge-minor-modes)
-
-(defun pulse-line (&rest _)
-  "Pulse the current line (never lose cursor)."
-  (pulse-momentary-highlight-one-line (point)))
-(dolist (command '(scroll-up-command scroll-down-command recenter-top-bottom other-window))
-  (advice-add command :after #'pulse-line))
-
 (defun my-kill-ring-save ()
   "Better than 'kill-ring-save."
   (interactive)
