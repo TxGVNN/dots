@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20220906.0821")
+(defvar emacs-config-version "20220913.1310")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -414,19 +414,6 @@
           (persp-switch dir))) pr)
   ;; hack local var when switch
   (add-hook 'persp-switch-hook #'hack-dir-local-variables-non-file-buffer)
-  ;; show project folder of persp-curr
-  (advice-add #'persp-update-modestring :override #'persp-update-modestring-only-curr)
-  (defun persp-update-modestring-only-curr ()
-    "Override persp-update-modestring."
-    (when (and persp-show-modestring (persp-name (persp-curr)))
-      (let ((open (list (nth 0 persp-modestring-dividers)))
-            (close (list (nth 1 persp-modestring-dividers))))
-        (set-frame-parameter
-         nil 'persp--modestring
-         (append open
-                 (cons (propertize
-                        (file-name-nondirectory (directory-file-name (persp-name (persp-curr))))
-                        'face 'persp-selected-face)()) close)))))
   ;; persp-ibuffer
   (add-hook 'ibuffer-hook
             (lambda ()
@@ -461,19 +448,6 @@
         (pop-to-buffer-same-window value))))
   ;; compile
   (with-eval-after-load 'compile
-    (advice-add #'compile :override #'compile-with-nohistory)
-    (defun compile-with-nohistory (command &optional comint)
-      "Override compile(COMMAND &optional COMINT)."
-      (interactive
-       (list
-        (let ((command (eval compile-command)))
-          (if (or compilation-read-command current-prefix-arg)
-              (compilation-read-command command) command))
-        (consp current-prefix-arg)))
-      (save-some-buffers (not compilation-ask-about-save)
-                         compilation-save-buffers-predicate)
-      (setq-default compilation-directory default-directory)
-      (compilation-start command comint))
     (defvar persp-compile-history (make-hash-table :test 'equal))
     (defun persp--get-command-history (persp)
       (or (gethash persp persp-compile-history)
@@ -825,11 +799,23 @@
   (setq compilation-always-kill t       ; kill compilation process before starting another
         compilation-ask-about-save nil  ; save all buffers on `compile'
         compilation-scroll-output t)
+  (defun compile-with-nohistory (command &optional comint)
+    "Override compile(COMMAND &optional COMINT)."
+    (interactive
+     (list
+      (let ((command (eval compile-command)))
+        (if (or compilation-read-command current-prefix-arg)
+            (compilation-read-command command) command))
+      (consp current-prefix-arg)))
+    (save-some-buffers (not compilation-ask-about-save)
+                       compilation-save-buffers-predicate)
+    (setq-default compilation-directory default-directory)
+    (compilation-start command comint))
+  (advice-add #'compile :override #'compile-with-nohistory)
   (defun doom-apply-ansi-color-to-compilation-buffer-h ()
     "Applies ansi codes to the compilation buffers."
     (with-silent-modifications
       (ansi-color-apply-on-region compilation-filter-start (point))))
-  ;; Handle ansi codes in compilation buffer
   (add-hook 'compilation-filter-hook #'doom-apply-ansi-color-to-compilation-buffer-h))
 (use-package epg
   :defer t
@@ -1143,28 +1129,21 @@
   "ERC configuration."
   (interactive)
   (package-install 'ercn))
-(with-eval-after-load 'erc
+(use-package erc :defer t
+  :config
   (setq erc-hide-list '("JOIN" "PART" "QUIT"))
   (setq erc-default-server "irc.libera.chat")
   (setq erc-prompt-for-password nil))
-(with-eval-after-load 'ercn
+(use-package ercn  :defer t
+  :hook (ercn-notify . do-notify)
+  :config
   (setq ercn-notify-rules
         '((current-nick . all)
           (keyword . all)
           (pal . ("#emacs" "#guix"))
           (query-buffer . all)))
   (defun do-notify (nick msg)
-    (call-process "notify-send" nil nil nil "ERC" nick))
-  (add-hook 'ercn-notify-hook #'do-notify))
-
-;; c-mode
-(defun my-c-mode-common-hook ()
-  "C-mode hook."
-  (c-set-offset 'substatement-open 0)
-  (setq c++-tab-always-indent t
-        c-basic-offset 4
-        c-indent-level 4))
-(add-hook 'c-mode-common-hook #'my-c-mode-common-hook)
+    (call-process "notify-send" nil nil nil "ERC" nick)))
 
 ;; org-mode
 (use-package org :defer t
@@ -1190,10 +1169,12 @@
   :init (add-hook 'org-mode-hook #'org-bullets-mode))
 (use-package ob-compile :ensure t :defer t
   :config (add-hook 'compilation-finish-functions #'ob-compile-save-file))
+
 ;; yaml
 (use-package yaml-mode
   :ensure t
   :init (add-hook 'yaml-mode-hook #'eglot-ensure))
+
 ;; go-mode
 (defun develop-go()
   "Go develoment.
