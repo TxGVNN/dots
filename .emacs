@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20220913.1310")
+(defvar emacs-config-version "20220921.1004")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -97,6 +97,7 @@
   ;;                    #'consult-completion-in-region
   ;;                  #'completion--in-region) args)))
   (advice-add #'multi-occur :override #'consult-multi-occur)
+  (advice-add #'register-preview :override #'consult-register-window)
   (setq xref-show-definitions-function #'consult-xref
         xref-show-xrefs-function #'consult-xref)
   :config
@@ -140,6 +141,7 @@
         ("s" . embark-run-shell)
         ("t" . embark-run-term)
         ("T" . embark-run-vterm)
+        ("v" .  magit-status-setup-buffer)
         ("+" . embark-make-directory)
         ("x" . consult-file-externally))
   :config
@@ -202,7 +204,9 @@
 ;;; VERSION CONTROL: git-gutter, magit, git-link
 (use-package git-gutter
   :ensure t :defer t
-  :init (setq git-gutter:lighter "")
+  :init
+  (setq git-gutter:lighter ""
+        git-gutter:disabled-modes '("fundamental-mode"))
   :hook
   (after-init . global-git-gutter-mode)
   (magit-post-refresh . git-gutter:update-all-windows)
