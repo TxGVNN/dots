@@ -1241,10 +1241,10 @@ Please install:
 (defun develop-php()
   "PHP development."
   (interactive)
-  (package-install 'php-mode)
-  (package-install 'company-php))
-(add-hook 'php-mode-hook
-          (lambda() (add-to-list 'company-backends 'company-ac-php-backend)))
+  (package-install 'phps-mode))
+(use-package phps-mode
+  :defer t
+  :mode ("\\.php\\'" "\\.phtml\\'"))
 
 ;; erlang
 (add-hook 'erlang-mode-hook #'eglot-ensure)
