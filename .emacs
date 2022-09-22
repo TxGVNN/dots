@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20220921.1004")
+(defvar emacs-config-version "20220922.0207")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -207,8 +207,12 @@
   :init
   (setq git-gutter:lighter ""
         git-gutter:disabled-modes '("fundamental-mode"))
+  (defun git-gutter-mode-turn-on-custom ()
+    "Enable git-gutter except TRAMP."
+    (when (not (file-remote-p default-directory))
+      (git-gutter-mode +1)))
   :hook
-  (after-init . global-git-gutter-mode)
+  (prog-mode . git-gutter-mode-turn-on-custom)
   (magit-post-refresh . git-gutter:update-all-windows)
   :bind
   ("C-x v p" . git-gutter:previous-hunk)
