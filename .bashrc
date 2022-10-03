@@ -71,12 +71,16 @@ declare -f "cdenv" > /dev/null || function cdenv(){
     fi
 }
 
+if [ -z "$TMPDIR" ]; then
+    export TMPDIR=/tmp
+fi
+
 function cdtmp(){
     cd "$(mktemp -d -t ${USER}_$(date +%F_%H-%M)_XXX)" || exit 1
 }
 
 function lstmp(){
-    ls /tmp/"$USER"*
+    ls "${TMPDIR}/$USER"*
 }
 
 function mkcd(){
@@ -85,19 +89,54 @@ function mkcd(){
     fi
     mkdir "$1" && cd "$1"
 }
+
+export SSH_DIR="${HOME}/.ssh"
+use-ssh(){
+    ssh_key="$USER@$HOSTNAME.priv"
+    if [ -e "${SSH_DIR}/$1" ]; then
+        ssh_key="${SSH_DIR}/$1"
+    elif [ -e "${PWD}/$1" ]; then
+        ssh_key="${PWD}/$1"
+    elif [ -e "$1" ]; then
+        ssh_key="$1"
+    else
+        echo "What is $1?"
+        return 1
+    fi
+    ssh_key=$(readlink -f "$ssh_key")
+    file="$TMPDIR/.${LOGNAME}_ssh_${ssh_key////_}.tmp"
+    if [ -z "$2" ] && [ -e "$file" ]; then
+        SSH_AUTH_SOCK="$(readlink -f $file)"
+        ps1 "ssh:$ssh_key"
+        return 0
+    fi
+    eval $(ssh-agent)
+    ssh-add "${ssh_key}"
+    ln -svf "$SSH_AUTH_SOCK" "$file" >& /dev/null
+    ps1 "ssh:$ssh_key"
+}
+_use-ssh(){
+    local cur prev words cword opts
+    _get_comp_words_by_ref -n : cur prev words cword
+    COMPREPLY=()
+    opts=""
+    if [[ ${#toks[@]} -ne 0 ]]; then
+        compopt -o filenames 2> /dev/null;
+        COMPREPLY+=("${toks[@]}");
+    fi
+    if [[ ${cword} -eq 1 ]];then
+        opts=$(find "${SSH_DIR}/" -name \*@\* -exec basename {} \;)
+    fi
+    _filedir
+    COMPREPLY+=( $(compgen -W "$opts" -- "${cur}"))
+}
+
+complete -F _use-ssh use-ssh
+
 # direnv
 if type -p direnv &>/dev/null; then
     eval "$(direnv hook bash)"
 fi
-
-# SSH and screen
-function sshscreen(){
-    ssh "$@" -v -t 'if screen -ls | grep gtx -q ; then screen -x gtx ;else screen -S gtx ;fi'
-}
-# SSH and screen
-function sshtmux(){
-    ssh "$@" -v -t 'if tmux ls | grep gtx -q ; then tmux at -t gtx ;else tmux new -s gtx ;fi'
-}
 
 # Alias
 alias cd="cdenv"
