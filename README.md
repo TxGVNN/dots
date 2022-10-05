@@ -1,3 +1,4 @@
+[![Replit:Emacs](https://img.shields.io/badge/Replit-emacs-%239340c1.svg)](https://replit.com/@TxGVNN/dots)
 ## GNU Emacs
 
 ```
