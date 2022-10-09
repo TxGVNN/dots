@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20220922.0207")
+(defvar emacs-config-version "20221009.0158")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -239,7 +239,6 @@
   (define-key isearch-mode-map (kbd "M-s %") 'isearch-query-replace-regexp))
 (use-package anzu
   :ensure t :defer t
-  :init
   :hook (after-init . global-anzu-mode)
   :config
   (setq anzu-mode-lighter "")
@@ -637,7 +636,6 @@
   ("C-^" . crux-top-join-line)
   ("C-a" . crux-move-beginning-of-line)
   ("C-o" . crux-smart-open-line-above)
-  ("M-o" . crux-smart-open-line)
   ("C-c c" . crux-create-scratch-buffer)
   ("C-c d" . crux-duplicate-current-line-or-region)
   ("C-c M-d" . crux-duplicate-and-comment-current-line-or-region)
@@ -1014,7 +1012,7 @@
 (global-set-key (kbd "C-x C-@") 'pop-to-mark-command)
 (global-set-key (kbd "C-x C-SPC") 'pop-to-mark-command)
 (global-set-key (kbd "C-x C-b") 'ibuffer)
-(global-set-key (kbd "C-x j") 'mode-line-other-buffer)
+(global-set-key (kbd "M-o") 'mode-line-other-buffer)
 (global-set-key (kbd "M-s e") 'eww)
 (global-set-key (kbd "M-s E") 'eww-search-local-help)
 (global-set-key (kbd "M-s f") 'find-file-rec)
@@ -1288,6 +1286,9 @@ https://download.eclipse.org/jdtls/snapshots/jdt-language-server-latest.tar.gz"
 (use-package indent-guide :defer t
   :hook (html-mode . indent-guide-mode)
   :config (set-face-foreground 'indent-guide-face "dimgray"))
+(use-package sgml-mode :defer t
+  :config
+  (define-key html-mode-map (kbd "M-o") #'mode-line-other-buffer))
 
 ;; js, ts mode
 (defun develop-ts()
