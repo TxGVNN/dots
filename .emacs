@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20221009.0158")
+(defvar emacs-config-version "20221009.0200")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -702,7 +702,13 @@
 (use-package eev
   :ensure t :defer 1
   :config (require 'eev-load)
-  (global-set-key (kbd "<f8>") #'eepitch-this-line))
+  (defun eepitch-this-line-or-setup (&optional prefix)
+    "Setup eepitch-buffer-name if PREFIX or eval this line."
+    (interactive "P")
+    (if prefix
+        (setq-local eepitch-buffer-name (read-buffer-to-switch "Buffer: "))
+      (eepitch-this-line)))
+  (global-set-key (kbd "<f8>") #'eepitch-this-line-or-setup))
 (use-package so-long
   :ensure t :defer t
   :hook (after-init . global-so-long-mode))
@@ -1243,10 +1249,7 @@ Please install:
 (defun develop-php()
   "PHP development."
   (interactive)
-  (package-install 'phps-mode))
-(use-package phps-mode
-  :defer t
-  :mode ("\\.php\\'" "\\.phtml\\'"))
+  (package-install 'php-mode))
 
 ;; erlang
 (add-hook 'erlang-mode-hook #'eglot-ensure)
