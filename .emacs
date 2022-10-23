@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20221009.0200")
+(defvar emacs-config-version "20221023.1515")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -281,16 +281,16 @@
         ("O" . project-org-go)
         ("v" . magit-project-status))
   :config
-  (if (and (version< emacs-version "28") (not (assq 'project package-alist)))
-      (warn "If `project' < 0.8, please install latest from ELPA"))
+  (if (version< (package-version-join (pkg-info-package-version 'project)) "0.8.2")
+      (user-error "`project' < 0.8.2, please install latest from ELPA"))
   (advice-add #'project-find-file :override #'project-find-file-cd)
-  (defun project-find-file-cd ()
+  (defun project-find-file-cd (&optional include-all)
     "Project-find-file set default-directory is project-root"
     (interactive)
     (let* ((pr (project-current t))
            (default-directory (project-root pr))
            (dirs (list default-directory)))
-      (project-find-file-in (thing-at-point 'filename) dirs pr)))
+      (project-find-file-in (thing-at-point 'filename) dirs pr include-all)))
   (setq project-compilation-buffer-name-function 'project-prefixed-buffer-name)
   (defun project-shell ()
     "Override `project-shell'."
@@ -416,7 +416,7 @@
   (defun project-current-with-persp (pr)
     "Override project-current(MAYBE-PROMPT DIRECTORY)."
     (if-let* ((bound-and-true-p persp-mode)
-              (dir (cdr pr)))
+              (dir (car (nthcdr 2 pr))))
         (unless (equal (persp-name (persp-curr)) dir)
           (persp-switch dir))) pr)
   ;; hack local var when switch
