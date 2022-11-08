@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20221023.1515")
+(defvar emacs-config-version "20221108.0728")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -270,6 +270,7 @@
     "https://packages.ubuntu.com/search?keywords=%s&searchon=names&suite=all&section=all"))
 
 ;;; WORKSPACE: project, perspective, envrc
+(use-package pkg-info :ensure t :defer t)
 (use-package project :defer t
   :bind
   (:map project-prefix-map
@@ -943,8 +944,17 @@
                     (format-time-string "%Y%m%d-%H%M"))))))
 (defun insert-datetime(&optional prefix)
   "Insert YYYYmmdd-HHMM or YYYY-mm-dd_HH-MM if PREFIX set."
-  (interactive "P")
-  (insert (format-time-string (if prefix "%Y-%m-%d_%H-%M" "%Y%m%d-%H%M") (current-time) t)))
+  (interactive "p")
+  (let ((msg
+         (cond
+          ((= prefix 1)
+           (format-time-string "%Y%m%d-%H%M" (current-time) t))
+          ((= prefix 2)
+           (string-trim (shell-command-to-string "date --utc")))
+          ((= prefix 4)
+           (format-time-string "%Y-%m-%d_%H-%M" (current-time) t)))))
+    (insert msg)))
+
 (defun linux-stat-file()
   "Run stat command in linux in current file."
   (interactive)
@@ -1328,7 +1338,7 @@ npm i -g typescript-language-server; npm i -g typescript"
 (defun develop-docker()
   "Docker tools."
   (interactive)
-  (package-installs 'dockerfile-mode 'docker 'docker-compose-mode))
+  (package-installs 'dockerfile-mode 'docker 'docker-tramp 'docker-compose-mode))
 (use-package docker :defer t
   :config (setq docker-run-async-with-buffer-function #'docker-run-async-with-buffer-shell))
 
