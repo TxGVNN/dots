@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20221108.0728")
+(defvar emacs-config-version "20221108.0729")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -535,10 +535,6 @@
         ("S-TAB" . corfu-previous)
         ([backtab] . corfu-previous))
   :config
-  (unless (display-graphic-p)
-    (use-package corfu-terminal
-      :ensure t :defer t
-      :init (add-hook 'corfu-mode-hook #'corfu-terminal-mode)))
   (setq completion-cycle-threshold 3
         corfu-auto t
         corfu-cycle t
