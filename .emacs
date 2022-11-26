@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20221108.0729")
+(defvar emacs-config-version "20221126.1552")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -349,34 +349,19 @@
     "Capture to project dir."
     (interactive)
     (unless (bound-and-true-p org-default-notes-file) (require 'org-capture))
-    (let* ((project (project-current t))
-           (org-default-notes-file (concat (cdr project) "tasks.org")))
+    (let* ((project (project-root (project-current t)))
+           (org-default-notes-file (concat project "tasks.org")))
       (call-interactively 'org-capture)))
   (defun project-org-go ()
     "Jump to project org file."
     (interactive)
-    (let* ((project (project-current t))
-           (org-default-notes-file (concat (cdr project) "tasks.org")))
+    (let* ((project (project-root (project-current t)))
+           (org-default-notes-file (concat project "tasks.org")))
       (find-file org-default-notes-file)))
-  (defun project-save-buffers ()
-    "Save all project buffers."
-    (interactive)
-    (let* ((project (project-current t))
-           (buffers (project--buffer-list project))
-           (modified-buffers (cl-remove-if-not (lambda (buf)
-                                                 (and (buffer-file-name buf)
-                                                      (buffer-modified-p buf)))
-                                               buffers)))
-      (if (null modified-buffers)
-          (message "No buffers need saving")
-        (dolist (buf modified-buffers)
-          (with-current-buffer buf
-            (save-buffer)))
-        (message "Saved %d buffers" (length modified-buffers)))))
   (defun project-jump-persp ()
     "Just jump to persp of project."
     (interactive)
-    (let ((dir (cdr (project-current t))))
+    (let ((dir (project-root (project-current t))))
       (persp-switch dir)))
   ;; switch commands
   (setq project-switch-commands
@@ -412,14 +397,6 @@
   ;; buffer
   (with-eval-after-load 'marginalia
     (add-to-list 'marginalia-command-categories '(persp-switch-to-buffer* . buffer)))
-  ;; switch persp with project - TODO: Find better solution
-  (advice-add #'project-current :filter-return #'project-current-with-persp)
-  (defun project-current-with-persp (pr)
-    "Override project-current(MAYBE-PROMPT DIRECTORY)."
-    (if-let* ((bound-and-true-p persp-mode)
-              (dir (car (nthcdr 2 pr))))
-        (unless (equal (persp-name (persp-curr)) dir)
-          (persp-switch dir))) pr)
   ;; hack local var when switch
   (add-hook 'persp-switch-hook #'hack-dir-local-variables-non-file-buffer)
   ;; persp-ibuffer
@@ -441,6 +418,17 @@
                 (persp-switch (cdr other-persp)))))
         (switch-to-buffer buffer)
         (when single (delete-other-windows)))))
+  (defun project-switch-project (dir)
+    "Override 'project-switch-project with support perspective."
+    (interactive (list (project-prompt-project-dir)))
+    (let ((command (if (symbolp project-switch-commands)
+                       project-switch-commands
+                     (project--switch-project-command))))
+      (with-temp-buffer
+        (let ((default-directory dir)
+              (project-current-inhibit-prompt t))
+          (persp-switch dir)
+          (call-interactively command)))))
   ;; find-file
   (advice-add #'find-file :override #'find-file-persp)
   (defun find-file-persp (filename &optional wildcards)
@@ -449,7 +437,7 @@
      (find-file-read-args "Find file: "
                           (confirm-nonexistent-file-or-buffer)))
     (if (bound-and-true-p persp-mode)
-        (project-current nil filename))
+        (persp-switch (project-root (project-current nil filename))))
     (let ((value (find-file-noselect filename nil nil wildcards)))
       (if (listp value)
           (mapcar 'pop-to-buffer-same-window (nreverse value))
