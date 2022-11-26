@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20221126.1555")
+(defvar emacs-config-version "20221126.1612")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -282,8 +282,8 @@
         ("O" . project-org-go)
         ("v" . magit-project-status))
   :config
-  (if (version< (package-version-join (pkg-info-package-version 'project)) "0.8.2")
-      (user-error "`project' < 0.8.2, please install latest from ELPA"))
+  (if (version< (package-version-join (pkg-info-package-version 'project)) "0.8.3")
+      (user-error "`project' < 0.8.3, please install latest from ELPA"))
   (advice-add #'project-find-file :override #'project-find-file-cd)
   (defun project-find-file-cd (&optional include-all)
     "Project-find-file set default-directory is project-root"
@@ -418,17 +418,18 @@
                 (persp-switch (cdr other-persp)))))
         (switch-to-buffer buffer)
         (when single (delete-other-windows)))))
-  (defun project-switch-project (dir)
-    "Override 'project-switch-project with support perspective."
-    (interactive (list (project-prompt-project-dir)))
-    (let ((command (if (symbolp project-switch-commands)
-                       project-switch-commands
-                     (project--switch-project-command))))
-      (with-temp-buffer
-        (let ((default-directory dir)
-              (project-current-inhibit-prompt t))
-          (persp-switch dir)
-          (call-interactively command)))))
+  (with-eval-after-load 'project
+    (defun project-switch-project (dir)
+      "Override 'project-switch-project with support perspective."
+      (interactive (list (project-prompt-project-dir)))
+      (let ((command (if (symbolp project-switch-commands)
+                         project-switch-commands
+                       (project--switch-project-command))))
+        (with-temp-buffer
+          (let ((default-directory dir)
+                (project-current-inhibit-prompt t))
+            (persp-switch dir)
+            (call-interactively command))))))
   ;; find-file
   (advice-add #'find-file :override #'find-file-persp)
   (defun find-file-persp (filename &optional wildcards)
