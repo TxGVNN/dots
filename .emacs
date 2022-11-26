@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20221126.1554")
+(defvar emacs-config-version "20221126.1555")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -1153,7 +1153,9 @@
 
 ;; org-mode
 (use-package org :defer t
-  :init (add-hook 'org-mode-hook #'org-indent-mode)
+  :hook
+  (org-mode . org-indent-mode)
+  (org-mode . flyspell-mode)
   :config
   (add-to-list 'hidden-minor-modes 'org-indent-mode)
   (define-key org-src-mode-map (kbd "C-c C-c") #'org-edit-src-exit)
@@ -1165,10 +1167,11 @@
         org-src-tab-acts-natively t
         org-edit-src-content-indentation 0
         org-log-done 'time
-        org-todo-keyword-faces (quote (("BLOCKED" . error) ("WIP" . warning)))
+        org-todo-keyword-faces (quote (("BLOCKED" . error) ("WIP" . warning)
+                                       ("WONTFIX" . (:foreground "gray" :weight bold))))
         org-todo-keywords
         (quote
-         ((sequence "TODO(t)" "|" "DONE(d)")
+         ((sequence "TODO(t)" "|" "WONTFIX(W)" "DONE(d)")
           (sequence "WIP(w)" "BLOCKED(b)" "|" "REJECTED(r)")))))
 (use-package org-bullets
   :ensure t :defer t
