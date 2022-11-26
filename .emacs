@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20221126.1552")
+(defvar emacs-config-version "20221126.1554")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -1217,6 +1217,10 @@ Please install:
   (when (and (executable-find "python3")
              (string= python-shell-interpreter "python"))
     (setq python-shell-interpreter "python3"))
+  (defun python-pip-install-requirements()
+    (interactive)
+    (let ((default-directory (project-root (project-current t))))
+      (async-shell-command "pwd; which pip; pip install -r requirements.txt")))
   (defun python-docs (w)
     "Launch PyDOC on the Word at Point"
     (interactive
