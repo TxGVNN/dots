@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20221127.0047")
+(defvar emacs-config-version "20221127.0438")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -440,7 +440,7 @@
     (if-let* ((bound-and-true-p persp-mode)
               (pr (project-current nil filename))
               (dir (project-root pr)))
-        (persp-switch pr))
+        (persp-switch dir))
     (let ((value (find-file-noselect filename nil nil wildcards)))
       (if (listp value)
           (mapcar 'pop-to-buffer-same-window (nreverse value))
