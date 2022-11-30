@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20221127.0438")
+(defvar emacs-config-version "20221130.0242")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -426,9 +426,9 @@
                          project-switch-commands
                        (project--switch-project-command))))
         (with-temp-buffer
+          (persp-switch dir)
           (let ((default-directory dir)
                 (project-current-inhibit-prompt t))
-            (persp-switch dir)
             (call-interactively command))))))
   ;; find-file
   (advice-add #'find-file :override #'find-file-persp)
