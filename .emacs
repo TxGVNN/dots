@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20221130.0242")
+(defvar emacs-config-version "20221204.0238")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -282,8 +282,8 @@
         ("O" . project-org-go)
         ("v" . magit-project-status))
   :config
-  (if (version< (package-version-join (pkg-info-package-version 'project)) "0.8.3")
-      (user-error "`project' < 0.8.3, please install latest from ELPA"))
+  (unless (version= (package-version-join (pkg-info-package-version 'project)) "0.9.2")
+    (user-error "Require `project-0.9.2', please install from ELPA"))
   (advice-add #'project-find-file :override #'project-find-file-cd)
   (defun project-find-file-cd (&optional include-all)
     "Project-find-file set default-directory is project-root"
@@ -425,11 +425,9 @@
       (let ((command (if (symbolp project-switch-commands)
                          project-switch-commands
                        (project--switch-project-command))))
-        (with-temp-buffer
-          (persp-switch dir)
-          (let ((default-directory dir)
-                (project-current-inhibit-prompt t))
-            (call-interactively command))))))
+        (persp-switch dir)
+        (let ((project-current-directory-override dir))
+          (call-interactively command)))))
   ;; find-file
   (advice-add #'find-file :override #'find-file-persp)
   (defun find-file-persp (filename &optional wildcards)
@@ -438,7 +436,7 @@
      (find-file-read-args "Find file: "
                           (confirm-nonexistent-file-or-buffer)))
     (if-let* ((bound-and-true-p persp-mode)
-              (pr (project-current nil filename))
+              (pr (project-current nil (file-name-directory filename)))
               (dir (project-root pr)))
         (persp-switch dir))
     (let ((value (find-file-noselect filename nil nil wildcards)))
