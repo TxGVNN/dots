@@ -46,6 +46,12 @@
   (setq vertico-cycle t)
   (delete ".git/" completion-ignored-extensions)
   (add-hook 'minibuffer-setup-hook #'vertico-repeat-save)
+  (advice-add #'vertico--format-candidate :around
+              (lambda (orig cand prefix suffix index _start)
+                (setq cand (funcall orig cand prefix suffix index _start))
+                (concat
+                 (if (= vertico--index index)
+                     (propertize "»" 'face 'vertico-current) " ") cand)))
   :bind ("C-x C-r" . vertico-repeat)
   (:map vertico-map
         ("<prior>" . vertico-scroll-down)
