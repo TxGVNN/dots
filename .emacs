@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20221209.1742")
+(defvar emacs-config-version "20221213.0333")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -288,8 +288,6 @@
         ("O" . project-org-go)
         ("v" . magit-project-status))
   :config
-  (unless (version= (package-version-join (pkg-info-package-version 'project)) "0.9.2")
-    (user-error "Require `project-0.9.2', please install from ELPA"))
   (advice-add #'project-find-file :override #'project-find-file-cd)
   (defun project-find-file-cd (&optional include-all)
     "Project-find-file set default-directory is project-root"
@@ -380,7 +378,9 @@
           (project-shell "shell")
           (magit-project-status "git")
           (project-jump-persp "jump")
-          (embark-on-project "embark"))))
+          (embark-on-project "embark")))
+  (unless (version= (package-version-join (pkg-info-package-version 'project)) "0.9.3")
+    (user-error "Require `project-0.9.3', please install from ELPA")))
 (use-package envrc ;; direnv > 2.7
   :ensure t :defer t
   :config
