@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20221213.0333")
+(defvar emacs-config-version "20230101.1614")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -236,6 +236,12 @@
 (use-package git-link
   :ensure t :defer t
   :config (setq git-link-use-commit t))
+(use-package magit-todos
+  :ensure t :defer t
+  :config  ;; j-T in magit-status buffer
+  (setq magit-todos-branch-list nil
+        magit-todos-update nil)
+  :hook (magit-mode . magit-todos-mode))
 
 ;;; SEARCHING: ripgrep, anzu, engine-mode
 (use-package isearch :defer t
@@ -506,7 +512,7 @@
   :hook (after-init . volatile-highlights-mode)
   :config (add-to-list 'hidden-minor-modes 'volatile-highlights-mode))
 (use-package symbol-overlay
-  :ensure t :defer t
+  :ensure t :defer t :pin nongnu
   :bind ("M-s H" . symbol-overlay-put)
   :hook (prog-mode . symbol-overlay-mode)
   :config (add-to-list 'hidden-minor-modes 'symbol-overlay-mode))
@@ -705,6 +711,7 @@
 (use-package so-long
   :ensure t :defer t
   :hook (after-init . global-so-long-mode))
+(use-package dpaste :ensure t :defer t)
 
 ;;; CHECKER: flymake(C-h .)
 (use-package flymake
@@ -962,7 +969,7 @@
            ((and (bound-and-true-p rectangle-mark-mode) (use-region-p))
             (mapconcat 'concat (extract-rectangle (region-beginning) (region-end)) "\n"))
            ((use-region-p) (buffer-substring-no-properties (point) (mark)))
-           (t (buffer-substring (point-min) (point-max)))))
+           (t (buffer-substring-no-properties (point-min) (point-max)))))
          (buffer-name (format "%s_%s" (file-name-base (buffer-name))
                               (format-time-string "%Y%m%d_%H%M%S")))
          (buffer (get-buffer-create buffer-name)))
@@ -1148,7 +1155,7 @@
   (setq erc-hide-list '("JOIN" "PART" "QUIT"))
   (setq erc-default-server "irc.libera.chat")
   (setq erc-prompt-for-password nil))
-(use-package ercn  :defer t
+(use-package ercn :defer t
   :hook (ercn-notify . do-notify)
   :config
   (setq ercn-notify-rules
@@ -1187,12 +1194,13 @@
 (use-package ob-compile :ensure t :defer t
   :config (add-hook 'compilation-finish-functions #'ob-compile-save-file))
 
-;; yaml
 (use-package yaml-mode
   :ensure t
   :init (add-hook 'yaml-mode-hook #'eglot-ensure))
 
-;; go-mode
+(use-package markdown-mode
+  :ensure t :defer t)
+
 (defun develop-go()
   "Go develoment.
 Please install:
