@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20230101.1614")
+(defvar emacs-config-version "20230101.1615")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -620,7 +620,7 @@
   :commands eglot-ensure
   :after (project flymake))
 
-;;; TOOLS: avy, crux, expand-region, move-text, ace-window, vundo|undo-tree,...
+;;; TOOLS: avy, crux, expand-region, move-text, ace-window, vundo|undo-tree,
 (use-package avy
   :ensure t :defer t
   :config
@@ -701,12 +701,14 @@
 (use-package eev
   :ensure t :defer 1
   :config (require 'eev-load)
-  (defun eepitch-this-line-or-setup (&optional prefix)
+  (defun eepitch-this-line-or-setup ()
     "Setup eepitch-buffer-name if PREFIX or eval this line."
-    (interactive "P")
-    (if prefix
-        (setq-local eepitch-buffer-name (read-buffer-to-switch "Buffer: "))
-      (eepitch-this-line)))
+    (interactive)
+    (if (eq eepitch-buffer-name "")
+        (setq-local eepitch-buffer-name (read-buffer-to-switch "Buffer: ")))
+    (unless (get-buffer eepitch-buffer-name)
+      (shell eepitch-buffer-name))
+    (eepitch-this-line))
   (global-set-key (kbd "<f8>") #'eepitch-this-line-or-setup))
 (use-package so-long
   :ensure t :defer t
