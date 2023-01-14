@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20230101.1615")
+(defvar emacs-config-version "20230114.1602")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -385,8 +385,8 @@
           (magit-project-status "git")
           (project-jump-persp "jump")
           (embark-on-project "embark")))
-  (unless (version= (package-version-join (pkg-info-package-version 'project)) "0.9.3")
-    (user-error "Require `project-0.9.3', please install from ELPA")))
+  (unless (version= (package-version-join (pkg-info-package-version 'project)) "0.9.4")
+    (user-error "Require `project-0.9.4', please install from ELPA")))
 (use-package envrc ;; direnv > 2.7
   :ensure t :defer t
   :config
@@ -537,6 +537,10 @@
         ("S-TAB" . corfu-previous)
         ([backtab] . corfu-previous))
   :config
+  (unless (display-graphic-p)
+    (use-package corfu-terminal
+      :ensure t :defer t
+      :init (add-hook 'corfu-mode-hook #'corfu-terminal-mode)))
   (setq completion-cycle-threshold 3
         corfu-auto t
         corfu-cycle t
