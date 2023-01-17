@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20230117.1348")
+(defvar emacs-config-version "20230117.1420")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -26,7 +26,8 @@
       '(("me" . "https://txgvnn.github.io/giaelpa/")
         ("melpa" . "https://melpa.org/packages/")
         ("gnu" . "https://elpa.gnu.org/packages/")
-        ("nongnu" . "https://elpa.nongnu.org/nongnu/")))
+        ("nongnu" . "https://elpa.nongnu.org/nongnu/"))
+      package-archive-priorities '(("me" . 9)))
 
 ;; BOOTSTRAP `use-package'
 (unless (package-installed-p 'use-package)
