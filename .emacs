@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20230114.1602")
+(defvar emacs-config-version "20230117.1348")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -694,7 +694,6 @@
   :ensure t :defer t
   :init
   (global-set-key [remap describe-command] 'helpful-command)
-  (global-set-key [remap describe-function] 'helpful-function)
   (global-set-key [remap describe-key] 'helpful-key)
   (global-set-key [remap describe-macro] 'helpful-macro)
   (global-set-key [remap describe-variable] 'helpful-variable)
