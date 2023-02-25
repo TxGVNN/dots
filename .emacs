@@ -633,6 +633,7 @@
 (use-package eglot
   :ensure t
   :commands eglot-ensure
+  :config (setq eglot-report-progress nil)
   :after (project flymake))
 
 ;;; TOOLS: avy, crux, expand-region, move-text, ace-window, vundo|undo-tree,
