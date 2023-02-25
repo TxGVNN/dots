@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20230117.1540")
+(defvar emacs-config-version "20230225.0853")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -283,8 +283,8 @@
     "https://packages.ubuntu.com/search?keywords=%s&searchon=names&suite=all&section=all"))
 
 ;;; WORKSPACE: project, perspective, envrc
-(use-package pkg-info :ensure t :defer t)
 (use-package project :defer t
+  :ensure t :pin me
   :bind
   (:map project-prefix-map
         ("t" . project-term)
@@ -304,17 +304,29 @@
            (dirs (list default-directory)))
       (project-find-file-in (thing-at-point 'filename) dirs pr include-all)))
   (setq project-compilation-buffer-name-function 'project-prefixed-buffer-name)
+  (defun shell-with-histfile(buffer-name histfile)
+    "Create a shell BUFFER-NAME and set comint-input-ring-file-name is HISTFILE."
+    (let* ((shell-directory-name (locate-user-emacs-file "shell"))
+           (filepath (expand-file-name (format "%s/%s.history" shell-directory-name histfile))))
+      (unless (file-exists-p shell-directory-name)
+        (make-directory shell-directory-name t))
+      (with-current-buffer (shell buffer-name)
+        (setq-local comint-input-ring-file-name filepath)
+        (comint-read-input-ring t)
+        (set-process-sentinel (get-buffer-process (current-buffer))
+                              #'shell-write-history-on-exit))))
   (defun project-shell ()
     "Override `project-shell'."
     (interactive)
     (let* ((default-directory (project-root (project-current t)))
-           (default-project-shell-name (project-prefixed-buffer-name "shell"))
-           (shell-buffer (get-buffer default-project-shell-name)))
+           (project-shell-name (project-prefixed-buffer-name "shell"))
+           (shell-buffer (get-buffer project-shell-name)))
       (if current-prefix-arg
-          (shell (generate-new-buffer-name default-project-shell-name))
+          (shell-with-histfile (generate-new-buffer-name project-shell-name)
+                               project-shell-name)
         (if (get-buffer-process shell-buffer)
             (pop-to-buffer-same-window shell-buffer)
-          (shell default-project-shell-name)))))
+          (shell-with-histfile project-shell-name project-shell-name)))))
   (defun project-consult-grep (&optional initial)
     "Using consult-grep(INITIAL) in project."
     (interactive)
@@ -385,9 +397,7 @@
           (project-shell "shell")
           (magit-project-status "git")
           (project-jump-persp "jump")
-          (embark-on-project "embark")))
-  (unless (version= (package-version-join (pkg-info-package-version 'project)) "0.9.4")
-    (user-error "Require `project-0.9.4', please install from ELPA")))
+          (embark-on-project "embark"))))
 (use-package envrc ;; direnv > 2.7
   :ensure t :defer t
   :config
