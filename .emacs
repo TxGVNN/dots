@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20230225.0853")
+(defvar emacs-config-version "20230318.0350")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -729,6 +729,12 @@
 (use-package so-long
   :ensure t :defer t
   :hook (after-init . global-so-long-mode))
+(use-package detached
+  :ensure t
+  :init (detached-init)
+  :bind (([remap async-shell-command] . detached-shell-command)
+         ("C-x M" . detached-compile))
+  :custom ((detached-terminal-data-command system-type)))
 (use-package dpaste :ensure t :defer t)
 
 ;;; CHECKER: flymake(C-h .)
@@ -903,6 +909,11 @@
                 (vc-mode vc-mode) " "
                 mode-line-modes mode-line-misc-info
                 mode-line-end-spaces))
+(use-package which-func
+  :after imenu
+  :config
+  (setq-default header-line-format
+                (list '("::" (:eval (propertize (or (which-function) "") 'face 'font-lock-function-name-face))))))
 
 ;;; CUSTOMIZE
 (defun add-to-hooks (func &rest hooks)
@@ -1150,6 +1161,31 @@
 (add-hook 'minibuffer-setup-hook #'cursor-intangible-mode)
 
 ;;; DEVELOPMENT ENV
+(use-package treesit
+  :demand t
+  :init
+  (dolist (mapping '((python-mode . python-ts-mode)
+                     (css-mode . css-ts-mode)
+                     (sh-mode . bash-ts-mode)
+                     ;; (yaml-mode . yaml-ts-mode)
+                     (js-json-mode . json-ts-mode)
+                     (javascript-mode . js-ts-mode)
+                     (typescript-mode . typescript-ts-mode)
+                     (c-mode . c-ts-mode)
+                     (c++-mode . c++-ts-mode)))
+    (add-to-list 'major-mode-remap-alist mapping))
+  (setq treesit-extra-load-path '("~/.guix-profile/lib/tree-sitter")))
+
+(use-package combobulate
+  :ensure t :defer t
+  :hook
+  (python-ts-mode . combobulate-mode)
+  (js-ts-mode . combobulate-mode)
+  (css-ts-mode . combobulate-mode)
+  ;; (yaml-ts-mode . combobulate-mode)
+  (typescript-ts-mode . combobulate-mode)
+  (tsx-ts-mode . combobulate-mode))
+
 (defun package-installs (&rest packages)
   "Install PACKAGES."
   (dolist (package packages) (package-install package)))
@@ -1363,7 +1399,7 @@ npm i -g typescript-language-server; npm i -g typescript"
 (defun develop-docker()
   "Docker tools."
   (interactive)
-  (package-installs 'dockerfile-mode 'docker 'docker-tramp 'docker-compose-mode))
+  (package-installs 'dockerfile-mode 'docker 'docker-compose-mode))
 (use-package docker :defer t
   :config (setq docker-run-async-with-buffer-function #'docker-run-async-with-buffer-shell))
 
