@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20230318.0350")
+(defvar emacs-config-version "20230320.0903")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -628,10 +628,15 @@
 (use-package dumb-jump
   :ensure t :defer t
   :init
-  (with-eval-after-load 'xref
-    (add-to-list 'xref-backend-functions #'dumb-jump-xref-activate)))
-(use-package eglot
-  :ensure t
+  (add-hook 'eglot-managed-mode-hook (lambda () (add-hook 'xref-backend-functions 'dumb-jump-xref-activate t t)))
+  (add-hook 'xref-backend-functions #'dumb-jump-xref-activate))
+(use-package eglot :defer t
+  :init
+  (add-hook 'python-ts-mode-hook #'eglot-ensure)
+  (add-hook 'bash-ts-mode-hook #'eglot-ensure)
+  (add-hook 'go-ts-mode-hook #'eglot-ensure)
+  (add-hook 'c-ts-mode-hook #'eglot-ensure)
+  (add-hook 'cpp-ts-mode-hook #'eglot-ensure)
   :commands eglot-ensure
   :config (setq eglot-report-progress nil)
   :after (project flymake))
