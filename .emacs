@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20230320.0903")
+(defvar emacs-config-version "20230325.1038")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -343,7 +343,7 @@
   (defun project-term ()
     "project-term."
     (interactive)
-    (let* ((default-directory (cdr (project-current t)))
+    (let* ((default-directory (project-root (project-current t)))
            (termname (format "%s-term" (file-name-nondirectory
                                         (directory-file-name default-directory))))
            (buffer (format "*%s*" termname)))
@@ -354,7 +354,7 @@
   (defun project-vterm ()
     "project-vterm."
     (interactive)
-    (let* ((default-directory (cdr (project-current t)))
+    (let* ((default-directory (project-root (project-current t)))
            (buffer (format "*%s-vterm*" (file-name-nondirectory
                                          (directory-file-name default-directory)))))
       (unless (get-buffer buffer)
