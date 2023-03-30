@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20230330.1512")
+(defvar emacs-config-version "20230330.1706")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -305,8 +305,6 @@
         ("j" . project-jump-persp)
         ("T" . project-vterm)
         ("M-x" . project-execute-extended-command)
-        ("o" . project-org-capture)
-        ("O" . project-org-go)
         ("v" . magit-project-status))
   :config
   (advice-add #'project-find-file :override #'project-find-file-cd)
@@ -381,20 +379,6 @@
     (require 'embark nil t)
     (embark-chroot (project-root (project-current t))))
   (define-key project-prefix-map (kbd "/") #'embark-on-project)
-  ;; org-capture
-  (defun project-org-capture ()
-    "Capture to project dir."
-    (interactive)
-    (unless (bound-and-true-p org-default-notes-file) (require 'org-capture))
-    (let* ((project (project-root (project-current t)))
-           (org-default-notes-file (concat project "tasks.org")))
-      (call-interactively 'org-capture)))
-  (defun project-org-go ()
-    "Jump to project org file."
-    (interactive)
-    (let* ((project (project-root (project-current t)))
-           (org-default-notes-file (concat project "tasks.org")))
-      (find-file org-default-notes-file)))
   (defun project-jump-persp ()
     "Just jump to persp of project."
     (interactive)
@@ -412,6 +396,15 @@
           (magit-project-status "git")
           (project-jump-persp "jump")
           (embark-on-project "embark"))))
+(use-package project-tasks
+  :ensure t :defer t
+  :after (project)
+  :init (add-to-list 'project-switch-commands '(project-tasks "tasks") t)
+  :bind
+  (:map project-prefix-map
+        ("P" . project-tasks)
+        ("o" . project-tasks-capture)
+        ("O" . project-tasks-jump)))
 (use-package envrc ;; direnv > 2.7
   :ensure t :defer t
   :config
