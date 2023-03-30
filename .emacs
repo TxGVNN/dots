@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20230330.1511")
+(defvar emacs-config-version "20230330.1512")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -229,9 +229,23 @@
 (use-package magit
   :ensure t :defer t
   :config
-  (defun magit-find-file-on-project (project rev path)
-    (let ((default-directory project))
-      (magit-find-file rev path)))
+  (defun magit-find-file-at-path (project rev path)
+    (let ((default-directory project)
+          (line (string-to-number (car (last (split-string path "#L"))))))
+      (with-current-buffer
+          (magit-find-file rev (car (split-string path "#")))
+        (goto-char (point-min))
+        (forward-line (1- line)))))
+  (defun magit-link-at-point ()
+    (interactive)
+    (let* ((link (magit-with-toplevel
+                   (list (abbreviate-file-name default-directory)
+                         (magit-rev-parse "--short" "HEAD")
+                         (magit-file-relative-name))))
+           (magit-link (format "(magit-find-file-at-path \"%s\" \"%s\" \"%s#L%s\")"
+                               (car link) (cadr link) (caddr link) (line-number-at-pos))))
+      (kill-new magit-link)
+      (message magit-link)))
   :bind
   ("C-x v f" . magit-find-file))
 (use-package git-link
