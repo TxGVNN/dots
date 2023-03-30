@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20230325.1038")
+(defvar emacs-config-version "20230330.1511")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -877,9 +877,9 @@
         gnus-sum-thread-tree-single-leaf     "└─> "))
 
 ;;; THEMES
-(use-package dracula-theme
-  :ensure t
-  :init (load-theme 'dracula t))
+(use-package modus-vivendi-theme
+  :demand
+  :init (load-theme 'modus-vivendi t))
 
 ;; MODELINE
 (setq mode-line-position
