@@ -241,9 +241,9 @@
   (defun magit-link-at-point ()
     (interactive)
     (let* ((link (magit-with-toplevel
-                  (list (abbreviate-file-name default-directory)
-                        (magit-rev-parse "--short" "HEAD")
-                        (magit-file-relative-name))))
+                   (list (abbreviate-file-name default-directory)
+                         (magit-rev-parse "--short" "HEAD")
+                         (magit-file-relative-name))))
            (magit-link (format "(magit-find-file-at-path \"%s\" \"%s\" \"%s#L%s\")"
                                (car link) (cadr link) (caddr link) (line-number-at-pos))))
       (kill-new magit-link)
@@ -321,11 +321,14 @@
   (defun shell-with-histfile(buffer-name histfile)
     "Create a shell BUFFER-NAME and set comint-input-ring-file-name is HISTFILE."
     (let* ((shell-directory-name (locate-user-emacs-file "shell"))
-           (filepath (expand-file-name (format "%s/%s.history" shell-directory-name histfile))))
+           (comint-input-ring-file-name (expand-file-name
+                                         (format "%s/%s.history" shell-directory-name histfile)))
+           (comint-input-ring (make-ring 1)))
+      ;; HACK: make shell-mode doesnt set comint-input-ring-file-name
+      (ring-insert comint-input-ring "uname")
       (unless (file-exists-p shell-directory-name)
         (make-directory shell-directory-name t))
       (with-current-buffer (shell buffer-name)
-        (setq-local comint-input-ring-file-name filepath)
         (comint-read-input-ring t)
         (set-process-sentinel (get-buffer-process (current-buffer))
                               #'shell-write-history-on-exit))))
@@ -487,14 +490,15 @@
       "Override compilation-read-command (COMMAND)."
       (let* ((persp-name (if (bound-and-true-p persp-mode)
                              (persp-name (persp-curr)) "0"))
-             (compile-history
-              (ring-elements (persp--get-command-history persp-name))))
-        (ring-insert (persp--get-command-history persp-name)
-                     (read-shell-command (format "Compile [%s]: " default-directory)
-                                         (or (car compile-history) command)
-                                         (if (equal (car compile-history) command)
-                                             '(compile-history . 1)
-                                           'compile-history))))))
+             (history
+              (ring-elements (persp--get-command-history persp-name)))
+             (command (or (car history) command))
+             (input (read-shell-command
+                     (format "Compile (%s) (%s):"
+                             (pretty--abbreviate-directory default-directory) command) nil
+                     'history command)))
+        (ring-remove+insert+extend (persp--get-command-history persp-name)
+                                   (if (string-empty-p input) command input)))))
   (with-eval-after-load 'savehist
     (add-to-list 'savehist-additional-variables 'persp-compile-history)))
 ;; project-temp-root
@@ -745,7 +749,8 @@
   :hook (after-init . global-so-long-mode))
 (use-package detached
   :ensure t
-  :init (detached-init)
+  :custom(detached-init-allow-list '(compile org))
+  :hook (after-init . detached-init)
   :bind (([remap async-shell-command] . detached-shell-command)
          ("C-x M" . detached-compile))
   :custom ((detached-terminal-data-command system-type)))
@@ -844,23 +849,11 @@
       (with-current-buffer buf (doom-auto-revert-buffer-h)))))
 (use-package compile :defer t
   :init (global-set-key (kbd "C-x m") 'compile)
+  :custom
+  (compilation-always-kill t)       ; kill compilation process before starting another
+  (compilation-ask-about-save nil)  ; save all buffers on `compile'
+  (compilation-scroll-output t)
   :config
-  (setq compilation-always-kill t       ; kill compilation process before starting another
-        compilation-ask-about-save nil  ; save all buffers on `compile'
-        compilation-scroll-output t)
-  (defun compile-with-nohistory (command &optional comint)
-    "Override compile(COMMAND &optional COMINT)."
-    (interactive
-     (list
-      (let ((command (eval compile-command)))
-        (if (or compilation-read-command current-prefix-arg)
-            (compilation-read-command command) command))
-      (consp current-prefix-arg)))
-    (save-some-buffers (not compilation-ask-about-save)
-                       compilation-save-buffers-predicate)
-    (setq-default compilation-directory default-directory)
-    (compilation-start command comint))
-  (advice-add #'compile :override #'compile-with-nohistory)
   (defun doom-apply-ansi-color-to-compilation-buffer-h ()
     "Applies ansi codes to the compilation buffers."
     (with-silent-modifications
@@ -929,6 +922,12 @@
                 (list '("::" (:eval (propertize (or (which-function) "") 'face 'font-lock-function-name-face))))))
 
 ;;; CUSTOMIZE
+(defun pretty--abbreviate-directory (dir)
+  "Clone `consult--abbreviate-directory(DIR)'."
+  (save-match-data
+    (let ((adir (abbreviate-file-name dir)))
+      (if (string-match "/\\([^/]+\\)/\\([^/]+\\)/\\'" adir)
+          (format "…/%s/%s/" (match-string 1 adir) (match-string 2 adir)) adir))))
 (defun add-to-hooks (func &rest hooks)
   "Add FUNC to mutil HOOKS."
   (dolist (hook hooks) (add-hook hook func)))
