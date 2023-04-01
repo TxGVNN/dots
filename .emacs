@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20230330.1706")
+(defvar emacs-config-version "latest")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -37,7 +37,9 @@
 (use-package gcmh
   :ensure t
   :init (gcmh-mode)
-  :config (add-to-list 'hidden-minor-modes 'gcmh-mode))
+  :config
+  (setq gcmh-idle-delay 'auto)
+  (add-to-list 'hidden-minor-modes 'gcmh-mode))
 
 ;;; COMPLETION SYSTEM: vertico, orderless, marginalia, consult, embark
 (use-package vertico
@@ -239,9 +241,9 @@
   (defun magit-link-at-point ()
     (interactive)
     (let* ((link (magit-with-toplevel
-                   (list (abbreviate-file-name default-directory)
-                         (magit-rev-parse "--short" "HEAD")
-                         (magit-file-relative-name))))
+                  (list (abbreviate-file-name default-directory)
+                        (magit-rev-parse "--short" "HEAD")
+                        (magit-file-relative-name))))
            (magit-link (format "(magit-find-file-at-path \"%s\" \"%s\" \"%s#L%s\")"
                                (car link) (cadr link) (caddr link) (line-number-at-pos))))
       (kill-new magit-link)
@@ -815,11 +817,10 @@
   (setq ediff-window-setup-function 'ediff-setup-windows-plain)
   (setq ediff-split-window-function 'split-window-horizontally))
 (use-package savehist
-  :ensure t
-  :config (savehist-mode)
-  (add-hook 'savehist-save-hook
-            (lambda () (setq savehist-minibuffer-history-variables
-                             (delete 'eww-prompt-history savehist-minibuffer-history-variables)))))
+  :ensure t :defer t
+  :custom (savehist-ignored-variables '(eww-prompt-history compile-command))
+  :hook (after-init . savehist-mode))
+
 (use-package autorevert
   ;; revert buffers when their files/state have changed
   :hook (focus-in . doom-auto-revert-buffers-h)
@@ -1240,8 +1241,10 @@
   :config
   (add-to-list 'hidden-minor-modes 'org-indent-mode)
   (define-key org-src-mode-map (kbd "C-c C-c") #'org-edit-src-exit)
-  (setq org-babel-load-languages (quote ((emacs-lisp . t) (shell . t)))
-        org-enforce-todo-dependencies t
+  (org-babel-do-load-languages
+   'org-babel-do-load-languagesel-load-languages
+   '((emacs-lisp . t) (shell . t)))
+  (setq org-enforce-todo-dependencies t
         org-adapt-indentation nil
         org-odd-levels-only nil
         org-hide-leading-stars t
