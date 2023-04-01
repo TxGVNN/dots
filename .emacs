@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20230401.0908")
+(defvar emacs-config-version "20230401.1102")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -735,13 +735,13 @@
 (use-package eev
   :ensure t :defer 1
   :config (require 'eev-load)
-  (defun eepitch-this-line-or-setup ()
+  (defun eepitch-this-line-or-setup (&optional prefix)
     "Setup eepitch-buffer-name if PREFIX or eval this line."
-    (interactive)
-    (if (eq eepitch-buffer-name "")
-        (setq-local eepitch-buffer-name (read-buffer-to-switch "Buffer: ")))
-    (unless (get-buffer eepitch-buffer-name)
-      (shell eepitch-buffer-name))
+    (interactive "P")
+    (when (and prefix (eq eepitch-buffer-name ""))
+      (setq-local eepitch-buffer-name (read-buffer-to-switch "Buffer: "))
+      (unless (get-buffer eepitch-buffer-name)
+        (shell eepitch-buffer-name)))
     (eepitch-this-line))
   (global-set-key (kbd "<f8>") #'eepitch-this-line-or-setup))
 (use-package so-long
