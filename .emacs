@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20230406.0438")
+(defvar emacs-config-version "20230406.1550")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -494,7 +494,7 @@
               (ring-elements (persp--get-command-history persp-name)))
              (command (or (car history) command))
              (input (read-shell-command
-                     (format "Compile (%s) (%s):"
+                     (format "Compile `%s' [%s]: "
                              (pretty--abbreviate-directory default-directory) command) nil
                      'history command)))
         (ring-remove+insert+extend (persp--get-command-history persp-name)
@@ -736,7 +736,7 @@
         (list #'shell-command+-command-substitution
               #'shell-command+-redirect-output
               #'shell-command+-implicit-cd)
-        shell-command+-prompt "Shell (%s):")
+        shell-command+-prompt "Shell command `%s': ")
   :init (global-set-key (kbd "M-!") #'shell-command+))
 (use-package eev
   :ensure t :defer 1
@@ -770,10 +770,10 @@
       (call-interactively #'detached-compile)))
   :hook (after-init . detached-init)
   :bind
-  (:map project-prefix-map
-        ("C" . project-detached-compile))
-  ([remap async-shell-command] . detached-shell-command)
-  ("C-x M" . detached-compile))
+  (([remap async-shell-command] . detached-shell-command)
+   ("C-x M" . detached-compile)
+   :map project-prefix-map
+   ("C" . project-detached-compile)))
 (use-package dpaste :ensure t :defer t)
 
 ;;; CHECKER: flymake(C-h .)
