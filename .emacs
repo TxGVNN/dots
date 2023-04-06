@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20230401.1102")
+(defvar emacs-config-version "20230406.0438")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -731,6 +731,12 @@
   (global-set-key [remap describe-symbol] 'helpful-symbol))
 (use-package shell-command+
   :ensure t :defer t
+  :config
+  (setq shell-command+-features
+        (list #'shell-command+-command-substitution
+              #'shell-command+-redirect-output
+              #'shell-command+-implicit-cd)
+        shell-command+-prompt "Shell (%s):")
   :init (global-set-key (kbd "M-!") #'shell-command+))
 (use-package eev
   :ensure t :defer 1
@@ -749,11 +755,25 @@
   :hook (after-init . global-so-long-mode))
 (use-package detached
   :ensure t
-  :custom(detached-init-allow-list '(compile org))
+  :custom
+  (detached-init-allow-list '(compile org))
+  (detached-terminal-data-command system-type)
+  :config
+  (defun project-detached-compile ()
+    "Run `detached-compile' in the project root."
+    (declare (interactive-only compile))
+    (interactive)
+    (let ((default-directory (project-root (project-current t)))
+          (compilation-buffer-name-function
+           (or project-compilation-buffer-name-function
+               compilation-buffer-name-function)))
+      (call-interactively #'detached-compile)))
   :hook (after-init . detached-init)
-  :bind (([remap async-shell-command] . detached-shell-command)
-         ("C-x M" . detached-compile))
-  :custom ((detached-terminal-data-command system-type)))
+  :bind
+  (:map project-prefix-map
+        ("C" . project-detached-compile))
+  ([remap async-shell-command] . detached-shell-command)
+  ("C-x M" . detached-compile))
 (use-package dpaste :ensure t :defer t)
 
 ;;; CHECKER: flymake(C-h .)
@@ -1140,6 +1160,7 @@
  '(read-quoted-char-radix 16)
  '(ring-bell-function #'ignore)
  '(scroll-bar-mode nil)
+ '(shell-command-prompt-show-cwd t)
  '(show-paren-mode t)
  '(tab-stop-list '(4 8 12 16 20 24 28 32 36))
  '(tab-width 4)
@@ -1238,6 +1259,7 @@
   (org-mode . org-indent-mode)
   (org-mode . flyspell-mode)
   :config
+  (require 'ob-shell)
   (add-to-list 'hidden-minor-modes 'org-indent-mode)
   (define-key org-src-mode-map (kbd "C-c C-c") #'org-edit-src-exit)
   (org-babel-do-load-languages
