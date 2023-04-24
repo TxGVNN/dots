@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20230406.1550")
+(defvar emacs-config-version "20230424.1315")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -89,7 +89,7 @@
   ("M-g m" . consult-mark)
   ("M-g k" . consult-global-mark)
   ("M-g e" . consult-error)
-  ("M-s w" . consult-line-at-point)
+  ("M-s w" . consult-line)
   ("M-s g" . consult-grep)
   ("M-s r" . consult-ripgrep)
   ("M-s F" . consult-find)
@@ -114,32 +114,7 @@
         register-preview-function #'consult-register-format
         consult-preview-key (kbd "C-l"))
   (setf (alist-get 'slime-repl-mode consult-mode-histories)
-        'slime-repl-input-history)
-  (defun consult-thing-at-point ()
-    "Return a string that corresponds to the current thing at point."
-    (substring-no-properties
-     (cond
-      ((use-region-p)
-       (let* ((beg (region-beginning))
-              (end (region-end))
-              (eol (save-excursion (goto-char beg) (line-end-position))))
-         (buffer-substring-no-properties beg (min end eol))))
-      ((thing-at-point 'url))
-      ((let ((s (thing-at-point 'symbol)))
-         (and (stringp s)
-              (if (string-match "\\`[`']?\\(.*?\\)'?\\'" s)
-                  (match-string 1 s)
-                s))))
-      ((looking-at "(+\\(\\(?:\\sw\\|\\s_\\)+\\)\\_>")
-       (match-string-no-properties 1))
-      (t ""))))
-  (defun consult-line-at-point()
-    (interactive)
-    (let ((thing (consult-thing-at-point))
-          (consult-preview-key 'any))
-      (when (use-region-p)
-        (deactivate-mark))
-      (consult-line (regexp-quote thing)))))
+        'slime-repl-input-history))
 (use-package embark
   :ensure t :defer t
   :bind ("C-c /" . embark-act)
@@ -332,7 +307,7 @@
         (comint-read-input-ring t)
         (set-process-sentinel (get-buffer-process (current-buffer))
                               #'shell-write-history-on-exit))))
-  (defun project-shell ()
+  (defun project-shell-with-histfile ()
     "Override `project-shell'."
     (interactive)
     (let* ((default-directory (project-root (project-current t)))
@@ -344,6 +319,7 @@
         (if (get-buffer-process shell-buffer)
             (pop-to-buffer-same-window shell-buffer)
           (shell-with-histfile project-shell-name project-shell-name)))))
+  (advice-add #'project-shell :override #'project-shell-with-histfile)
   (defun project-consult-grep (&optional initial)
     "Using consult-grep(INITIAL) in project."
     (interactive)
@@ -1233,16 +1209,13 @@
     (other-window 1 nil)
     (message "Override %s by %s to update" user-init-file upstream)))
 
-(defun develop-erc ()
-  "ERC configuration."
-  (interactive)
-  (package-install 'ercn))
 (use-package erc :defer t
   :config
   (setq erc-hide-list '("JOIN" "PART" "QUIT"))
   (setq erc-default-server "irc.libera.chat")
   (setq erc-prompt-for-password nil))
-(use-package ercn :defer t
+(use-package ercn
+  :ensure t :defer t
   :hook (ercn-notify . do-notify)
   :config
   (setq ercn-notify-rules
@@ -1291,18 +1264,14 @@
 (use-package markdown-mode
   :ensure t :defer t)
 
-(defun develop-go()
-  "Go develoment.
-Please install:
-   go install golang.org/x/tools/gopls"
-  (interactive)
-  (package-installs 'go-mode))
-(use-package go-mode :defer t
+;; Go: `go install golang.org/x/tools/gopls'
+(use-package go-mode
+  :ensure t
+  :hook (go-mode . lsp-go-install-save-hooks)
   :config
   (defun lsp-go-install-save-hooks ()
     (if (fboundp 'eglot-ensure)(eglot-ensure))
     (add-hook 'before-save-hook #'eglot-format-buffer t t))
-  (add-hook 'go-mode-hook #'lsp-go-install-save-hooks)
   (defun go-print-debug-at-point()
     "Print debug."
     (interactive)
@@ -1313,15 +1282,10 @@ Please install:
                       (file-name-nondirectory (buffer-file-name))
                       (substring (md5 (format "%s%s" (emacs-pid) (current-time))) 0 4) var var)))))
 
-;; python-mode
-(defun develop-python()
-  "Python development.
-Please install:
-   pip install python-lsp-server[all]"
-  (interactive))
-(add-hook 'python-mode-hook #'eglot-ensure)
-
-(with-eval-after-load 'python ;; built-in
+;; Python: `pip install python-lsp-server[all]'
+(use-package python
+  :hook (python-mode . eglot-ensure)
+  :config
   (setq python-indent-guess-indent-offset-verbose nil)
   (when (and (executable-find "python3")
              (string= python-shell-interpreter "python"))
@@ -1352,48 +1316,39 @@ Please install:
                       (substring (md5 (format "%s%s" (emacs-pid) (current-time))) 0 4)
                       var var var)))))
 
-;; php-mode
-(defun develop-php()
-  "PHP development."
-  (interactive)
-  (package-install 'php-mode))
+;; PHP
+(use-package php-mode
+  :ensure t)
 
-;; erlang
-(add-hook 'erlang-mode-hook #'eglot-ensure)
+;; Erlang
+(use-package erlang
+  :ensure t
+  :hook (erlang-mode . eglot-ensure))
 
-;; terraform-mode
-(defun develop-terraform()
-  "Terraform development."
-  (interactive)
-  (package-install 'company-terraform)
-  (package-install 'terraform-doc))
-(add-hook 'terraform-mode-hook
-          (lambda() (add-to-list 'company-backends 'company-terraform)))
+;; Terraform
+(use-package terraform-mode :ensure t)
+(use-package terraform-doc :ensure t)
 
-;; ansible-mode
-(defun develop-ansible ()
-  "Ansible development."
-  (interactive)
-  (package-installs 'ansible 'ansible-doc 'company-ansible))
-(add-hook 'ansible-hook
+;; Ansible
+(use-package ansible
+  :ensure t :defer t
+  :hook (ansible .
           (lambda()
             (ansible-doc-mode)
-            (add-to-list 'company-backends 'company-ansible)))
-(use-package ansible-doc :defer t
+            (add-to-list 'company-backends 'company-ansible))))
+(use-package ansible-doc
+  :ensure t :defer t
   :config (define-key ansible-doc-mode-map (kbd "M-?") #'ansible-doc))
 
-;; java-mode
-(defun develop-java()
-  "Java development.
-https://download.eclipse.org/jdtls/snapshots/jdt-language-server-latest.tar.gz"
-  (interactive))
-(add-hook 'java-mode-hook #'eglot-ensure)
+;; Java - https://download.eclipse.org/jdtls/snapshots/jdt-language-server-latest.tar.gz"
+(use-package java-mode
+  :hook (java-mode . eglot-ensure))
 
-(defun develop-html()
-  "HTML development."
-  (interactive)
-  (package-install 'indent-guide))
-(use-package indent-guide :defer t
+(use-package lua-mode
+  :ensure t)
+;; HTML
+(use-package indent-guide
+  :ensure t :defer t
   :hook (html-mode . indent-guide-mode)
   :config (set-face-foreground 'indent-guide-face "dimgray"))
 (use-package sgml-mode :defer t
@@ -1432,23 +1387,24 @@ npm i -g typescript-language-server; npm i -g typescript"
   (interactive)
   (package-installs 'vagrant 'vagrant-tramp))
 
-(defun develop-docker()
-  "Docker tools."
-  (interactive)
-  (package-installs 'dockerfile-mode 'docker 'docker-compose-mode))
+;; Docker
 (use-package docker :defer t
   :config (setq docker-run-async-with-buffer-function #'docker-run-async-with-buffer-shell))
+(use-package dockerfile-mode :ensure t)
+(use-package docker-compose-mode :ensure t)
 
-(defun develop-restclient ()
-  "Install restclient."
-  (interactive)
-  (package-installs 'restclient 'restclient-jq))
-(use-package restclient :defer t
+(use-package restclient-jq
+  :ensure t
+  :defer t)
+(use-package restclient
+  :ensure t
+  :defer t
   :config (require 'restclient-jq))
 (defun develop-kubernetes()
   "Kubernetes tools."
   (interactive)
   (package-installs 'kubel 'kubedoc 'k8s-mode))
+(use-package nginx-mode :ensure t)
 (defun develop-keylog ()
   "Keycast and log."
   (interactive)
