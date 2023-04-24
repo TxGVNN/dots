@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20230424.1315")
+(defvar emacs-config-version "20230424.1515")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -687,6 +687,9 @@
     :config (define-key vundo-mode-map (kbd "q") #'vundo-confirm)))
 (use-package pinentry
   :ensure t :defer t
+  :config
+  (require 'server)
+  (setq pinentry--socket-dir server-socket-dir)
   :hook (after-init . pinentry-start))
 (use-package multiple-cursors
   :ensure t :defer t
