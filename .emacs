@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20230424.1515")
+(defvar emacs-config-version "20230515.1514")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -112,7 +112,8 @@
   :config
   (setq register-preview-delay 0
         register-preview-function #'consult-register-format
-        consult-preview-key (kbd "C-l"))
+        consult-preview-key "C-l"
+        consult-project-function nil)
   (setf (alist-get 'slime-repl-mode consult-mode-histories)
         'slime-repl-input-history))
 (use-package embark
@@ -293,6 +294,12 @@
            (dirs (list default-directory)))
       (project-find-file-in (thing-at-point 'filename) dirs pr include-all)))
   (setq project-compilation-buffer-name-function 'project-prefixed-buffer-name)
+  (defun shell--save-history (&rest _)
+    "Save `shell' history."
+    (unless (string-prefix-p detached--shell-command-buffer (buffer-name))
+      (let* ((inhibit-message t))
+        (comint-write-input-ring))))
+  (advice-add #'comint-add-to-input-history :after #'shell--save-history)
   (defun shell-with-histfile(buffer-name histfile)
     "Create a shell BUFFER-NAME and set comint-input-ring-file-name is HISTFILE."
     (let* ((shell-directory-name (locate-user-emacs-file "shell"))
