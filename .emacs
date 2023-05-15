@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20230515.1515")
+(defvar emacs-config-version "20230515.1516")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -941,7 +941,10 @@
   :after imenu
   :config
   (setq-default header-line-format
-                (list '("::" (:eval (propertize (or (which-function) "") 'face 'font-lock-function-name-face))))))
+                (list "▶" '((:eval (propertize (pretty--abbreviate-directory default-directory)
+                                               'face 'font-lock-comment-face)) "::"
+                                               (:eval (propertize (or (which-function) "")
+                                                                  'face 'font-lock-function-name-face))))))
 
 ;;; CUSTOMIZE
 (defun pretty--abbreviate-directory (dir)
@@ -1077,13 +1080,6 @@
      (list (region-beginning) (region-end) string)))
   (let ((bufname (car (split-string (substring command 0 (if (< (length command) 9) (length command) 9))))))
     (async-shell-command command (format "*shell:%s:%s*" bufname (format-time-string "%Y%m%d_%H%M%S")))))
-
-(defvar share-to-online-func
-  'crux-share-to-transfersh)
-(defun share-to-online ()
-  "Share buffer to online."
-  (interactive)
-  (call-interactively share-to-online-func))
 
 (global-set-key (kbd "M-D") 'kill-whole-line)
 (global-set-key (kbd "M-w") 'my-kill-ring-save)
@@ -1107,7 +1103,6 @@
 (global-set-key (kbd "C-x / D") 'org-time-stamp)
 (global-set-key (kbd "C-x / x") 'save-region-to-temp)
 (global-set-key (kbd "C-x / c") 'copy-region-to-scratch)
-(global-set-key (kbd "C-x / s") 'share-to-online)
 (global-set-key (kbd "C-x / t") 'untabify)
 (global-set-key (kbd "C-x / T") 'tabify)
 (global-set-key (kbd "C-x / l") 'toggle-truncate-lines)
@@ -1359,9 +1354,9 @@
 (use-package ansible
   :ensure t :defer t
   :hook (ansible .
-          (lambda()
-            (ansible-doc-mode)
-            (add-to-list 'company-backends 'company-ansible))))
+                 (lambda()
+                   (ansible-doc-mode)
+                   (add-to-list 'company-backends 'company-ansible))))
 (use-package ansible-doc
   :ensure t :defer t
   :config (define-key ansible-doc-mode-map (kbd "M-?") #'ansible-doc))
