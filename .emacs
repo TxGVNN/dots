@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20230515.1514")
+(defvar emacs-config-version "20230515.1515")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -469,7 +469,7 @@
       (or (gethash persp persp-compile-history)
           (puthash persp (make-ring 16) persp-compile-history)))
     (advice-add #'compilation-read-command :override #'compilation-read-command-persp)
-    (defun compilation-read-command-persp (command)
+    (defun compilation-read-command-persp (command &optional prompt)
       "Override compilation-read-command (COMMAND)."
       (let* ((persp-name (if (bound-and-true-p persp-mode)
                              (persp-name (persp-curr)) "0"))
@@ -477,11 +477,27 @@
               (ring-elements (persp--get-command-history persp-name)))
              (command (or (car history) command))
              (input (read-shell-command
-                     (format "Compile `%s' [%s]: "
+                     (format "%s `%s' [%s]: " (or prompt "Compile")
                              (pretty--abbreviate-directory default-directory) command) nil
                      'history command)))
         (ring-remove+insert+extend (persp--get-command-history persp-name)
-                                   (if (string-empty-p input) command input)))))
+                                   (if (string-empty-p input) command input))))
+    (defun detached-compile-custom (command &optional comint)
+      "Override detached-compile(COMMAND COMINT) to use `compilation-read-command-persp'."
+      (interactive
+       (list
+        (let ((command (eval compile-command t)))
+          (if (or compilation-read-command current-prefix-arg)
+              (compilation-read-command-persp command "Detached compile")
+            command))
+        (consp current-prefix-arg)))
+      (let* ((detached-enabled t)
+             (detached-session-origin (or detached-session-origin 'compile))
+             (detached-session-action (or detached-session-action
+                                          detached-compile-session-action))
+             (detached-session-mode (or detached-session-mode 'attached)))
+        (compile command comint)))
+    (advice-add #'detached-compile :override #'detached-compile-custom))
   (with-eval-after-load 'savehist
     (add-to-list 'savehist-additional-variables 'persp-compile-history)))
 ;; project-temp-root
