@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20230623.1139")
+(defvar emacs-config-version "20230623.1140")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -396,6 +396,12 @@
 (use-package envrc ;; direnv > 2.7
   :ensure t :defer t
   :config
+  (defun my/ensure-current-project (fn &rest args) ;; purcell/envrc#59
+    (let ((default-directory (project-root (project-current t))))
+      (with-temp-buffer
+        (envrc-mode 1)
+        (apply fn args))))
+  (advice-add 'project-compile :around #'my/ensure-current-project)
   (setq envrc-none-lighter nil
         envrc-on-lighter '(:propertize " env" face envrc-mode-line-on-face)
         envrc-error-lighter '(:propertize " env" face envrc-mode-line-error-face))
