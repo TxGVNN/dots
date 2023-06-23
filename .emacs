@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20230623.1140")
+(defvar emacs-config-version "20230623.1141")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -1014,18 +1014,18 @@
    (concat (file-name-as-directory temporary-file-directory)
            (make-temp-name
             (format "%s_%s_" user-login-name
-                    (format-time-string "%Y%m%d-%H%M"))))))
+                    (format-time-string "%Y%m%d-%H%M%S"))))))
 (defun insert-datetime(&optional prefix)
   "Insert YYYYmmdd-HHMM or YYYY-mm-dd_HH-MM if PREFIX set."
   (interactive "p")
   (let ((msg
          (cond
           ((= prefix 1)
-           (format-time-string "%Y%m%d-%H%M" (current-time) t))
+           (format-time-string "%Y%m%d-%H%M%S" (current-time) t))
           ((= prefix 2)
            (string-trim (shell-command-to-string "date --utc")))
           ((= prefix 4)
-           (format-time-string "%Y-%m-%d_%H-%M" (current-time) t)))))
+           (format-time-string "%Y-%m-%d_%H-%M-%S" (current-time) t)))))
     (insert msg)))
 
 (defun linux-stat-file()
