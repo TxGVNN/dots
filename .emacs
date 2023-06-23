@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20230515.1516")
+(defvar emacs-config-version "20230623.1139")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -262,7 +262,7 @@
   (define-key isearch-mb-minibuffer-map (kbd "M-s %") 'isearch-query-replace-regexp))
 (use-package rg :ensure t :defer t)
 (use-package engine-mode
-  :ensure t :defer 1
+  :ensure t :defer t
   :config
   (setq engine/browser-function 'eww-browse-url)
   (defengine vagrant-box
@@ -664,6 +664,8 @@
   ("M-g l" . avy-goto-line))
 (use-package crux
   :ensure t :defer t :pin me
+  :config
+  (setq crux-share-to-transfersh-host "https://free.keep.sh")
   :bind
   ("C-^" . crux-top-join-line)
   ("C-a" . crux-move-beginning-of-line)
@@ -1165,6 +1167,7 @@
  '(use-dialog-box nil)
  '(vc-follow-symlinks nil)
  '(version-control t)
+ '(warning-suppress-log-types '((comp)))
  '(whitespace-style
    '(face tabs trailing space-before-tab newline empty tab-mark))
  '(x-select-request-type '(COMPOUND_TEXT UTF8_STRING STRING TEXT)))
@@ -1279,7 +1282,7 @@
   :config (add-hook 'compilation-finish-functions #'ob-compile-save-file))
 
 (use-package yaml-mode
-  :ensure t
+  :ensure t :defer t
   :init (add-hook 'yaml-mode-hook #'eglot-ensure))
 
 (use-package markdown-mode
@@ -1337,18 +1340,14 @@
                       (substring (md5 (format "%s%s" (emacs-pid) (current-time))) 0 4)
                       var var var)))))
 
-;; PHP
-(use-package php-mode
-  :ensure t)
-
 ;; Erlang
 (use-package erlang
   :ensure t
   :hook (erlang-mode . eglot-ensure))
 
 ;; Terraform
-(use-package terraform-mode :ensure t)
-(use-package terraform-doc :ensure t)
+(use-package terraform-mode :ensure t :defer t)
+(use-package terraform-doc :ensure t :defer t)
 
 ;; Ansible
 (use-package ansible
@@ -1366,7 +1365,7 @@
   :hook (java-mode . eglot-ensure))
 
 (use-package lua-mode
-  :ensure t)
+  :ensure t :defer t)
 ;; HTML
 (use-package indent-guide
   :ensure t :defer t
@@ -1411,15 +1410,11 @@ npm i -g typescript-language-server; npm i -g typescript"
 ;; Docker
 (use-package docker :defer t
   :config (setq docker-run-async-with-buffer-function #'docker-run-async-with-buffer-shell))
-(use-package dockerfile-mode :ensure t)
-(use-package docker-compose-mode :ensure t)
+(use-package dockerfile-mode :ensure t :defer t)
+(use-package docker-compose-mode :ensure t :defer t)
 
-(use-package restclient-jq
-  :ensure t
-  :defer t)
-(use-package restclient
-  :ensure t
-  :defer t
+(use-package restclient-jq :ensure t :defer t)
+(use-package restclient :ensure t :defer t
   :config (require 'restclient-jq))
 (defun develop-kubernetes()
   "Kubernetes tools."
