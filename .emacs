@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20230623.1141")
+(defvar emacs-config-version "20230623.1142")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -751,14 +751,19 @@
 (use-package eev
   :ensure t :defer 1
   :config (require 'eev-load)
+  (defun eepitch-get-buffer-name-line()
+    (unless (eq eepitch-buffer-name "")
+      (format "ξ:%s "eepitch-buffer-name)))
+  (add-to-list 'mode-line-misc-info '(:eval (propertize (eepitch-get-buffer-name-line)
+                                                        'face 'custom-set)))
   (defun eepitch-this-line-or-setup (&optional prefix)
     "Setup eepitch-buffer-name if PREFIX or eval this line."
     (interactive "P")
-    (when (and prefix (eq eepitch-buffer-name ""))
+    (if (not prefix)
+        (eepitch-this-line)
       (setq-local eepitch-buffer-name (read-buffer-to-switch "Buffer: "))
       (unless (get-buffer eepitch-buffer-name)
-        (shell eepitch-buffer-name)))
-    (eepitch-this-line))
+        (shell eepitch-buffer-name))))
   (global-set-key (kbd "<f8>") #'eepitch-this-line-or-setup))
 (use-package so-long
   :ensure t :defer t
@@ -778,6 +783,8 @@
            (or project-compilation-buffer-name-function
                compilation-buffer-name-function)))
       (call-interactively #'detached-compile)))
+  (with-eval-after-load 'detached-list-sessions
+    (define-key detached-list-mode-map (kbd "A") #'detached-attach-session))
   :hook (after-init . detached-init)
   :bind
   (([remap async-shell-command] . detached-shell-command)
