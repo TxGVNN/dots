@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20230623.1142")
+(defvar emacs-config-version "20230628.1620")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -303,14 +303,18 @@
   (defun shell-with-histfile(buffer-name histfile)
     "Create a shell BUFFER-NAME and set comint-input-ring-file-name is HISTFILE."
     (let* ((shell-directory-name (locate-user-emacs-file "shell"))
-           (comint-input-ring-file-name (expand-file-name
-                                         (format "%s/%s.history" shell-directory-name histfile)))
-           (comint-input-ring (make-ring 1)))
+           (comint-history-file (expand-file-name
+                                 (format "%s/%s.history" shell-directory-name histfile)))
+           (comint-input-ring-file-name comint-history-file)
+           (comint-input-ring (make-ring 1))
+           (buff (get-buffer-create buffer-name)))
       ;; HACK: make shell-mode doesnt set comint-input-ring-file-name
       (ring-insert comint-input-ring "uname")
       (unless (file-exists-p shell-directory-name)
         (make-directory shell-directory-name t))
-      (with-current-buffer (shell buffer-name)
+      (with-current-buffer (shell buff)
+        (set-buffer buff)
+        (setq-local comint-input-ring-file-name comint-history-file)
         (comint-read-input-ring t)
         (set-process-sentinel (get-buffer-process (current-buffer))
                               #'shell-write-history-on-exit))))
@@ -752,8 +756,8 @@
   :ensure t :defer 1
   :config (require 'eev-load)
   (defun eepitch-get-buffer-name-line()
-    (unless (eq eepitch-buffer-name "")
-      (format "ξ:%s "eepitch-buffer-name)))
+    (if (not (eq eepitch-buffer-name ""))
+        (format "ξ:%s "eepitch-buffer-name) ""))
   (add-to-list 'mode-line-misc-info '(:eval (propertize (eepitch-get-buffer-name-line)
                                                         'face 'custom-set)))
   (defun eepitch-this-line-or-setup (&optional prefix)
