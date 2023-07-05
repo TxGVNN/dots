@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20230705.0336")
+(defvar emacs-config-version "20230705.0337")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -562,6 +562,9 @@
 (use-package corfu
   :ensure t :defer t
   :init (global-corfu-mode)
+  :hook ((shell-mode . corfu-echo-mode)
+         (eshell-mode . corfu-echo-mode)
+         (comint-mode . corfu-echo-mode))
   :bind
   (:map corfu-map
         ("M-m" . corfu-move-to-minibuffer)
@@ -574,6 +577,7 @@
     (use-package corfu-terminal
       :ensure t :defer t
       :init (add-hook 'corfu-mode-hook #'corfu-terminal-mode)))
+  (setq corfu-exclude-modes '(shell-mode eshell-mode comint-mode))
   (setq completion-cycle-threshold 3
         corfu-auto t
         corfu-cycle t
