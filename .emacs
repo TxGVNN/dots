@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20230628.1620")
+(defvar emacs-config-version "20230705.0336")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -558,7 +558,7 @@
   :config (add-to-list 'hidden-minor-modes 'beacon-mode))
 
 
-;;; COMPLETION CODE: corfu, yasnippet, eglot, dumb-jump
+;;; COMPLETION CODE: corfu, yasnippet, eglot, dumb-jump, pcmpl-args
 (use-package corfu
   :ensure t :defer t
   :init (global-corfu-mode)
@@ -662,6 +662,7 @@
   :commands eglot-ensure
   :config (setq eglot-report-progress nil)
   :after (project flymake))
+(use-package pcmpl-args :ensure t)
 
 ;;; TOOLS: avy, crux, expand-region, move-text, ace-window, vundo|undo-tree,
 (use-package avy
