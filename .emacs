@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20230705.0337")
+(defvar emacs-config-version "20230707.0444")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -666,7 +666,7 @@
   :commands eglot-ensure
   :config (setq eglot-report-progress nil)
   :after (project flymake))
-(use-package pcmpl-args :ensure t)
+(use-package pcmpl-args :ensure t :defer 1)
 
 ;;; TOOLS: avy, crux, expand-region, move-text, ace-window, vundo|undo-tree,
 (use-package avy
