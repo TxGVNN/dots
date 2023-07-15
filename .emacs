@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20230715.0702")
+(defvar emacs-config-version "20230715.1150")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -793,8 +793,6 @@
            (or project-compilation-buffer-name-function
                compilation-buffer-name-function)))
       (call-interactively #'detached-compile)))
-  (with-eval-after-load 'detached-list-sessions
-    (define-key detached-list-mode-map (kbd "A") #'detached-attach-session))
   :hook (after-init . detached-init)
   :bind
   (([remap async-shell-command] . detached-shell-command)
@@ -802,6 +800,7 @@
    :map project-prefix-map
    ("C" . project-detached-compile)))
 (use-package dpaste :ensure t :defer t)
+(use-package gist :ensure t :defer t)
 
 ;;; CHECKER: flymake(C-h .)
 (use-package flymake
