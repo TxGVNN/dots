@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20230707.0444")
+(defvar emacs-config-version "20230715.0702")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -561,6 +561,14 @@
 ;;; COMPLETION CODE: corfu, yasnippet, eglot, dumb-jump, pcmpl-args
 (use-package corfu
   :ensure t :defer t
+  :custom
+  (completion-cycle-threshold 3)
+  (corfu-auto t)
+  (corfu-cycle t)
+  (corfu-auto-prefix 2)
+  (corfu-preselect-first nil)
+  (corfu-history-mode t)
+  (corfu-exclude-modes '(shell-mode eshell-mode comint-mode))
   :init (global-corfu-mode)
   :hook ((shell-mode . corfu-echo-mode)
          (eshell-mode . corfu-echo-mode)
@@ -577,13 +585,6 @@
     (use-package corfu-terminal
       :ensure t :defer t
       :init (add-hook 'corfu-mode-hook #'corfu-terminal-mode)))
-  (setq corfu-exclude-modes '(shell-mode eshell-mode comint-mode))
-  (setq completion-cycle-threshold 3
-        corfu-auto t
-        corfu-cycle t
-        corfu-auto-prefix 2
-        corfu-preselect-first nil
-        corfu-history-mode t)
   (defvar-local corfu-common-old nil)
   (defun corfu-complete-common-or-next ()
     "Complete common prefix or go to next candidate (@minad/corfu#170)."
