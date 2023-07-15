@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20230715.1150")
+(defvar emacs-config-version "20230715.1151")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -764,8 +764,16 @@
   (defun eepitch-get-buffer-name-line()
     (if (not (eq eepitch-buffer-name ""))
         (format "ξ:%s "eepitch-buffer-name) ""))
-  (add-to-list 'mode-line-misc-info '(:eval (propertize (eepitch-get-buffer-name-line)
-                                                        'face 'custom-set)))
+  (add-to-list 'mode-line-misc-info
+               '(:eval (propertize (eepitch-get-buffer-name-line) 'face 'custom-set)))
+  (defun eepitch-set-local-buffer-name(&rest _)
+    "Set `eepitch-buffer-name' to local buffer name."
+    (setq eepitch-code '(error "eepitch not set up"))
+    (setq-local eepitch-buffer-name-tmp eepitch-buffer-name)
+    (setq eepitch-buffer-name "")
+    (setq-local eepitch-buffer-name eepitch-buffer-name-tmp))
+  (advice-add #'eepitch :after #'eepitch-set-local-buffer-name)
+  (advice-add #'eepitch-this-line :after #'eepitch-set-local-buffer-name)
   (defun eepitch-this-line-or-setup (&optional prefix)
     "Setup eepitch-buffer-name if PREFIX or eval this line."
     (interactive "P")
