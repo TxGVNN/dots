@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20230717.1015")
+(defvar emacs-config-version "20230717.1416")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -768,11 +768,17 @@
                '(:eval (propertize (eepitch-get-buffer-name-line) 'face 'warning)))
   (defun eepitch-set-local-buffer-name(&rest _)
     "Set `eepitch-buffer-name' to local buffer name."
-    (setq eepitch-code '(error "eepitch not set up"))
+    (setq-local eepitch-code-tmp eepitch-code)
+    (setq-default eepitch-code '(error "eepitch not set up"))
+    (setq-local eepitch-code eepitch-code-tmp)
     (setq-local eepitch-buffer-name-tmp eepitch-buffer-name)
-    (setq eepitch-buffer-name "")
+    (setq-default eepitch-buffer-name "")
     (setq-local eepitch-buffer-name eepitch-buffer-name-tmp))
+  (defun eepitch-set-local-buffer-name-follow(&rest _)
+    "Set `eepitch-buffer-name' to local buffer name."
+    (setq-local eepitch-buffer-name (default-value 'eepitch-buffer-name)))
   (advice-add #'eepitch :after #'eepitch-set-local-buffer-name)
+  (advice-add #'eepitch-buffer-create :after #'eepitch-set-local-buffer-name-follow)
   (advice-add #'eepitch-this-line :after #'eepitch-set-local-buffer-name)
   (defun eepitch-this-line-or-setup (&optional prefix)
     "Setup eepitch-buffer-name if PREFIX or eval this line."
