@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20230717.1416")
+(defvar emacs-config-version "20230718.1626")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -545,7 +545,7 @@
   :hook (after-init . volatile-highlights-mode)
   :config (add-to-list 'hidden-minor-modes 'volatile-highlights-mode))
 (use-package symbol-overlay
-  :ensure t :defer t :pin nongnu
+  :ensure t :defer t
   :bind ("M-s H" . symbol-overlay-put)
   :hook (prog-mode . symbol-overlay-mode)
   :config (add-to-list 'hidden-minor-modes 'symbol-overlay-mode))
@@ -832,10 +832,9 @@
   (defun dired-auto-update-name (&optional suffix)
     "Auto update name with SUFFIX.ext."
     (interactive "p")
-    (let* ((filename (file-name-nondirectory (dired-get-file-for-visit)))
-           (suffix (replace-regexp-in-string
-                    "\n" "" (shell-command-to-string (format "stat %s|grep Change|awk '{print $2\"_\"$3}'" filename)))))
-      (rename-file filename (file-name-with-extension filename (format "%s.%s" suffix (file-name-extension filename))) t)
+    (let ((filename (file-name-nondirectory (dired-get-file-for-visit)))
+          (timestamp (format-time-string "%Y%m%d-%H%M%S")))
+      (rename-file filename (concat filename "_" timestamp) t)
       (revert-buffer)))
   (setq dired-listing-switches "-alh"))
 (use-package diredfl
@@ -1021,8 +1020,10 @@
 (defun yank-file-path ()
   "Yank file path of buffer."
   (interactive)
-  (let ((filename (if (buffer-file-name) (buffer-file-name)
-                    default-directory)))
+  (let ((filename (or (when (eq major-mode 'dired-mode)
+                        (dired-get-filename nil t))
+                      (if (buffer-file-name) (buffer-file-name)
+                        default-directory))))
     (when filename (kill-new filename)
           (message "Yanked %s (%s)" filename (what-line)))))
 (defun split-window-vertically-last-buffer (prefix)
@@ -1363,8 +1364,9 @@
                                   (if (not word) "" (format " (default %s)" word))))))
              (if (string= input "")
                  (if (not word) (error "No pydoc args given") word) input))))
+    (ignore-errors (kill-buffer "*PYDOCS*"))
     (shell-command (concat "python -c \"from pydoc import help;help(\'" w "\')\"") "*PYDOCS*")
-    (view-buffer-other-window "*PYDOCS*" t 'kill-buffer-and-window))
+    (view-buffer-other-window "*PYDOCS*" t 'kill-buffer))
   (defun python-print-debug-at-point()
     "Print debug."
     (interactive)
