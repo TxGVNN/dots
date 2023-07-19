@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20230718.1626")
+(defvar emacs-config-version "20230719.0340")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -296,9 +296,8 @@
   (setq project-compilation-buffer-name-function 'project-prefixed-buffer-name)
   (defun shell--save-history (&rest _)
     "Save `shell' history."
-    (unless (string-prefix-p detached--shell-command-buffer (buffer-name))
-      (let* ((inhibit-message t))
-        (comint-write-input-ring))))
+    (let ((inhibit-message t))
+      (comint-write-input-ring)))
   (advice-add #'comint-add-to-input-history :after #'shell--save-history)
   (defun shell-with-histfile(buffer-name histfile)
     "Create a shell BUFFER-NAME and set comint-input-ring-file-name is HISTFILE."
