@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20230721.1629")
+(defvar emacs-config-version "20230721.1630")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -79,7 +79,7 @@
                                    (minibuffer (initials)))))
 
 (use-package consult
-  :ensure t :defer t :pin me
+  :ensure t :defer t
   :bind
   ("M-y" . consult-yank-pop)
   ("M-g g" . consult-goto-line)
@@ -234,7 +234,9 @@
   :config  ;; j-T in magit-status buffer
   (setq magit-todos-branch-list nil
         magit-todos-update nil)
-  :hook (magit-mode . magit-todos-mode))
+  :init
+  (with-eval-after-load 'magit
+    (magit-todos-mode)))
 
 ;;; SEARCHING: ripgrep, anzu, engine-mode
 (use-package isearch :defer t
@@ -265,10 +267,10 @@
   :ensure t :defer t
   :config
   (setq engine/browser-function 'eww-browse-url)
+  (defengine nixhub "https://www.nixhub.io/search?q=%s")
+  (defengine debian-package "https://packages.debian.org/search?searchon=names&keywords=%s")
   (defengine vagrant-box
     "https://app.vagrantup.com/boxes/search?provider=libvirt&q=%s&utf8=%%E2%%9C%%93")
-  (defengine debian-package
-    "https://packages.debian.org/search?searchon=names&keywords=%s")
   (defengine alpine-apk-file
     "https://pkgs.alpinelinux.org/contents?file=%s&path=&name=&branch=edge&arch=x86_64")
   (defengine ubuntu-package
@@ -276,7 +278,7 @@
 
 ;;; WORKSPACE: project, perspective, envrc
 (use-package project :defer t
-  :ensure t :pin me
+  :ensure t
   :bind
   (:map project-prefix-map
         ("t" . project-term)
@@ -410,7 +412,7 @@
         envrc-error-lighter '(:propertize " env" face envrc-mode-line-error-face))
   :hook (after-init . envrc-global-mode))
 (use-package perspective
-  :ensure t :pin me
+  :ensure t
   :init
   (setq persp-mode-prefix-key (kbd "C-z")
         persp-initial-frame-name "0")
@@ -634,14 +636,14 @@
   (add-to-list 'completion-at-point-functions #'cape-dabbrev)
   (add-to-list 'completion-at-point-functions #'cape-file))
 (use-package yasnippet
-  :ensure t :defer t :pin me
+  :ensure t :defer t
   :hook (after-init . yas-global-mode)
   :config
   (setq yas-lighter " υ")
   (define-key yas-minor-mode-map [(tab)] nil)
   (define-key yas-minor-mode-map (kbd "TAB") nil))
 (use-package yasnippet-snippets
-  :ensure t :defer t :pin me)
+  :ensure t :defer t )
 (use-package consult-yasnippet
   :ensure t :defer t
   :init (global-set-key (kbd "M-]") #'completion-customize)
@@ -678,7 +680,7 @@
   ("M-g a" . avy-goto-char)
   ("M-g l" . avy-goto-line))
 (use-package crux
-  :ensure t :defer t :pin me
+  :ensure t :defer t
   :config
   (setq crux-share-to-transfersh-host "https://free.keep.sh")
   :bind
