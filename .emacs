@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20230719.0340")
+(defvar emacs-config-version "20230721.1629")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -1260,6 +1260,14 @@
   (dolist (package packages) (package-install package)))
 
 ;; .emacs
+(use-package elisp-mode
+  :ensure nil :defer t
+  :config
+  ;; Prevent byte complation of .emacs file, which can introduce bugs.
+  ;; BUG: Emacs try to install packages that are already installed.
+  (defun elisp-flymake-byte-compile-do-nothing())
+  (advice-add 'elisp-flymake-byte-compile :override #'elisp-flymake-byte-compile-do-nothing))
+
 (defun develop-dot()
   "Diff 'user-init-file - .emacs."
   (interactive)
