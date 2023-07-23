@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20230721.1630")
+(defvar emacs-config-version "20230723.0725")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -279,6 +279,18 @@
 ;;; WORKSPACE: project, perspective, envrc
 (use-package project :defer t
   :ensure t
+  :custom
+  (project-switch-use-entire-map t)
+  (project-compilation-buffer-name-function 'project-prefixed-buffer-name)
+  (project-switch-commands
+   '((project-find-file "file")
+     (project-consult-ripgrep "rg")
+     (magit-project-status "git")
+     (project-compile "compile")
+     (project-switch-to-buffer "buf")
+     (project-shell "shell")
+     (project-jump-persp "jump")
+     (embark-on-project "embark")))
   :bind
   (:map project-prefix-map
         ("t" . project-term)
@@ -295,7 +307,6 @@
            (default-directory (project-root pr))
            (dirs (list default-directory)))
       (project-find-file-in (thing-at-point 'filename) dirs pr include-all)))
-  (setq project-compilation-buffer-name-function 'project-prefixed-buffer-name)
   (defun shell--save-history (&rest _)
     "Save `shell' history."
     (let ((inhibit-message t))
@@ -376,29 +387,17 @@
     "Just jump to persp of project."
     (interactive)
     (let ((dir (project-root (project-current t))))
-      (persp-switch dir)))
-  ;; switch commands
-  (setq project-switch-commands
-        '((project-find-file "file")
-          (project-consult-ripgrep "rg")
-          (project-consult-grep "grep")
-          (project-compile "compile")
-          (project-switch-to-buffer "buf")
-          (project-term "term")
-          (project-shell "shell")
-          (magit-project-status "git")
-          (project-jump-persp "jump")
-          (embark-on-project "embark"))))
+      (persp-switch dir))))
+
 (use-package project-tasks
   :ensure t :defer t
   :after (project)
-  :init (add-to-list 'project-switch-commands '(project-tasks "tasks") t)
   :bind
   (:map project-prefix-map
         ("P" . project-tasks)
         ("o" . project-tasks-capture)
         ("O" . project-tasks-jump)))
-(use-package envrc ;; direnv > 2.7
+(use-package envrc
   :ensure t :defer t
   :config
   (defun my/ensure-current-project (fn &rest args) ;; purcell/envrc#59
