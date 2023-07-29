@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20230723.0725")
+(defvar emacs-config-version "20230728.1406")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -761,6 +761,8 @@
 (use-package eev
   :ensure t :defer 1
   :config (require 'eev-load)
+  (define-abbrev-table 'global-abbrev-table
+    '(("eekcopy" " (eek \"C-x o C-p C-e C-SPC C-a M-w C-n C-x o C-n C-y\") ;; copy output")))
   (defun eepitch-get-buffer-name-line()
     (if (not (eq eepitch-buffer-name ""))
         (format "ξ:%s "eepitch-buffer-name) ""))
@@ -811,10 +813,11 @@
   :bind
   (([remap async-shell-command] . detached-shell-command)
    ("C-x M" . detached-compile)
+   ("C-x D" . detached-list-sessions)
    :map project-prefix-map
    ("C" . project-detached-compile)))
 (use-package dpaste :ensure t :defer t)
-(use-package gist :ensure t :defer t)
+(use-package gist :ensure t :defer 1)
 
 ;;; CHECKER: flymake(C-h .)
 (use-package flymake
