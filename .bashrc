@@ -27,9 +27,9 @@ function ps1(){
 
 declare -f "cdenv" > /dev/null || function cdenv(){
     if [ -z "$1" ]; then
-        cd || exit 1
+        command cd || return 1
     else
-        cd "$1"
+        command cd "$1"
     fi
 
     # .bin
