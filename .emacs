@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20230728.1406")
+(defvar emacs-config-version "20230731.1554")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -155,7 +155,7 @@
     (interactive "s") ; prompt for _target and ignore it
     (embark--quit-and-run
      (lambda () (command-execute #'persp-switch-to-buffer))))
-  (define-key embark-general-map (kbd "P") #'embark-persp-to-buffer)
+  (define-key embark-buffer-map (kbd "P") #'embark-persp-to-buffer)
   ;; region
   (add-to-list 'embark-target-injection-hooks
                '(async-shell-from-region embark--allow-edit))
@@ -391,7 +391,9 @@
 
 (use-package project-tasks
   :ensure t :defer t
-  :after (project)
+  :init
+  (with-eval-after-load 'embark
+    (define-key embark-file-map (kbd "P") #'project-tasks-in-dir))
   :bind
   (:map project-prefix-map
         ("P" . project-tasks)
@@ -511,7 +513,7 @@
   (with-eval-after-load 'savehist
     (add-to-list 'savehist-additional-variables 'persp-compile-history)))
 ;; project-temp-root
-(defvar project-temp-root "~/projects/")
+(defvar project-temp-root "~/")
 (defun project-temp-M-x (&optional prefix)
   "With PREFIX we will set `project-temp-root'."
   (interactive "P")
@@ -564,11 +566,13 @@
   :custom
   (completion-cycle-threshold 3)
   (corfu-auto t)
-  (corfu-cycle t)
   (corfu-auto-prefix 2)
+  (corfu-cycle t)
   (corfu-preselect-first nil)
   (corfu-history-mode t)
   (corfu-exclude-modes '(shell-mode eshell-mode comint-mode))
+  (corfu-bar-width 0)
+  (corfu-right-margin-width 0)
   :init (global-corfu-mode)
   :hook ((shell-mode . corfu-echo-mode)
          (eshell-mode . corfu-echo-mode)
@@ -583,6 +587,7 @@
   :config
   (unless (display-graphic-p)
     (use-package corfu-terminal
+      ;; https://codeberg.org/akib/emacs-corfu-terminal/issues/18
       :ensure t :defer t
       :init (add-hook 'corfu-mode-hook #'corfu-terminal-mode)))
   (defvar-local corfu-common-old nil)
