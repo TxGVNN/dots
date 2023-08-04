@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20230731.1554")
+(defvar emacs-config-version "20230802.0149")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -587,7 +587,7 @@
   :config
   (unless (display-graphic-p)
     (use-package corfu-terminal
-      ;; https://codeberg.org/akib/emacs-corfu-terminal/issues/18
+      ;; FIXME: codeberg.org/akib/emacs-corfu-terminal#18
       :ensure t :defer t
       :init (add-hook 'corfu-mode-hook #'corfu-terminal-mode)))
   (defvar-local corfu-common-old nil)
@@ -1270,7 +1270,7 @@
 
 ;; .emacs
 (use-package elisp-mode
-  :ensure nil :defer t
+  :defer t
   :config
   ;; Prevent byte complation of .emacs file, which can introduce bugs.
   ;; BUG: Emacs try to install packages that are already installed.
@@ -1342,9 +1342,8 @@
   :ensure t :defer t)
 
 ;; Go: `go install golang.org/x/tools/gopls'
-(use-package go-mode
-  :ensure t
-  :hook (go-mode . lsp-go-install-save-hooks)
+(use-package go-ts-mode
+  :hook (go-ts-mode . lsp-go-install-save-hooks)
   :config
   (defun lsp-go-install-save-hooks ()
     (if (fboundp 'eglot-ensure)(eglot-ensure))
@@ -1360,8 +1359,8 @@
                       (substring (md5 (format "%s%s" (emacs-pid) (current-time))) 0 4) var var)))))
 
 ;; Python: `pip install python-lsp-server[all]'
-(use-package python
-  :hook (python-mode . eglot-ensure)
+(use-package python-ts-mode
+  :hook (python-ts-mode . eglot-ensure)
   :config
   (setq python-indent-guess-indent-offset-verbose nil)
   (when (and (executable-find "python3")
@@ -1415,8 +1414,8 @@
   :config (define-key ansible-doc-mode-map (kbd "M-?") #'ansible-doc))
 
 ;; Java - https://download.eclipse.org/jdtls/snapshots/jdt-language-server-latest.tar.gz"
-(use-package java-mode
-  :hook (java-mode . eglot-ensure))
+(use-package java-ts-mode
+  :hook (java-ts-mode . eglot-ensure))
 
 (use-package lua-mode
   :ensure t :defer t)
@@ -1425,20 +1424,13 @@
   :ensure t :defer t
   :hook (html-mode . indent-guide-mode)
   :config (set-face-foreground 'indent-guide-face "dimgray"))
-(use-package sgml-mode :defer t
+(use-package sgml-mode
+  :defer t
   :config
   (define-key html-mode-map (kbd "M-o") #'mode-line-other-buffer))
 
-;; js, ts mode
-(defun develop-ts()
-  "TS development.
-npm i -g typescript-language-server; npm i -g typescript"
-  (interactive)
-  (package-installs 'eslint-fix 'typescript-mode))
-(use-package typescript-mode :defer t
-  :hook
-  (typescript-mode . eglot-ensure)
-  (js-mode . eglot-ensure))
+(use-package typescript-ts-mode
+  :hook (typescript-ts-mode . eglot-ensure))
 
 (defun js-print-debug-at-point()
   "Print debug."
@@ -1466,15 +1458,26 @@ npm i -g typescript-language-server; npm i -g typescript"
   :config (setq docker-run-async-with-buffer-function #'docker-run-async-with-buffer-shell))
 (use-package dockerfile-mode :ensure t :defer t)
 (use-package docker-compose-mode :ensure t :defer t)
-
+;; restclient
 (use-package restclient-jq :ensure t :defer t)
 (use-package restclient :ensure t :defer t
-  :config (require 'restclient-jq))
+  :config
+  (require 'restclient-jq)
+  (defun restclient-get-response-headers ()
+    "Returns alist of current response headers. Works *only* with with
+hook called from `restclient-http-send-current-raw', usually
+bound to C-c C-r."
+    (let ((start (point-min))
+          (headers-end (+ 1 (string-match "\n\n" (buffer-substring-no-properties (point-min) (point-max))))))
+      (restclient-parse-headers (buffer-substring-no-properties start headers-end))))
+  (defun restclient-set-var-from-header (var header)
+    (restclient-set-var var (cdr (assoc header (restclient-get-response-headers))))))
+
 (defun develop-kubernetes()
   "Kubernetes tools."
   (interactive)
   (package-installs 'kubel 'kubedoc 'k8s-mode))
-(use-package nginx-mode :ensure t)
+(use-package nginx-mode :ensure t :defer t)
 (defun develop-keylog ()
   "Keycast and log."
   (interactive)
