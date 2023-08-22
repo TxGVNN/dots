@@ -7,8 +7,8 @@
 ;;; [ @author TxGVNN ]
 
 ;;; Code:
-(when (version< emacs-version "27.1")
-  (error "Requires GNU Emacs 27.1 or newer, but you're running %s" emacs-version))
+(when (version< emacs-version "29")
+  (error "Requires GNU Emacs 29 or newer, but you're running %s" emacs-version))
 
 (setq gc-cons-threshold most-positive-fixnum) ;; enable gcmh
 (setq read-process-output-max (* 1024 1024)) ;; 1mb
@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20230802.0149")
+(defvar emacs-config-version "20230821.0244")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -73,10 +73,13 @@
   :custom
   (orderless-matching-styles
    '(orderless-regexp orderless-literal orderless-initialism))
-  (completion-styles '(orderless))
+  (completion-styles '(orderless basic))
   (completion-category-defaults nil)
   (completion-category-overrides '((file (styles basic partial-completion))
-                                   (minibuffer (initials)))))
+                                   (minibuffer (initials))))
+  :config
+  (add-hook 'shell-mode-hook
+            (lambda () (setq-local completion-styles '(substring orderless)))))
 
 (use-package consult
   :ensure t :defer t
@@ -127,7 +130,7 @@
         ("t" . embark-run-term)
         ("T" . embark-run-vterm)
         ("v" .  magit-status-setup-buffer)
-        ("+" . embark-make-directory)
+        ("M-+" . make-directory-and-go)
         ("x" . consult-file-externally))
   :config
   (setq embark-indicators '(embark-minimal-indicator))
@@ -175,7 +178,7 @@
     (interactive "D")
     (let ((default-directory (file-name-directory dir)))
       (crux-visit-vterm-buffer t)))
-  (defun embark-make-directory(dir)
+  (defun make-directory-and-go(dir)
     (interactive "D")
     (make-directory dir)
     (find-file dir)))
@@ -674,7 +677,7 @@
   :after (project flymake))
 (use-package pcmpl-args :ensure t :defer 1)
 
-;;; TOOLS: avy, crux, expand-region, move-text, ace-window, vundo|undo-tree,
+;;; TOOLS
 (use-package avy
   :ensure t :defer t
   :config
@@ -702,9 +705,9 @@
   ("C-h RET" . crux-find-user-init-file)
   ("C-x / e" . crux-open-with)
   ("C-x 7" . crux-swap-windows))
-(use-package expand-region
+(use-package expreg
   :ensure t :defer t
-  :bind ("M-#" . er/expand-region))
+  :init (define-key esc-map "@" 'expreg-expand))
 (use-package move-text
   :ensure t :defer t
   :bind
