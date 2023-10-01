@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20230924.0800")
+(defvar emacs-config-version "20230928.1405")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -251,7 +251,8 @@
   :ensure t :defer t
   :hook (after-init . global-anzu-mode)
   :config
-  (setq anzu-mode-lighter "")
+  (setq anzu-mode-lighter ""
+        anzu-replace-threshold 100)
   (global-set-key [remap query-replace] 'anzu-query-replace)
   (global-set-key [remap query-replace-regexp] 'anzu-query-replace-regexp)
   (define-key isearch-mode-map [remap isearch-query-replace] #'anzu-isearch-query-replace)
@@ -531,6 +532,7 @@
   :ensure t :defer t
   :bind ("M-s H" . symbol-overlay-put)
   :hook (prog-mode . symbol-overlay-mode)
+  :custom (symbol-overlay-priority 100)
   :config (add-to-list 'hidden-minor-modes 'symbol-overlay-mode))
 (use-package hl-todo
   :ensure t :defer t
@@ -651,7 +653,9 @@
   (add-hook 'c-ts-mode-hook #'eglot-ensure)
   (add-hook 'cpp-ts-mode-hook #'eglot-ensure)
   :commands eglot-ensure
-  :config (setq eglot-report-progress nil)
+  :custom
+  (eglot-report-progress nil)
+  (eglot-sync-connect nil)
   :after (project flymake))
 (use-package pcmpl-args :ensure t :defer 1)
 
