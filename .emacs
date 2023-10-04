@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20230928.1405")
+(defvar emacs-config-version "20231002.0159")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -541,7 +541,6 @@
   :ensure t :defer t
   :hook (after-init . beacon-mode)
   :config (add-to-list 'hidden-minor-modes 'beacon-mode))
-
 
 ;;; COMPLETION CODE: corfu, yasnippet, eglot, dumb-jump, pcmpl-args
 (use-package corfu
@@ -553,13 +552,14 @@
   (corfu-cycle t)
   (corfu-preselect-first nil)
   (corfu-history-mode t)
-  (corfu-exclude-modes '(shell-mode eshell-mode comint-mode))
   (corfu-bar-width 0)
   (corfu-right-margin-width 0)
-  :init (global-corfu-mode)
-  :hook ((shell-mode . corfu-echo-mode)
-         (eshell-mode . corfu-echo-mode)
-         (comint-mode . corfu-echo-mode))
+  :hook
+  ((shell-mode . corfu-echo-mode)
+   (eshell-mode . corfu-echo-mode)
+   (comint-mode . corfu-echo-mode)
+   (prog-mode . corfu-mode)
+   (text-mode . corfu-mode))
   :bind
   (:map corfu-map
         ("M-m" . corfu-move-to-minibuffer)
