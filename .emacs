@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20231002.0159")
+(defvar emacs-config-version "20231012.0743")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -210,6 +210,8 @@
 (use-package magit
   :ensure t :defer t
   :config
+  (add-hook 'magit-process-find-password-functions
+            'magit-process-password-auth-source)
   (defun magit-find-file-at-path (project rev path)
     (let ((default-directory project)
           (line (string-to-number (car (last (split-string path "#L"))))))
@@ -237,6 +239,10 @@
   :config  ;; j-T in magit-status buffer
   (setq magit-todos-branch-list nil
         magit-todos-update 15)
+  (advice-add #'magit-todos--insert-todos :around
+              (lambda (orig &rest args)   ;; Disable on TRAMP
+                (unless (file-remote-p default-directory)
+                  (apply orig args))))
   :init
   (with-eval-after-load 'magit
     (magit-todos-mode)))
