@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20231012.0743")
+(defvar emacs-config-version "20231015.1356")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -873,6 +873,9 @@ Why not use detached, because detached doesnt run with -A"
   (add-hook 'eshell-mode-hook #'with-editor-export-editor)
   (add-hook 'term-exec-hook   #'with-editor-export-editor)
   (add-hook 'vterm-mode-hook  #'with-editor-export-editor))
+(use-package coterm
+  :ensure t
+  :init (coterm-mode))
 (use-package shell
   :bind (:map shell-mode-map ("C-c d" . interactive-cd))
   :config
