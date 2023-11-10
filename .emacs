@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20231015.1356")
+(defvar emacs-config-version "20231109.1358")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -1269,13 +1269,6 @@ Why not use detached, because detached doesnt run with -A"
  '(whitespace-style
    '(face tabs trailing space-before-tab newline empty tab-mark))
  '(x-select-request-type '(COMPOUND_TEXT UTF8_STRING STRING TEXT)))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(symbol-overlay-default-face ((t (:inherit bold :underline t))))
- '(vc-state-base ((t (:inherit font-lock-string-face :weight bold)))))
 
 ;;; PATCHING
 (if (boundp 'use-short-answers)
@@ -1310,12 +1303,8 @@ Why not use detached, because detached doesnt run with -A"
 (use-package combobulate
   :ensure t :defer t
   :hook
-  (python-ts-mode . combobulate-mode)
-  (js-ts-mode . combobulate-mode)
-  (css-ts-mode . combobulate-mode)
-  ;; (yaml-ts-mode . combobulate-mode)
-  (typescript-ts-mode . combobulate-mode)
-  (tsx-ts-mode . combobulate-mode))
+  ((python-ts-mode js-ts-mode css-ts-mode tsx-ts-mode typescript-ts-mode) . combobulate-mode))
+;; (yaml-ts-mode . combobulate-mode)
 
 (defun package-installs (&rest packages)
   "Install PACKAGES."
@@ -1348,6 +1337,7 @@ Why not use detached, because detached doesnt run with -A"
   (require 'ob-shell)
   (add-to-list 'hidden-minor-modes 'org-indent-mode)
   (define-key org-src-mode-map (kbd "C-c C-c") #'org-edit-src-exit)
+  (global-set-key (kbd "C-c l") #'org-store-link)
   (org-babel-do-load-languages
    'org-babel-do-load-languagesel-load-languages
    '((emacs-lisp . t) (shell . t)))
