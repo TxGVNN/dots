@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20231109.1358")
+(defvar emacs-config-version "20231110.1423")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -91,7 +91,7 @@
   ("M-g o" . consult-outline)
   ("M-g m" . consult-mark)
   ("M-g k" . consult-global-mark)
-  ("M-g e" . consult-error)
+  ("M-g e" . consult-flymake)
   ("M-s w" . consult-line)
   ("M-s g" . consult-grep)
   ("M-s r" . consult-ripgrep)
@@ -520,9 +520,7 @@
   :bind (:map smartparens-mode-map
               ("C-M-f" . 'sp-forward-sexp)
               ("C-M-b" . 'sp-backward-sexp))
-  :hook
-  (markdown-mode . smartparens-mode)
-  (prog-mode . smartparens-mode))
+  :hook ((markdown-mode prog-mode) . smartparens-mode))
 (use-package rainbow-mode
   :ensure t :defer t
   :hook (prog-mode . rainbow-mode)
@@ -557,15 +555,11 @@
   (corfu-auto-prefix 2)
   (corfu-cycle t)
   (corfu-preselect-first nil)
-  (corfu-history-mode t)
   (corfu-bar-width 0)
   (corfu-right-margin-width 0)
   :hook
-  ((shell-mode . corfu-echo-mode)
-   (eshell-mode . corfu-echo-mode)
-   (comint-mode . corfu-echo-mode)
-   (prog-mode . corfu-mode)
-   (text-mode . corfu-mode))
+  ((shell-mode eshell-mode comint-mode) . corfu-echo-mode)
+  ((prog-mode text-mode) . corfu-mode)
   :bind
   (:map corfu-map
         ("M-m" . corfu-move-to-minibuffer)
@@ -612,6 +606,14 @@
     (let ((completion-extra-properties corfu--extra)
           completion-cycle-threshold completion-cycling)
       (apply #'consult-completion-in-region completion-in-region--data))))
+
+(use-package corfu-history
+  :after corfu
+  :init (corfu-history-mode)
+  :config
+  (with-eval-after-load 'savehist
+    (add-to-list 'savehist-additional-variables 'corfu-history)))
+
 (use-package cape
   :ensure t :defer t
   :bind (("C-c p p" . completion-at-point) ;; capf
@@ -625,9 +627,12 @@
          ("C-c p i" . cape-ispell)
          ("C-c p l" . cape-line)
          ("C-c p w" . cape-dict))
-  :init
-  (add-to-list 'completion-at-point-functions #'cape-dabbrev)
-  (add-to-list 'completion-at-point-functions #'cape-file))
+  :config
+  (defun cape-backends-add-to-corfu-mode ()
+    (add-to-list 'completion-at-point-functions #'cape-file :append)
+    (add-to-list 'completion-at-point-functions #'cape-dabbrev :append))
+  :hook (corfu-mode . cape-backends-add-to-corfu-mode))
+
 (use-package yasnippet
   :ensure t :defer t
   :hook (after-init . yas-global-mode)
@@ -942,8 +947,7 @@ Why not use detached, because detached doesnt run with -A"
 
 (use-package autorevert
   ;; revert buffers when their files/state have changed
-  :hook (focus-in . doom-auto-revert-buffers-h)
-  :hook (after-save . doom-auto-revert-buffers-h)
+  :hook ((focus-in after-save) . doom-auto-revert-buffers-h)
   :config
   (setq auto-revert-verbose t ; let us know when it happens
         auto-revert-use-notify nil
@@ -985,6 +989,9 @@ Why not use detached, because detached doesnt run with -A"
 (use-package epa
   :defer t
   :config (setq epa-armor t))
+(use-package delsel
+  :defer t
+  :init (delete-selection-mode))
 
 ;; MAIL
 (use-package gnus :defer t
@@ -1180,6 +1187,19 @@ Why not use detached, because detached doesnt run with -A"
      (list (region-beginning) (region-end) string)))
   (let ((bufname (car (split-string (substring command 0 (if (< (length command) 9) (length command) 9))))))
     (async-shell-command command (format "*shell:%s:%s*" bufname (format-time-string "%Y%m%d_%H%M%S")))))
+
+(defmacro with-file-contents (file &rest body)
+  "Execute BODY with FILE contents."
+  `(with-temp-buffer
+     (insert-file-contents ,file)
+     ,@body))
+(defmacro create-file-with-content (file content)
+  "Create FILE with CONTENT."
+  `(progn
+     (unless (file-exists-p (file-name-directory ,file))
+       (make-directory (file-name-directory ,file) t))
+     (with-temp-file ,file
+       (insert ,content))))
 
 (global-set-key (kbd "M-D") 'kill-whole-line)
 (global-set-key (kbd "M-w") 'my-kill-ring-save)
