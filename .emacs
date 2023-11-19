@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20231110.1423")
+(defvar emacs-config-version "20231116.1457")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -245,7 +245,8 @@
                   (apply orig args))))
   :init
   (with-eval-after-load 'magit
-    (magit-todos-mode)))
+    (let ((inhibit-message t))
+      (magit-todos-mode))))
 
 ;;; SEARCHING: ripgrep, anzu, engine-mode
 (use-package isearch :defer t
@@ -324,11 +325,11 @@
            (project-shell-name (project-prefixed-buffer-name "shell"))
            (shell-buffer (get-buffer project-shell-name)))
       (if current-prefix-arg
-          (shell-hist (generate-new-buffer-name project-shell-name)
-                      project-shell-name)
+          (eat-hist (generate-new-buffer-name project-shell-name)
+                    project-shell-name)
         (if (get-buffer-process shell-buffer)
             (pop-to-buffer-same-window shell-buffer)
-          (shell-hist project-shell-name project-shell-name)))))
+          (eat-hist project-shell-name project-shell-name)))))
   (advice-add #'project-shell :override #'project-shell-with-histfile)
   (defun project-consult-grep (&optional initial)
     "Using consult-grep(INITIAL) in project."
@@ -763,7 +764,7 @@
   :ensure t :defer 1
   :config (require 'eev-load)
   (define-abbrev-table 'global-abbrev-table
-    '(("eekcopy" " (eek \"C-x o C-p C-e C-SPC C-a M-w C-n C-x o C-n C-y\") ;; copy output")))
+    '(("eekcopy" " (eek \"C-x o C-p C-e C-SPC C-a M-w C-n C-x O C-e RET C-a C-y\") ;; copy output")))
   (defun eepitch-get-buffer-name-line()
     (if (not (eq eepitch-buffer-name ""))
         (format "ξ:%s "eepitch-buffer-name) ""))
@@ -807,14 +808,14 @@ Why not use detached, because detached doesnt run with -A"
     (interactive)
     (let* ((explicit-shell-file-name (if (executable-find "dtach")
                                          "dtach" nil))
-           (file-name (format "%s/%s.dtach" temporary-file-directory
+           (file-name (format "/tmp/%s.dtach"
                               (replace-regexp-in-string
                                "/" "~" default-directory)))
            (explicit-dtach-args `("-A" ,file-name "-z"
                                   "/bin/bash" "--noediting" "-login")))
       (if buffer
           (shell buffer)
-        (shell (format "*dtach:%s*" default-directory)))))
+        (shell-hist (format "*dtach:%s*" default-directory)))))
   (defun project-detached-compile ()
     "Run `detached-compile' in the project root."
     (declare (interactive-only compile))
@@ -837,6 +838,7 @@ Why not use detached, because detached doesnt run with -A"
 
 ;;; CHECKER: flymake(C-h .)
 (use-package flymake
+  :custom (flymake-mode-line-lighter "ƒ")
   :config
   (define-key flymake-mode-map (kbd "C-c ! l") 'flymake-show-diagnostics-buffer)
   (define-key flymake-mode-map (kbd "M-g n") #'flymake-goto-next-error)
@@ -878,9 +880,10 @@ Why not use detached, because detached doesnt run with -A"
   (add-hook 'eshell-mode-hook #'with-editor-export-editor)
   (add-hook 'term-exec-hook   #'with-editor-export-editor)
   (add-hook 'vterm-mode-hook  #'with-editor-export-editor))
-(use-package coterm
-  :ensure t
-  :init (coterm-mode))
+(use-package comint
+  :custom
+  (comint-input-ignoredups t)
+  (comint-input-ring-size 1024))
 (use-package shell
   :bind (:map shell-mode-map ("C-c d" . interactive-cd))
   :config
@@ -894,10 +897,10 @@ Why not use detached, because detached doesnt run with -A"
     (let* ((shell-directory-name (locate-user-emacs-file "shell"))
            (histfile (or histfile buffer-name))
            (comint-history-file (expand-file-name
-                                 (format "%s/%s.%s.history" shell-directory-name
+                                 (format "%s/%s.history" shell-directory-name
                                          (replace-regexp-in-string
-                                          "/" "~" (abbreviate-file-name default-directory))
-                                         histfile)))
+                                          "/" "~"
+                                          (format "%s.%s" (abbreviate-file-name default-directory) histfile)))))
            (comint-input-ring-file-name comint-history-file)
            (comint-input-ring (make-ring 1))
            (buff (get-buffer-create buffer-name)))
@@ -923,6 +926,61 @@ Why not use detached, because detached doesnt run with -A"
         ("M-x"  . execute-extended-command)
         ("C-c C-y" . term-paste)
         ("C-c d" . interactive-cd)))
+(use-package coterm
+  :ensure t
+  :init (coterm-mode))
+
+(use-package eat
+  :ensure t
+  :custom (eat-line-input-ring-size 1024)
+  :config
+  (defun eat-kill-process-confirm (orig-fun &rest args)
+    (if (y-or-n-p "Kill process? ")
+        (apply orig-fun args)))
+  (advice-add 'eat-kill-process :around #'eat-kill-process-confirm)
+  (defvar-local eat--line-input-ring-file-name nil
+    "Name of the file to which the buffer's `eat--line-input-ring' is saved.")
+  (defun eat--line-write-input-ring ()
+    "Clone from `comint-write-input-ring'."
+    (cond ((or (null eat--line-input-ring-file-name)
+               (equal eat--line-input-ring-file-name "")
+               (null eat--line-input-ring) (ring-empty-p eat--line-input-ring))
+           nil)
+          ((not (file-writable-p eat--line-input-ring-file-name))
+           (message "Cannot write history file %s" eat--line-input-ring-file-name))
+          (t
+           (let* ((history-buf (get-buffer-create " *Temp Input History*"))
+                  (ring eat--line-input-ring)
+                  (file eat--line-input-ring-file-name)
+                  (index (ring-length ring)))
+             (with-current-buffer history-buf
+               (erase-buffer)
+               (while (> index 0)
+                 (setq index (1- index))
+                 (insert (ring-ref ring index) "\n"))
+               (write-region (buffer-string) nil file nil 'no-message)
+               (kill-buffer nil))))))
+  (defun eat--line--save-history (&rest _)
+    "Save `eat-line' history."
+    (let ((inhibit-message t))
+      (eat--line-write-input-ring)))
+  (advice-add #'eat-line-send-input :after #'eat--line--save-history)
+
+  (defun eat-hist(buffer-name &optional histfile)
+    (let* ((eat-buffer-name buffer-name)
+           (shell-directory-name (locate-user-emacs-file "shell"))
+           (histfile (or histfile buffer-name))
+           (history-file (expand-file-name
+                          (format "%s/%s.history" shell-directory-name
+                                  (replace-regexp-in-string
+                                   "/" "~" (format "%s.%s" (abbreviate-file-name default-directory) histfile))))))
+      (with-current-buffer (eat)
+        (eat-line-mode)
+        (setq-local eat--line-input-ring-file-name history-file)
+        (ignore-errors
+          (eat-line-load-input-history-from-file eat--line-input-ring-file-name "bash")))
+      (pop-to-buffer buffer-name display-comint-buffer-action))))
+
 (use-package xclip ;; -- don't use xsel
   :ensure t :defer t
   :init
@@ -1260,7 +1318,7 @@ Why not use detached, because detached doesnt run with -A"
  '(column-number-mode t)
  '(default-input-method "vietnamese-telex")
  '(delete-selection-mode t)
- '(eldoc-minor-mode-string " σ")
+ '(eldoc-minor-mode-string " ð")
  '(electric-indent-mode nil)
  '(enable-local-variables :all)
  '(enable-recursive-minibuffers t)
