@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20231116.1457")
+(defvar emacs-config-version "20231228.1511")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -92,6 +92,7 @@
   ("M-g m" . consult-mark)
   ("M-g k" . consult-global-mark)
   ("M-g e" . consult-flymake)
+  ("M-s m" . consult-man)
   ("M-s w" . consult-line)
   ("M-s g" . consult-grep)
   ("M-s r" . consult-ripgrep)
@@ -209,6 +210,8 @@
   ("C-x v r" . git-gutter:revert-hunk))
 (use-package magit
   :ensure t :defer t
+  :custom
+  (magit-delete-by-moving-to-trash nil)
   :config
   (add-hook 'magit-process-find-password-functions
             'magit-process-password-auth-source)
@@ -538,7 +541,9 @@
   :bind ("M-s H" . symbol-overlay-put)
   :hook (prog-mode . symbol-overlay-mode)
   :custom (symbol-overlay-priority 100)
-  :config (add-to-list 'hidden-minor-modes 'symbol-overlay-mode))
+  :config
+  (set-face-attribute 'symbol-overlay-default-face nil :inherit 'bold :underline t)
+  (add-to-list 'hidden-minor-modes 'symbol-overlay-mode))
 (use-package hl-todo
   :ensure t :defer t
   :hook (prog-mode . hl-todo-mode))
@@ -569,11 +574,11 @@
         ("S-TAB" . corfu-previous)
         ([backtab] . corfu-previous))
   :config
-  (unless (display-graphic-p)
-    (use-package corfu-terminal
-      ;; FIXME: codeberg.org/akib/emacs-corfu-terminal#18
-      :ensure t :defer t
-      :init (add-hook 'corfu-mode-hook #'corfu-terminal-mode)))
+  ;; (unless (display-graphic-p)
+  ;;   (use-package corfu-terminal
+  ;;     ;; FIXME: codeberg.org/akib/emacs-corfu-terminal#18
+  ;;     :ensure t :defer t
+  ;;     :init (add-hook 'corfu-mode-hook #'corfu-terminal-mode)))
   (defvar-local corfu-common-old nil)
   (defun corfu-complete-common-or-next ()
     "Complete common prefix or go to next candidate (@minad/corfu#170)."
@@ -638,7 +643,7 @@
   :ensure t :defer t
   :hook (after-init . yas-global-mode)
   :config
-  (setq yas-lighter " υ")
+  (setq yas-lighter " ¥")
   (define-key yas-minor-mode-map [(tab)] nil)
   (define-key yas-minor-mode-map (kbd "TAB") nil))
 (use-package yasnippet-snippets
@@ -802,20 +807,25 @@
   (detached-init-allow-list '(compile org))
   (detached-terminal-data-command system-type)
   :config
-  (defun shell-dtach (&optional buffer)
+  (defun shell-dtach (&optional buffer sockfile)
     "Start dtach in shell(BUFFER).
 Why not use detached, because detached doesnt run with -A"
-    (interactive)
+    (interactive (list nil
+                       (and current-prefix-arg
+                            (read-file-name "Sock file: "))))
     (let* ((explicit-shell-file-name (if (executable-find "dtach")
                                          "dtach" nil))
-           (file-name (format "/tmp/%s.dtach"
-                              (replace-regexp-in-string
-                               "/" "~" default-directory)))
+           (file-name (or sockfile
+                          (format "/tmp/%s.dtach"
+                                  (replace-regexp-in-string
+                                   "/" "~" default-directory))))
            (explicit-dtach-args `("-A" ,file-name "-z"
                                   "/bin/bash" "--noediting" "-login")))
       (if buffer
           (shell buffer)
-        (shell-hist (format "*dtach:%s*" default-directory)))))
+        (if sockfile
+            (shell-hist (format "*dtach:%s*" sockfile))
+          (shell-hist (format "*dtach:%s*" default-directory))))))
   (defun project-detached-compile ()
     "Run `detached-compile' in the project root."
     (declare (interactive-only compile))
@@ -835,6 +845,10 @@ Why not use detached, because detached doesnt run with -A"
 (use-package 0x0 :ensure t :defer t)
 (use-package dpaste :ensure t :defer t)
 (use-package gist :ensure t :defer 1)
+(use-package devdocs
+  :ensure t
+  :config
+  (global-set-key (kbd "M-s d") #'devdocs-lookup))
 
 ;;; CHECKER: flymake(C-h .)
 (use-package flymake
@@ -1165,13 +1179,13 @@ Why not use detached, because detached doesnt run with -A"
   (split-window-horizontally) (other-window 1 nil)
   (if (= prefix 1 ) (switch-to-next-buffer)))
 (defun insert-temp-filename()
-  "Insert new temp filename."
+  "Insert new temp file and kill to yank ring."
   (interactive)
-  (insert
-   (concat (file-name-as-directory temporary-file-directory)
-           (make-temp-name
-            (format "%s_%s_" user-login-name
-                    (format-time-string "%Y%m%d-%H%M%S"))))))
+  (let ((file
+         (concat (file-name-as-directory temporary-file-directory)
+                 (make-temp-name
+                  (format "%s_" (format-time-string "%Y%m%d_%H%M%S"))))))
+    (kill-new file) (insert file)))
 (defun insert-datetime(&optional prefix)
   "Insert YYYYmmdd-HHMM or YYYY-mm-dd_HH-MM if PREFIX set."
   (interactive "p")
@@ -1371,6 +1385,7 @@ Why not use detached, because detached doesnt run with -A"
                      (sh-mode . bash-ts-mode)
                      ;; (yaml-mode . yaml-ts-mode)
                      (js-json-mode . json-ts-mode)
+                     (json-mode . json-ts-mode)
                      (javascript-mode . js-ts-mode)
                      (typescript-mode . typescript-ts-mode)
                      (c-mode . c-ts-mode)
