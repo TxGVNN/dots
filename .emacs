@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20231228.1511")
+(defvar emacs-config-version "20240102.0242")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -948,6 +948,7 @@ Why not use detached, because detached doesnt run with -A"
   :ensure t
   :custom (eat-line-input-ring-size 1024)
   :config
+  (define-key eat-line-mode-map [xterm-paste] #'xterm-paste)
   (defun eat-kill-process-confirm (orig-fun &rest args)
     (if (y-or-n-p "Kill process? ")
         (apply orig-fun args)))
