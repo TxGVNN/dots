@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20240102.0242")
+(defvar emacs-config-version "20240203.1318")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -71,13 +71,19 @@
 (use-package orderless
   :ensure t :defer t
   :custom
-  (orderless-matching-styles
-   '(orderless-regexp orderless-literal orderless-initialism))
   (completion-styles '(orderless basic))
   (completion-category-defaults nil)
-  (completion-category-overrides '((file (styles basic partial-completion))
-                                   (minibuffer (initials))))
+  (completion-category-overrides
+   '((command (styles . (orderless+initialism)))
+     (symbol (styles . (orderless+initialism)))
+     (variable (styles . (orderless+initialism)))
+     (file (styles . (basic partial-completion)))
+     (minibuffer (styles . (orderless-initialism)))))
   :config
+  (orderless-define-completion-style orderless+initialism
+    (orderless-matching-styles '(orderless-initialism
+                                 orderless-literal
+                                 orderless-regexp)))
   (add-hook 'shell-mode-hook
             (lambda () (setq-local completion-styles '(substring orderless)))))
 
@@ -127,9 +133,9 @@
   (:map embark-general-map ("/" . embark-chroot))
   (:map embark-region-map ("M-&" . async-shell-from-region))
   (:map embark-file-map
-        ("s" . embark-run-shell)
+        ("s" . embark-run-eat)
+        ("S" . embark-run-shell)
         ("t" . embark-run-term)
-        ("T" . embark-run-vterm)
         ("v" .  magit-status-setup-buffer)
         ("M-+" . make-directory-and-go)
         ("x" . consult-file-externally))
@@ -174,11 +180,11 @@
     (interactive "D")
     (let ((default-directory (file-name-directory dir)))
       (crux-visit-shell-buffer t)))
-  (defun embark-run-vterm(dir)
-    "Create or visit a vterm buffer."
+  (defun embark-run-eat(dir)
+    "Create or visit a eat buffer."
     (interactive "D")
     (let ((default-directory (file-name-directory dir)))
-      (crux-visit-vterm-buffer t)))
+      (crux-visit-eat-buffer t)))
   (defun make-directory-and-go(dir)
     (interactive "D")
     (make-directory dir)
@@ -298,18 +304,19 @@
   (project-compilation-buffer-name-function 'project-prefixed-buffer-name)
   (project-switch-commands
    '((project-find-file "file")
-     (project-consult-ripgrep "rg")
      (magit-project-status "git")
+     (project-consult-ripgrep "rg")
+     (project-consult-grep "grep")
      (project-compile "compile")
      (project-switch-to-buffer "buf")
-     (project-shell "shell")
+     (project-eat "eat")
      (project-jump-persp "jump")
      (embark-on-project "embark")))
   :bind
   (:map project-prefix-map
-        ("t" . project-term)
         ("j" . project-jump-persp)
-        ("T" . project-vterm)
+        ("s" . project-eat)
+        ("S" . project-shell)
         ("M-x" . project-execute-extended-command)
         ("v" . magit-project-status))
   :config
@@ -321,11 +328,11 @@
            (default-directory (project-root pr))
            (dirs (list default-directory)))
       (project-find-file-in (thing-at-point 'filename) dirs pr include-all)))
-  (defun project-shell-with-histfile ()
-    "Override `project-shell'."
+  (defun project-eat ()
+    "Project eat with history"
     (interactive)
     (let* ((default-directory (project-root (project-current t)))
-           (project-shell-name (project-prefixed-buffer-name "shell"))
+           (project-shell-name (project-prefixed-buffer-name "eat"))
            (shell-buffer (get-buffer project-shell-name)))
       (if current-prefix-arg
           (eat-hist (generate-new-buffer-name project-shell-name)
@@ -333,7 +340,6 @@
         (if (get-buffer-process shell-buffer)
             (pop-to-buffer-same-window shell-buffer)
           (eat-hist project-shell-name project-shell-name)))))
-  (advice-add #'project-shell :override #'project-shell-with-histfile)
   (defun project-consult-grep (&optional initial)
     "Using consult-grep(INITIAL) in project."
     (interactive)
@@ -346,28 +352,6 @@
     (consult-ripgrep (project-root (project-current t)) initial))
   (define-key project-prefix-map (kbd "r") #'project-consult-ripgrep)
   (define-key project-prefix-map (kbd "R") #'project-query-replace-regexp)
-  ;; term
-  (defun project-term ()
-    "project-term."
-    (interactive)
-    (let* ((default-directory (project-root (project-current t)))
-           (termname (format "%s-term" (file-name-nondirectory
-                                        (directory-file-name default-directory))))
-           (buffer (format "*%s*" termname)))
-      (unless (get-buffer buffer)
-        (require 'term)
-        (ansi-term (or explicit-shell-file-name (getenv "SHELL") "/bin/sh") termname))
-      (switch-to-buffer buffer)))
-  (defun project-vterm ()
-    "project-vterm."
-    (interactive)
-    (let* ((default-directory (project-root (project-current t)))
-           (buffer (format "*%s-vterm*" (file-name-nondirectory
-                                         (directory-file-name default-directory)))))
-      (unless (get-buffer buffer)
-        (require 'vterm)
-        (vterm buffer))
-      (switch-to-buffer buffer)))
   ;; embark
   (defun embark-on-project()
     (interactive)
@@ -557,10 +541,9 @@
   :ensure t :defer t
   :custom
   (completion-cycle-threshold 3)
-  (corfu-auto t)
-  (corfu-auto-prefix 2)
+  (corfu-auto nil)
   (corfu-cycle t)
-  (corfu-preselect-first nil)
+  (corfu-preselect 'prompt)
   (corfu-bar-width 0)
   (corfu-right-margin-width 0)
   :hook
@@ -574,11 +557,11 @@
         ("S-TAB" . corfu-previous)
         ([backtab] . corfu-previous))
   :config
-  ;; (unless (display-graphic-p)
-  ;;   (use-package corfu-terminal
-  ;;     ;; FIXME: codeberg.org/akib/emacs-corfu-terminal#18
-  ;;     :ensure t :defer t
-  ;;     :init (add-hook 'corfu-mode-hook #'corfu-terminal-mode)))
+  (unless (display-graphic-p)
+    (use-package corfu-terminal
+      ;; FIXME: codeberg.org/akib/emacs-corfu-terminal#18
+      :ensure t :defer t
+      :init (add-hook 'corfu-mode-hook #'corfu-terminal-mode)))
   (defvar-local corfu-common-old nil)
   (defun corfu-complete-common-or-next ()
     "Complete common prefix or go to next candidate (@minad/corfu#170)."
@@ -689,6 +672,15 @@
   :ensure t :defer t
   :config
   (setq crux-share-to-transfersh-host "https://free.keep.sh")
+  (defun crux-visit-eat-buffer (&optional prefix)
+    "Create or visit a eat buffer.
+If PREFIX is not nil, create visit in default-directory"
+    (interactive "P")
+    (let* ((eat-buffer-name
+            (format "*eat<%s>" (if prefix (crux-directory-domain-name) "0"))))
+      (with-current-buffer (eat)
+        (eat-line-mode))
+      (pop-to-buffer eat-buffer-name display-comint-buffer-action)))
   :bind
   ("C-^" . crux-top-join-line)
   ("C-a" . crux-move-beginning-of-line)
@@ -698,9 +690,9 @@
   ("C-c M-d" . crux-duplicate-and-comment-current-line-or-region)
   ("C-c D" . crux-delete-file-and-buffer)
   ("C-c r" . crux-rename-buffer-and-file)
-  ("C-c s" . crux-visit-shell-buffer)
+  ("C-c s" . crux-visit-eat-buffer)
   ("C-c t" . crux-visit-term-buffer)
-  ("C-c T" . crux-visit-vterm-buffer)
+  ("C-c S" . crux-visit-shell-buffer)
   ("C-h RET" . crux-find-user-init-file)
   ("C-x / e" . crux-open-with)
   ("C-x 7" . crux-swap-windows))
@@ -806,7 +798,7 @@
   :custom
   (detached-init-allow-list '(compile org))
   (detached-terminal-data-command system-type)
-  :config
+  :init
   (defun shell-dtach (&optional buffer sockfile)
     "Start dtach in shell(BUFFER).
 Why not use detached, because detached doesnt run with -A"
@@ -826,6 +818,7 @@ Why not use detached, because detached doesnt run with -A"
         (if sockfile
             (shell-hist (format "*dtach:%s*" sockfile))
           (shell-hist (format "*dtach:%s*" default-directory))))))
+  :config
   (defun project-detached-compile ()
     "Run `detached-compile' in the project root."
     (declare (interactive-only compile))
@@ -1353,6 +1346,7 @@ Why not use detached, because detached doesnt run with -A"
  '(scroll-bar-mode nil)
  '(shell-command-prompt-show-cwd t)
  '(show-paren-mode t)
+ '(tab-always-indent 'complete)
  '(tab-stop-list '(4 8 12 16 20 24 28 32 36))
  '(tab-width 4)
  '(tool-bar-mode nil)
@@ -1514,7 +1508,7 @@ Why not use detached, because detached doesnt run with -A"
 
 ;; Erlang
 (use-package erlang
-  :ensure t
+  :ensure t :defer t
   :hook (erlang-mode . eglot-ensure))
 
 ;; Terraform
@@ -1549,6 +1543,9 @@ Why not use detached, because detached doesnt run with -A"
   (define-key html-mode-map (kbd "M-o") #'mode-line-other-buffer))
 
 (use-package typescript-ts-mode
+  :init
+  (if (treesit-ready-p 'tsx)
+      (add-to-list 'auto-mode-alist '("\\.ts.*\\'" . tsx-ts-mode)))
   :hook (typescript-ts-mode . eglot-ensure))
 
 (defun js-print-debug-at-point()
