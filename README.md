@@ -1,4 +1,7 @@
-[![Replit:Emacs](https://img.shields.io/badge/Replit-emacs-%239340c1.svg)](https://replit.com/@TxGVNN/dots)
+[![Gitpod](https://img.shields.io/badge/Try-gitpod-%239340c1.svg)](https://gitpod.io/#https://github.com/TxGVNN/oops)
+[![Codespaces](https://img.shields.io/badge/Try-codespaces-%239340c1.svg)](https://github.com/codespaces/new?hide_repo_select=false&ref=main&repo=429365535&skip_quickstart=true)
+[![Replit:Emacs](https://img.shields.io/badge/Try-replit-%239340c1.svg)](https://replit.com/@TxGVNN/dots)
+
 ## GNU Emacs
 
 ```
