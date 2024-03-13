@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20240203.1318")
+(defvar emacs-config-version "20240309.0747")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -245,17 +245,13 @@
   :config (setq git-link-use-commit t))
 (use-package magit-todos
   :ensure t :defer t
-  :config  ;; j-T in magit-status buffer
-  (setq magit-todos-branch-list nil
-        magit-todos-update 15)
-  (advice-add #'magit-todos--insert-todos :around
-              (lambda (orig &rest args)   ;; Disable on TRAMP
-                (unless (file-remote-p default-directory)
-                  (apply orig args))))
   :init
   (with-eval-after-load 'magit
     (let ((inhibit-message t))
-      (magit-todos-mode))))
+      (magit-todos-mode)))
+  :custom ;; j-T in magit-status buffer
+  (magit-todos-branch-list nil)
+  (magit-todos-update nil))
 
 ;;; SEARCHING: ripgrep, anzu, engine-mode
 (use-package isearch :defer t
@@ -366,6 +362,8 @@
 
 (use-package project-tasks
   :ensure t :defer t
+  :custom
+  (project-tasks-files '(".*task.*\.org$"))
   :init
   (with-eval-after-load 'embark
     (define-key embark-file-map (kbd "P") #'project-tasks-in-dir))
@@ -839,9 +837,8 @@ Why not use detached, because detached doesnt run with -A"
 (use-package dpaste :ensure t :defer t)
 (use-package gist :ensure t :defer 1)
 (use-package devdocs
-  :ensure t
-  :config
-  (global-set-key (kbd "M-s d") #'devdocs-lookup))
+  :ensure t :defer t
+  :bind ("M-s d" . #'devdocs-lookup))
 
 ;;; CHECKER: flymake(C-h .)
 (use-package flymake
@@ -861,7 +858,7 @@ Why not use detached, because detached doesnt run with -A"
     "Auto update name with SUFFIX.ext."
     (interactive "p")
     (let ((filename (file-name-nondirectory (dired-get-file-for-visit)))
-          (timestamp (format-time-string "%Y%m%d%H%M%S")))
+          (timestamp (format-time-string "%Y%m%dT%H%M%S")))
       (rename-file filename (concat filename "_" timestamp) t)
       (revert-buffer)))
   (setq dired-listing-switches "-alh"))
@@ -887,7 +884,7 @@ Why not use detached, because detached doesnt run with -A"
   (add-hook 'eshell-mode-hook #'with-editor-export-editor)
   (add-hook 'term-exec-hook   #'with-editor-export-editor)
   (add-hook 'vterm-mode-hook  #'with-editor-export-editor))
-(use-package comint
+(use-package comint :defer t
   :custom
   (comint-input-ignoredups t)
   (comint-input-ring-size 1024))
@@ -922,7 +919,7 @@ Why not use detached, because detached doesnt run with -A"
                               #'shell-write-history-on-exit))
       (pop-to-buffer buff display-comint-buffer-action)
       buff)))
-(use-package term
+(use-package term :defer t
   :hook
   (term-mode . (lambda()
                  (let (term-escape-char) (term-set-escape-char ?\C-x))))
@@ -934,12 +931,33 @@ Why not use detached, because detached doesnt run with -A"
         ("C-c C-y" . term-paste)
         ("C-c d" . interactive-cd)))
 (use-package coterm
-  :ensure t
-  :init (coterm-mode))
+  :ensure t :defer t
+  :hook (after-init . coterm-mode))
 
 (use-package eat
-  :ensure t
+  :ensure t :defer t
   :custom (eat-line-input-ring-size 1024)
+  :init
+  (defun eat--line--save-history (&rest _)
+    "Save `eat-line' history."
+    (let ((inhibit-message t))
+      (eat--line-write-input-ring)))
+  (advice-add #'eat-line-send-input :after #'eat--line--save-history)
+
+  (defun eat-hist(buffer-name &optional histfile)
+    (let* ((eat-buffer-name buffer-name)
+           (shell-directory-name (locate-user-emacs-file "shell"))
+           (histfile (or histfile buffer-name))
+           (history-file (expand-file-name
+                          (format "%s/%s.history" shell-directory-name
+                                  (replace-regexp-in-string
+                                   "/" "~" (format "%s.%s" (abbreviate-file-name default-directory) histfile))))))
+      (with-current-buffer (eat)
+        (eat-line-mode)
+        (setq-local eat--line-input-ring-file-name history-file)
+        (ignore-errors
+          (eat-line-load-input-history-from-file eat--line-input-ring-file-name "bash")))
+      (pop-to-buffer buffer-name display-comint-buffer-action)))
   :config
   (define-key eat-line-mode-map [xterm-paste] #'xterm-paste)
   (defun eat-kill-process-confirm (orig-fun &rest args)
@@ -967,27 +985,7 @@ Why not use detached, because detached doesnt run with -A"
                  (setq index (1- index))
                  (insert (ring-ref ring index) "\n"))
                (write-region (buffer-string) nil file nil 'no-message)
-               (kill-buffer nil))))))
-  (defun eat--line--save-history (&rest _)
-    "Save `eat-line' history."
-    (let ((inhibit-message t))
-      (eat--line-write-input-ring)))
-  (advice-add #'eat-line-send-input :after #'eat--line--save-history)
-
-  (defun eat-hist(buffer-name &optional histfile)
-    (let* ((eat-buffer-name buffer-name)
-           (shell-directory-name (locate-user-emacs-file "shell"))
-           (histfile (or histfile buffer-name))
-           (history-file (expand-file-name
-                          (format "%s/%s.history" shell-directory-name
-                                  (replace-regexp-in-string
-                                   "/" "~" (format "%s.%s" (abbreviate-file-name default-directory) histfile))))))
-      (with-current-buffer (eat)
-        (eat-line-mode)
-        (setq-local eat--line-input-ring-file-name history-file)
-        (ignore-errors
-          (eat-line-load-input-history-from-file eat--line-input-ring-file-name "bash")))
-      (pop-to-buffer buffer-name display-comint-buffer-action))))
+               (kill-buffer nil)))))))
 
 (use-package xclip ;; -- don't use xsel
   :ensure t :defer t
@@ -1178,19 +1176,19 @@ Why not use detached, because detached doesnt run with -A"
   (let ((file
          (concat (file-name-as-directory temporary-file-directory)
                  (make-temp-name
-                  (format "%s_" (format-time-string "%Y%m%d_%H%M%S"))))))
+                  (format "%s_" (format-time-string "%Y%m%dT%H%M%S"))))))
     (kill-new file) (insert file)))
 (defun insert-datetime(&optional prefix)
-  "Insert YYYYmmdd-HHMM or YYYY-mm-dd_HH-MM if PREFIX set."
+  "Insert %Y%m%dT%H%M%S or %Y-%m-%dT%H:%M:%S if PREFIX set."
   (interactive "p")
   (let ((msg
          (cond
           ((= prefix 1)
-           (format-time-string "%Y%m%d-%H%M%S" (current-time) t))
+           (format-time-string "%Y%m%dT%H%M%S" (current-time) t))
           ((= prefix 2)
            (string-trim (shell-command-to-string "date --utc")))
           ((= prefix 4)
-           (format-time-string "%Y-%m-%d_%H-%M-%S" (current-time) t)))))
+           (format-time-string "%Y-%m-%dT%H:%M:%S" (current-time) t)))))
     (insert msg)))
 
 (defun linux-stat-file()
@@ -1210,7 +1208,7 @@ Why not use detached, because detached doesnt run with -A"
            ((use-region-p) (buffer-substring-no-properties (point) (mark)))
            (t (buffer-substring-no-properties (point-min) (point-max)))))
          (buffer-name (format "%s_%s" (file-name-base (buffer-name))
-                              (format-time-string "%Y%m%d_%H%M%S")))
+                              (format-time-string "%Y%m%dT%H%M%S")))
          (buffer (get-buffer-create buffer-name)))
     (with-current-buffer buffer
       (insert string)
@@ -1223,7 +1221,7 @@ Why not use detached, because detached doesnt run with -A"
          (make-temp-file
           (concat (file-name-base (buffer-name)) "_"
                   (unless (string-prefix-p "*scratch-" (buffer-name))
-                    (format-time-string "%Y%m%d-%H%M%S_")))
+                    (format-time-string "%Y%m%dT%H%M%S_")))
           nil (file-name-extension (buffer-name) t))))
     (copy-region-to-scratch (if prefix (read-file-name "Save to file: " nil filename) filename))))
 (defun find-file-rec ()
@@ -1252,7 +1250,7 @@ Why not use detached, because detached doesnt run with -A"
                                       (buffer-substring-no-properties (region-beginning) (region-end))))
      (list (region-beginning) (region-end) string)))
   (let ((bufname (car (split-string (substring command 0 (if (< (length command) 9) (length command) 9))))))
-    (async-shell-command command (format "*shell:%s:%s*" bufname (format-time-string "%Y%m%d_%H%M%S")))))
+    (async-shell-command command (format "*shell:%s:%s*" bufname (format-time-string "%Y%m%dT%H%M%S")))))
 
 (defmacro with-file-contents (file &rest body)
   "Execute BODY with FILE contents."
@@ -1448,6 +1446,13 @@ Why not use detached, because detached doesnt run with -A"
 (use-package ob-compile :ensure t :defer t
   :config (add-hook 'compilation-finish-functions #'ob-compile-save-file))
 
+(use-package denote
+  :ensure t :defer t
+  :bind
+  ("C-c n n" . denote-subdirectory)
+  ("C-c n o" . denote-open-or-create)
+  :custom (denote-directory "~/.gxt"))
+
 (use-package yaml-mode
   :ensure t :defer t
   :init (add-hook 'yaml-mode-hook #'eglot-ensure))
@@ -1457,9 +1462,9 @@ Why not use detached, because detached doesnt run with -A"
 
 ;; Go: `go install golang.org/x/tools/gopls'
 (use-package go-ts-mode
-  :hook (go-ts-mode . lsp-go-install-save-hooks)
+  :hook (go-ts-mode . eglot-go-install-save-hooks)
   :config
-  (defun lsp-go-install-save-hooks ()
+  (defun eglot-go-install-save-hooks ()
     (if (fboundp 'eglot-ensure)(eglot-ensure))
     (add-hook 'before-save-hook #'eglot-format-buffer t t))
   (defun go-print-debug-at-point()
@@ -1546,7 +1551,7 @@ Why not use detached, because detached doesnt run with -A"
   :init
   (if (treesit-ready-p 'tsx)
       (add-to-list 'auto-mode-alist '("\\.ts.*\\'" . tsx-ts-mode)))
-  :hook (typescript-ts-mode . eglot-ensure))
+  :hook (typescript-ts-base-mode . eglot-ensure))
 
 (defun js-print-debug-at-point()
   "Print debug."
@@ -1600,6 +1605,8 @@ bound to C-c C-r."
   (package-installs 'keycast 'interaction-log))
 (use-package keycast :defer t
   :config (setq keycast-mode-line-insert-after 'mode-line-misc-info))
+
+(use-package x509-mode :ensure t :defer t)
 
 ;; keep personal settings not in the .emacs file
 (let ((personal-settings (locate-user-emacs-file "personal.el")))
