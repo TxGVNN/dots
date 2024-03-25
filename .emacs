@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20240309.0747")
+(defvar emacs-config-version "20240322.1520")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -651,6 +651,13 @@
   (add-hook 'c-ts-mode-hook #'eglot-ensure)
   (add-hook 'cpp-ts-mode-hook #'eglot-ensure)
   :commands eglot-ensure
+  :config
+  (setq eglot-disable-on-tramp t)
+  (defun eglot-ensure-remote (orig &rest args)
+    "Ensure eglot on remote."
+    (unless (and eglot-disable-on-tramp (file-remote-p default-directory))
+      (apply orig args)))
+  (advice-add 'eglot-ensure :around #'eglot-ensure-remote)
   :custom
   (eglot-report-progress nil)
   (eglot-sync-connect nil)
@@ -759,7 +766,8 @@ If PREFIX is not nil, create visit in default-directory"
   :ensure t :defer 1
   :config (require 'eev-load)
   (define-abbrev-table 'global-abbrev-table
-    '(("eekcopy" " (eek \"C-x o C-p C-e C-SPC C-a M-w C-n C-x O C-e RET C-a C-y\") ;; copy output")))
+    '(("eekcopy" " (eek \"C-x o C-p C-e C-SPC C-a M-w C-n C-x O C-e RET C-a C-y\") ;; copy output")
+      ("datetime" "$(date +%Y%m%dT%H%M%S)")))
   (defun eepitch-get-buffer-name-line()
     (if (not (eq eepitch-buffer-name ""))
         (format "ξ:%s "eepitch-buffer-name) ""))
@@ -835,7 +843,7 @@ Why not use detached, because detached doesnt run with -A"
    ("C" . project-detached-compile)))
 (use-package 0x0 :ensure t :defer t)
 (use-package dpaste :ensure t :defer t)
-(use-package gist :ensure t :defer 1)
+(use-package gist :ensure t :defer t)
 (use-package devdocs
   :ensure t :defer t
   :bind ("M-s d" . #'devdocs-lookup))
@@ -910,8 +918,6 @@ Why not use detached, because detached doesnt run with -A"
            (buff (get-buffer-create buffer-name)))
       ;; HACK: make shell-mode doesnt set comint-input-ring-file-name
       (ring-insert comint-input-ring "uname")
-      (unless (file-exists-p shell-directory-name)
-        (make-directory shell-directory-name t))
       (with-current-buffer (shell buff)
         (setq-local comint-input-ring-file-name comint-history-file)
         (comint-read-input-ring t)
@@ -1181,14 +1187,15 @@ Why not use detached, because detached doesnt run with -A"
 (defun insert-datetime(&optional prefix)
   "Insert %Y%m%dT%H%M%S or %Y-%m-%dT%H:%M:%S if PREFIX set."
   (interactive "p")
-  (let ((msg
-         (cond
-          ((= prefix 1)
-           (format-time-string "%Y%m%dT%H%M%S" (current-time) t))
-          ((= prefix 2)
-           (string-trim (shell-command-to-string "date --utc")))
-          ((= prefix 4)
-           (format-time-string "%Y-%m-%dT%H:%M:%S" (current-time) t)))))
+  (let ((msg (cond
+              ((= prefix 1)
+               (format-time-string "%Y%m%dT%H%M%S" (current-time) t))
+              ((= prefix 2)
+               (string-trim (shell-command-to-string "date +%s")))
+              ((= prefix 3)
+               (string-trim (shell-command-to-string "date --utc")))
+              ((= prefix 4)
+               (format-time-string "%Y-%m-%dT%H:%M:%S" (current-time) t)))))
     (insert msg)))
 
 (defun linux-stat-file()
@@ -1368,6 +1375,8 @@ Why not use detached, because detached doesnt run with -A"
 (setq minibuffer-prompt-properties
       '(read-only t cursor-intangible t face minibuffer-prompt))
 (add-hook 'minibuffer-setup-hook #'cursor-intangible-mode)
+(let ((shell-directory-name (locate-user-emacs-file "shell")))
+    (make-directory shell-directory-name t))
 
 ;;; DEVELOPMENT ENV
 (use-package treesit
