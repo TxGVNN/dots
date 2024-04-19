@@ -18,7 +18,7 @@
 (add-hook 'emacs-startup-hook
           (lambda ()
             (setq file-name-handler-alist doom--file-name-handler-alist)))
-(defvar emacs-config-version "20240322.1520")
+(defvar emacs-config-version "20240416.1730")
 (defvar hidden-minor-modes '(whitespace-mode))
 
 (require 'package)
@@ -363,15 +363,31 @@
 (use-package project-tasks
   :ensure t :defer t
   :custom
+  (project-tasks-separator ":")
   (project-tasks-files '(".*task.*\.org$"))
   :init
   (with-eval-after-load 'embark
     (define-key embark-file-map (kbd "P") #'project-tasks-in-dir))
-  :bind
-  (:map project-prefix-map
-        ("P" . project-tasks)
-        ("o" . project-tasks-capture)
-        ("O" . project-tasks-jump)))
+  :bind (:map project-prefix-map ("P" . project-tasks))
+  :config
+  (defun project-tasks-goto-task (task)
+    "Go to SRC of TASK in project."
+    (interactive "sTask: ")
+    (let ((file (car (split-string task project-tasks-separator)))
+          (task-name (mapconcat #'identity (cdr (split-string task project-tasks-separator))
+                                project-tasks-separator)))
+      (if (string-empty-p task-name) ;; call on current buffer without separator. Ex: #+call: func()
+          (setq task-name file)
+        (find-file file))
+      (org-babel-goto-named-src-block task-name)))
+  (add-to-list 'marginalia-prompt-categories '("select task" . project-task))
+  (with-eval-after-load 'embark
+    (defvar-keymap embark-project-task-actions
+      :doc "Keymap for actions for project-task (when mentioned by name)."
+      :parent embark-general-map
+      "j" #'project-tasks-goto-task)
+    (add-to-list 'embark-keymap-alist '(project-task . embark-project-task-actions))))
+
 (use-package envrc
   :ensure t :defer t
   :config
@@ -628,7 +644,8 @@
   (define-key yas-minor-mode-map [(tab)] nil)
   (define-key yas-minor-mode-map (kbd "TAB") nil))
 (use-package yasnippet-snippets
-  :ensure t :defer t )
+  :ensure t :defer t
+  :config (add-to-list 'yas-snippet-dirs "~/.gxt/emacs/snippets"))
 (use-package consult-yasnippet
   :ensure t :defer t
   :init (global-set-key (kbd "M-]") #'completion-customize)
@@ -675,17 +692,6 @@
   ("M-g l" . avy-goto-line))
 (use-package crux
   :ensure t :defer t
-  :config
-  (setq crux-share-to-transfersh-host "https://free.keep.sh")
-  (defun crux-visit-eat-buffer (&optional prefix)
-    "Create or visit a eat buffer.
-If PREFIX is not nil, create visit in default-directory"
-    (interactive "P")
-    (let* ((eat-buffer-name
-            (format "*eat<%s>" (if prefix (crux-directory-domain-name) "0"))))
-      (with-current-buffer (eat)
-        (eat-line-mode))
-      (pop-to-buffer eat-buffer-name display-comint-buffer-action)))
   :bind
   ("C-^" . crux-top-join-line)
   ("C-a" . crux-move-beginning-of-line)
@@ -1376,7 +1382,7 @@ Why not use detached, because detached doesnt run with -A"
       '(read-only t cursor-intangible t face minibuffer-prompt))
 (add-hook 'minibuffer-setup-hook #'cursor-intangible-mode)
 (let ((shell-directory-name (locate-user-emacs-file "shell")))
-    (make-directory shell-directory-name t))
+  (make-directory shell-directory-name t))
 
 ;;; DEVELOPMENT ENV
 (use-package treesit
@@ -1429,6 +1435,16 @@ Why not use detached, because detached doesnt run with -A"
   (org-mode . org-indent-mode)
   (org-mode . flyspell-mode)
   :config
+  (defun org-open-at-point-of-babel-call()
+    (let* ((context (org-element-lineage (org-element-context) '(babel-call) t))
+	       (type (org-element-type context))
+	       (value (org-element-property :value context)))
+      (if (eq type 'babel-call)
+          ;; remove '()' string in value then to assign to project-task
+          (let ((project-task (replace-regexp-in-string "()" "" value)))
+            (project-tasks-goto-task project-task) t)
+        nil)))
+  (add-to-list 'org-open-at-point-functions #'org-open-at-point-of-babel-call)
   (require 'ob-shell)
   (add-to-list 'hidden-minor-modes 'org-indent-mode)
   (define-key org-src-mode-map (kbd "C-c C-c") #'org-edit-src-exit)
